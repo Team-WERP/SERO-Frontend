@@ -15,7 +15,9 @@
             </nav>
 
             <!-- 우측 여백(알림/유저 영역 자리) -->
-            <div class="top-nav__right"></div>
+            <div class="top-nav__right">
+                <UserProfile />
+            </div>
         </div>
     </header>
 </template>
@@ -24,6 +26,7 @@
 import { useMenuStore } from '@/stores/menu'
 import { useRouter } from 'vue-router'
 import AppLogo from '@/components/common/AppLogo.vue'
+import UserProfile from '@/components/common/UserProfile.vue'
 
 const menuStore = useMenuStore()
 const router = useRouter()
@@ -111,5 +114,6 @@ const change = (key) => {
     margin-left: auto;
     display: flex;
     align-items: center;
+    padding-right: 24px;
 }
 </style>
