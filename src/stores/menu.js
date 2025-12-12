@@ -32,7 +32,7 @@ export const useMenuStore = defineStore("menu", {
                 { name: "생산계획 관리", path: "/production/plans" },
                 { name: "작업지시 관리", path: "/production/work-orders" },
                 { name: "작업지시 실적 등록", path: "/production/work-results/input" },
-                { name: "작업지시 실적 관리", path: "/production/work-results" },
+                { name: "작업지시 실적 관리", path: "/production/work-results/management" },
                 { name: "공정 흐름 관리", path: "/production/process-flow" }
             ],
 

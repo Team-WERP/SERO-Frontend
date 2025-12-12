@@ -84,7 +84,7 @@ const router = createRouter({
                 { path: "/production/plans", component: ProductionPlanList },
                 { path: "/production/work-orders", component: WorkOrderList },
                 { path: "/production/work-results/input", component: WorkResultInput },
-                { path: "/production/work-results", component: WorkResultList },
+                { path: "/production/work-results/management", component: WorkResultList },
                 { path: "/production/process-flow", component: ProcessFlowManagement },
 
                 // ---------------------
