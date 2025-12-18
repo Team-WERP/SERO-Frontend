@@ -37,7 +37,6 @@
         <div class="items-section">
             <div class="section-header">
                 <h2 class="section-title">거래 품목 목록</h2>
-                <span class="item-count">(최소 주문 수량)</span>
             </div>
 
             <table class="items-table">
@@ -94,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'    
 import { useUserStore } from '@/stores/user'
 import { getClientItems } from '@/api/clientItem'
 import PriceHistoryModal from '@/components/client/PriceHistoryModal.vue'
@@ -180,6 +179,10 @@ const closeModal = () => {
     selectedItemInfo.value = null
 }
 
+watch(selectedFilter, () => {
+    searchItems()
+})
+
 // 초기 로드
 onMounted(() => {
     searchItems()
@@ -188,7 +191,7 @@ onMounted(() => {
 
 <style scoped>
 .client-item-page {
-    padding: 24px;
+    padding: 5px;
     width: 100%;
 }
 
