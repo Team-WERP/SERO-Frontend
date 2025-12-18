@@ -52,6 +52,17 @@
                 </button>
             </form>
 
+            <button @click="devLogin('hq')"
+                class="mt-8 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition">
+                본사 직원(시스템 관리자)로 로그인
+            </button>
+
+            <button @click="devLogin('client')"
+                class="mt-4 h-10 w-full rounded-xl  text-[14px] border border-[#4C4CDD] text-[#4C4CDD] font-semibold hover:opacity-95 transition">
+                고객사 직원으로 로그인
+            </button>
+
+
             <div class="mt-4 text-center text-[11px] text-gray-400">
                 <p>© 2025 WERP</p>
                 <a class="mt-1 inline-block text-[#4C4CDD] hover:underline">
@@ -148,6 +159,27 @@ const shakeAll = () => {
         emailRef.value?.classList.remove('animate-shake')
         passwordRef.value?.classList.remove('animate-shake')
     }, 300)
+}
+
+const devLogin = async (type) => {
+    try {
+        const data =
+            type === 'hq'
+                ? { email: 'admin@werp.com', password: 'kang' }
+                : { email: 'sl_buyer@sl.com', password: 'kang' };
+
+        const res = await login(type, data);
+
+        const { accessToken, grantType, permissions } = res.data;
+
+        localStorage.setItem('accessToken', `${grantType} ${accessToken}`);
+
+        localStorage.setItem('permissions', permissions);
+
+        router.push('/');
+    } catch (e) {
+        console.error('개발용 로그인 실패', e);
+    }
 }
 </script>
 
