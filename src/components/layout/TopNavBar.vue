@@ -68,25 +68,25 @@ const change = (key) => {
     background-color: #ffffff;
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
 .top-nav__inner {
     width: 100%;
-    max-width: 1440px;
     display: flex;
     align-items: center;
+    padding: 0 24px;
 }
 
 .top-nav__logo {
     width: 220px;
     display: flex;
-    padding-left: 24px;
 }
 
 .top-nav__menu {
     display: flex;
     align-items: center;
-    padding-left: 24px;
+    margin-left: 24px;
     gap: 32px;
 }
 
@@ -112,8 +112,8 @@ const change = (key) => {
 
 .top-nav__right {
     margin-left: auto;
+    margin-right: 12px;
     display: flex;
     align-items: center;
-    padding-right: 24px;
 }
 </style>
