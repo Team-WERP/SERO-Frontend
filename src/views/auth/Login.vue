@@ -172,7 +172,7 @@ const devLogin = async (type) => {
 
         const { accessToken, grantType, permissions } = res.data;
 
-        localStorage.setItem('accessToken', `${grantType} ${accessToken}`);
+        localStorage.setItem('accessToken', `${accessToken}`);
 
         localStorage.setItem('permissions', permissions);
 
