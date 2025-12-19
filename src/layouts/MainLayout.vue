@@ -5,19 +5,25 @@
 
             <div class="layout-body">
                 <SideNavBar v-if="showSidebar" />
+
                 <main class="layout-content">
-                    <RouterView />
+                    <div class="layout-content__inner">
+                        <RouterView />
+                    </div>
                 </main>
             </div>
         </template>
 
         <template v-else>
             <main class="layout-content">
-                <RouterView />
+                <div class="layout-content__inner" :class="{ 'no-padding': route.meta.noPadding }">
+                    <RouterView />
+                </div>
             </main>
         </template>
     </div>
 </template>
+
 
 <script setup>
 import { computed } from 'vue'
@@ -29,16 +35,15 @@ import SideNavBar from '@/components/layout/SideNavBar.vue'
 const route = useRoute()
 const { isMobile } = useResponsive()
 
-const hideLayoutPaths = ['/login']
-
 const showLayout = computed(() => {
-    return !hideLayoutPaths.includes(route.path)
+    return !route.meta.hideLayout
 })
 
 const showSidebar = computed(() => {
-    if (hideLayoutPaths.includes(route.path)) return false
+    if (route.meta.hideLayout) return false
     return !isMobile.value
 })
+
 </script>
 
 <style scoped>
@@ -57,5 +62,14 @@ const showSidebar = computed(() => {
 .layout-content {
     flex: 1;
     overflow: auto;
+}
+
+.layout-content__inner {
+    padding: 24px;
+    min-height: 100%;
+}
+
+.no-padding {
+    padding: 0;
 }
 </style>
