@@ -1,7 +1,13 @@
 <template>
     <div class="fixed inset-0 z-50 bg-black/30" @click.self="$emit('close')">
         <aside class="w-72 h-full bg-white p-4 overflow-auto">
-            <div v-for="nav in navItems" :key="nav.key" class="mb-4">
+            <!--  로고 -->
+            <div class="drawer-header">
+                <AppLogo />
+            </div>
+
+            <!-- 메뉴 영역 -->
+            <div v-for="nav in navItems" :key="nav.key" class="mb-2">
                 <!-- 상단 메뉴 -->
                 <button class="mobile-section-btn" :class="{
                     'mobile-section-btn--open': opened === nav.key,
@@ -40,6 +46,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMenuStore } from '@/stores/menu'
+import AppLogo from '@/components/common/AppLogo.vue'
 
 const route = useRoute()
 const menuStore = useMenuStore()
@@ -85,6 +92,15 @@ const emitClose = () => {
 </script>
 
 <style>
+.drawer-header {
+    display: flex;
+    align-items: center;
+    height: 49px;
+    padding: 0 4px 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
 .mobile-section-btn {
     width: 100%;
     display: flex;

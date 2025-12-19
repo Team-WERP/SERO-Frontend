@@ -25,8 +25,17 @@
             </div>
         </div>
 
+        <!-- 모바일 오버레이 -->
+        <transition name="backdrop">
+            <div v-if="open" class="mobile-backdrop" @click="open = false" />
+        </transition>
+
         <!-- 모바일 드로어 -->
-        <MobileMenuDrawer v-if="open" @close="open = false" />
+        <transition name="drawer">
+            <MobileMenuDrawer v-if="open" @close="open = false" />
+        </transition>
+
+
     </header>
 </template>
 
@@ -134,5 +143,37 @@ const change = (key) => {
     margin-left: auto;
     display: flex;
     align-items: center;
+}
+
+/* Drawer */
+.drawer-enter-active {
+    transition:
+        transform 0.26s cubic-bezier(0.22, 0.61, 0.36, 1),
+        opacity 0.22s ease-out;
+}
+
+.drawer-leave-active {
+    transition:
+        transform 0.22s ease-in,
+        opacity 0.18s ease-in;
+}
+
+.drawer-enter-from {
+    transform: translateX(-24px);
+    opacity: 0;
+}
+
+.drawer-leave-to {
+    transform: translateX(-16px);
+    opacity: 0;
+}
+
+/* Backdrop */
+.backdrop-enter-active {
+    transition: opacity 0.18s ease 0.04s;
+}
+
+.backdrop-leave-active {
+    transition: opacity 0.16s ease;
 }
 </style>
