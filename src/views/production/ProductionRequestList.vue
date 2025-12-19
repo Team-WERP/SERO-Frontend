@@ -8,6 +8,11 @@
                     확정된 생산요청 내역을 조회하고 담당자를 확인할 수 있습니다.
                 </p>
             </div>
+            <div>
+                <button class="create-btn" @click="openDraftModal">
+                    + 생산요청 등록
+                </button>
+            </div>
         </div>
 
         <!-- 필터 및 검색 -->
@@ -113,12 +118,16 @@
             </table>
         </div>
     </div>
+    <DraftPRModal v-if="showDraftModal" @close="showDraftModal = false" @select="handleSelectDraft" />
+
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getPRList } from '@/api/production/productionRequest.js'
+import DraftPRModal from '@/components/production/DraftPRModal.vue'
+
 
 const router = useRouter()
 
@@ -156,6 +165,18 @@ const fetchPRList = async () => {
     if (dueDate.value) params.dueDate = dueDate.value
 
     prList.value = await getPRList(params)
+}
+
+
+const showDraftModal = ref(false)
+
+const openDraftModal = () => {
+    showDraftModal.value = true
+}
+
+const handleSelectDraft = (draft) => {
+    showDraftModal.value = false
+    router.push(`/production/requests/drafts/${draft.prId}`)
 }
 
 const goDetail = (prId) => {
@@ -206,7 +227,10 @@ onMounted(fetchPRList)
 
 /* ===== 헤더 ===== */
 .page-header {
-    margin-bottom: 32px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
 }
 
 
@@ -483,5 +507,20 @@ onMounted(fetchPRList)
 .status-cancel {
     background: #f3f4f6;
     color: #374151;
+}
+
+.create-btn {
+    background: #4C4CDD;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.create-btn:hover {
+    background: #3d3dbb;
 }
 </style>
