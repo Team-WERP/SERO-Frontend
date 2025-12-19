@@ -77,6 +77,7 @@ import { ref, reactive, nextTick } from 'vue';
 import { login } from '@/api/auth';
 import router from '@/router';
 import logo from '@/assets/logo.png';
+import { useUserStore } from '@/stores/user'
 
 const email = ref('');
 const password = ref('');
@@ -132,23 +133,28 @@ const handleLogin = async () => {
             password: password.value
         });
 
-        const { accessToken, grantType, permissions } = res.data;
+        const { accessToken, grantType } = res.data;
 
-        localStorage.setItem('accessToken', `${grantType} ${accessToken}`);
-        localStorage.setItem('permissions', permissions);
+        localStorage.setItem(
+            'accessToken',
+            grantType ? `${grantType} ${accessToken}` : accessToken
+        );
 
-        router.push('/');
+        const userStore = useUserStore();
+        userStore.setFromToken(accessToken);
+
+        router.replace('/');
     } catch (e) {
         if (e.response?.status === 401) {
             errors.common =
                 '아이디 또는 비밀번호가 올바르지 않습니다. 입력하신 정보를 다시 확인해 주세요.';
             shakeAll();
             await focusField(emailRef);
-
-            isLoggingIn.value = false
         }
+    } finally {
+        isLoggingIn.value = false;
     }
-}
+};
 
 const focusField = async (refEl) => {
     await nextTick();
@@ -174,17 +180,18 @@ const devLogin = async (type) => {
 
         const res = await login(type, data);
 
-        const { accessToken, permissions } = res.data;
+        const { accessToken } = res.data;
 
-        localStorage.setItem('accessToken', `${accessToken}`);
+        localStorage.setItem('accessToken', accessToken);
 
-        localStorage.setItem('permissions', permissions);
+        const userStore = useUserStore();
+        userStore.setFromToken(accessToken);
 
-        router.push('/');
+        router.replace('/');
     } catch (e) {
         console.error('개발용 로그인 실패', e);
     }
-}
+};
 </script>
 
 <style scoped>
