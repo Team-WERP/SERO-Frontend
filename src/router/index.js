@@ -2,6 +2,9 @@
 import { createRouter, createWebHistory } from "vue-router";
 import MainLayout from "@/layouts/MainLayout.vue";
 
+// 로그인
+import Login from "@/views/auth/Login.vue";
+
 // 고객포털
 import ClientDashboard from "@/views/client-portal/ClientDashboard.vue";
 import ClientOrderCreate from "@/views/client-portal/ClientOrderCreate.vue";
@@ -57,6 +60,11 @@ const router = createRouter({
             redirect: "/client-portal/dashboard",
             component: MainLayout,
             children: [
+                // ---------------------
+                // 로그인
+                // ---------------------
+                { path: "/login", component: Login },
+
                 // ---------------------
                 // 고객포털
                 // ---------------------
