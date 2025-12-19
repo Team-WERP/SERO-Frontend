@@ -12,6 +12,7 @@
 
         <!-- 필터 및 검색 -->
         <div class="search-section">
+            <h2 class="filter-title">필터 및 검색</h2>
             <div class="filter-row">
                 <div class="filter-item">
                     <label>생산 요청일</label>
@@ -222,6 +223,13 @@ onMounted(fetchPRList)
 }
 
 /* ===== 검색 / 필터 ===== */
+.filter-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 10px;
+}
+
 .search-section {
     background: #ffffff;
     border: 1px solid #e5e7eb;
