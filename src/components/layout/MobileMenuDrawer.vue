@@ -20,7 +20,7 @@
                 </button>
 
                 <!-- 사이드 메뉴 -->
-                <ul v-show="opened === nav.key" class="mt-2 space-y-1">
+                <ul class="submenu mt-2 space-y-1" :class="{ 'submenu--open': opened === nav.key }">
 
                     <li v-for="item in menus[nav.key]" :key="item.path">
                         <RouterLink :to="item.path" class="side-menu-link" :class="{
@@ -123,5 +123,19 @@ const emitClose = () => {
 
 .chevron--active {
     color: #4C4CDD;
+}
+
+.submenu {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+        max-height 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.submenu--open {
+    max-height: 500px;
+    opacity: 1;
 }
 </style>
