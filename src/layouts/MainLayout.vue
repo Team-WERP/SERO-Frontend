@@ -1,10 +1,10 @@
 <template>
     <div class="layout-root">
-        <template v-if="showSidebar">
+        <template v-if="showLayout">
             <TopNavBar />
 
             <div class="layout-body">
-                <SideNavBar />
+                <SideNavBar v-if="showSidebar" />
                 <main class="layout-content">
                     <RouterView />
                 </main>
@@ -12,11 +12,9 @@
         </template>
 
         <template v-else>
-            <div class="layout-body">
-                <main class="layout-content">
-                    <RouterView />
-                </main>
-            </div>
+            <main class="layout-content">
+                <RouterView />
+            </main>
         </template>
     </div>
 </template>
@@ -24,16 +22,23 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useResponsive } from '@/composables/useResponsive'
 import TopNavBar from '@/components/layout/TopNavBar.vue'
 import SideNavBar from '@/components/layout/SideNavBar.vue'
 
-const route = useRoute();
+const route = useRoute()
+const { isMobile } = useResponsive()
 
-const hideSidebarPaths = ['/login'];
+const hideLayoutPaths = ['/login']
+
+const showLayout = computed(() => {
+    return !hideLayoutPaths.includes(route.path)
+})
 
 const showSidebar = computed(() => {
-    return !hideSidebarPaths.includes(route.path);
-});
+    if (hideLayoutPaths.includes(route.path)) return false
+    return !isMobile.value
+})
 </script>
 
 <style scoped>
@@ -47,12 +52,10 @@ const showSidebar = computed(() => {
     display: flex;
     flex: 1;
     background-color: #f9fafb;
-    /* 전체 배경 라이트 그레이 */
 }
 
 .layout-content {
     flex: 1;
-    /* padding: 24px; */
     overflow: auto;
 }
 </style>

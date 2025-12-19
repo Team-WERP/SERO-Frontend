@@ -1,32 +1,47 @@
 <template>
     <header class="top-nav">
         <div class="top-nav__inner">
-            <!-- 로고 영역 -->
+            <!-- 모바일: 햄버거 -->
+            <button v-if="isMobile" class="top-nav__hamburger" @click="open = true">
+                ☰
+            </button>
+
+            <!-- 로고 -->
             <div class="top-nav__logo">
                 <AppLogo />
             </div>
 
-            <!-- 상단 메뉴 -->
-            <nav class="top-nav__menu">
+            <!-- 데스크탑 상단 메뉴 -->
+            <nav v-if="!isMobile" class="top-nav__menu">
                 <button v-for="item in navItems" :key="item.key" class="top-nav__item"
                     :class="{ 'top-nav__item--active': isActive(item.key) }" @click="change(item.key)">
                     {{ item.label }}
                 </button>
             </nav>
 
-            <!-- 우측 여백(알림/유저 영역 자리) -->
+            <!-- 우측 유저 -->
             <div class="top-nav__right">
                 <UserProfile />
             </div>
         </div>
+
+        <!-- 모바일 드로어 -->
+        <MobileMenuDrawer v-if="open" @close="open = false" />
     </header>
 </template>
 
 <script setup>
-import { useMenuStore } from '@/stores/menu'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useMenuStore } from '@/stores/menu'
+import { useResponsive } from '@/composables/useResponsive'
+
 import AppLogo from '@/components/common/AppLogo.vue'
 import UserProfile from '@/components/common/UserProfile.vue'
+import MobileMenuDrawer from '@/components/layout/MobileMenuDrawer.vue'
+
+const { isMobile } = useResponsive()
+const open = ref(false)
 
 const menuStore = useMenuStore()
 const router = useRouter()
@@ -67,7 +82,6 @@ const change = (key) => {
     border-bottom: 1px solid #e5e7eb;
     background-color: #ffffff;
     display: flex;
-    align-items: center;
     justify-content: center;
 }
 
@@ -76,20 +90,30 @@ const change = (key) => {
     display: flex;
     align-items: center;
     padding: 0 24px;
+    gap: 16px;
 }
 
+/* 햄버거 */
+.top-nav__hamburger {
+    font-size: 22px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* 로고 */
 .top-nav__logo {
     width: 220px;
     display: flex;
 }
 
+/* 메뉴 */
 .top-nav__menu {
     display: flex;
-    align-items: center;
-    margin-left: 24px;
     gap: 32px;
 }
 
+/* 메뉴 버튼 */
 .top-nav__item {
     border: none;
     background: none;
@@ -98,11 +122,6 @@ const change = (key) => {
     cursor: pointer;
     color: #4b5563;
     font-weight: 400;
-    transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.top-nav__item:hover {
-    font-weight: 600;
 }
 
 .top-nav__item--active {
@@ -110,9 +129,9 @@ const change = (key) => {
     font-weight: 600;
 }
 
+/* 우측 */
 .top-nav__right {
     margin-left: auto;
-    margin-right: 12px;
     display: flex;
     align-items: center;
 }
