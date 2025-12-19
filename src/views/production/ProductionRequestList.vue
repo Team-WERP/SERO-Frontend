@@ -15,16 +15,12 @@
             <div class="filter-row">
                 <div class="filter-item">
                     <label>생산 요청일</label>
-                    <input type="date" v-model="requestedFrom" />
-                    <span>~</span>
-                    <input type="date" v-model="requestedTo" />
+                    <input type="date" v-model="requestedDate" />
                 </div>
 
                 <div class="filter-item">
                     <label>생산 마감일</label>
-                    <input type="date" v-model="dueFrom" />
-                    <span>~</span>
-                    <input type="date" v-model="dueTo" />
+                    <input type="date" v-model="dueDate" />
                 </div>
 
                 <div class="filter-item">
@@ -125,10 +121,8 @@ import { getPRList } from '@/api/production/productionRequest.js'
 
 const router = useRouter()
 
-const requestedFrom = ref('')
-const requestedTo = ref('')
-const dueFrom = ref('')
-const dueTo = ref('')
+const requestedDate = ref('')
+const dueDate = ref('')
 const managerId = ref('')
 const searchKeyword = ref('')
 const selectedStatus = ref('')
@@ -157,10 +151,8 @@ const fetchPRList = async () => {
     if (searchKeyword.value) params.keyword = searchKeyword.value
     if (selectedStatus.value) params.status = selectedStatus.value
     if (managerId.value) params.managerId = managerId.value
-    if (requestedFrom.value) params.requestedFrom = requestedFrom.value
-    if (requestedTo.value) params.requestedTo = requestedTo.value
-    if (dueFrom.value) params.dueFrom = dueFrom.value
-    if (dueTo.value) params.dueTo = dueTo.value
+    if (requestedDate.value) params.requestedDate = requestedDate.value
+    if (dueDate.value) params.dueDate = dueDate.value
 
     prList.value = await getPRList(params)
 }
