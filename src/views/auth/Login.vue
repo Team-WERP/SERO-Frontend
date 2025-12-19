@@ -13,12 +13,12 @@
                 <div class="absolute left-1 top-1 h-[calc(100%-8px)] w-[calc(50%-4px)] rounded-lg bg-[#4C4CDD] transition-all duration-300"
                     :class="employeeType === 'client' ? 'translate-x-full' : ''" />
 
-                <button class="z-10 flex-1 text-sm font-semibold"
+                <button class="z-10 flex-1 text-sm font-semibold cursor-pointer"
                     :class="employeeType === 'hq' ? 'text-white' : 'text-gray-500'" @click="employeeType = 'hq'">
                     본사
                 </button>
 
-                <button class="z-10 flex-1 text-sm font-semibold"
+                <button class="z-10 flex-1 text-sm font-semibold cursor-pointer"
                     :class="employeeType === 'client' ? 'text-white' : 'text-gray-500'"
                     @click="employeeType = 'client'">
                     고객사
@@ -46,22 +46,21 @@
                     {{ errors.common }}
                 </p>
 
-                <button type="submit"
-                    class="h-10 w-full rounded-xl bg-[#4C4CDD] text-[14px] font-semibold text-white hover:opacity-95 transition">
-                    로그인
+                <button type="submit" :disabled="isLoggingIn"
+                    class="h-10 w-full rounded-xl bg-[#4C4CDD] text-[14px] font-semibold text-white hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                    {{ isLoggingIn ? '로그인 중…' : '로그인' }}
                 </button>
             </form>
 
             <button @click="devLogin('hq')"
-                class="mt-8 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition">
+                class="mt-8 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
                 본사 직원(시스템 관리자)로 로그인
             </button>
 
             <button @click="devLogin('client')"
-                class="mt-4 h-10 w-full rounded-xl  text-[14px] border border-[#4C4CDD] text-[#4C4CDD] font-semibold hover:opacity-95 transition">
+                class="mt-4 h-10 w-full rounded-xl  text-[14px] border border-[#4C4CDD] text-[#4C4CDD] font-semibold hover:opacity-95 transition cursor-pointer">
                 고객사 직원으로 로그인
             </button>
-
 
             <div class="mt-4 text-center text-[11px] text-gray-400">
                 <p>© 2025 WERP</p>
@@ -74,91 +73,96 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick } from 'vue'
-import { login } from '@/api/auth'
-import router from '@/router'
-import logo from '@/assets/logo.png'
+import { ref, reactive, nextTick } from 'vue';
+import { login } from '@/api/auth';
+import router from '@/router';
+import logo from '@/assets/logo.png';
 
-const email = ref('')
-const password = ref('')
-const employeeType = ref('hq')
+const email = ref('');
+const password = ref('');
+const employeeType = ref('hq');
+const isLoggingIn = ref(false);
 
-const emailRef = ref(null)
-const passwordRef = ref(null)
+const emailRef = ref(null);
+const passwordRef = ref(null);
 
 const errors = reactive({
     email: '',
     password: '',
     common: ''
-})
+});
 
 const inputClass = (hasError) => [
     'w-full h-10 rounded-[11px] border px-4 text-sm outline-none transition-all',
     hasError
         ? 'border-red-400 focus:border-red-500 animate-shake'
         : 'border-[#dcdfea] focus:border-[#4C4CDD]'
-]
+];
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const handleLogin = async () => {
-    errors.email = ''
-    errors.password = ''
-    errors.common = ''
+    errors.email = '';
+    errors.password = '';
+    errors.common = '';
 
     if (!email.value) {
-        errors.email = '이메일을 입력해 주세요.'
-        await focusField(emailRef)
-        return
+        errors.email = '이메일을 입력해 주세요.';
+        await focusField(emailRef);
+        return;
     }
 
     if (!emailRegex.test(email.value)) {
-        errors.email = '이메일 형식이 올바르지 않습니다.'
-        await focusField(emailRef)
-        return
+        errors.email = '이메일 형식이 올바르지 않습니다.';
+        await focusField(emailRef);
+        return;
     }
 
     if (!password.value) {
-        errors.password = '비밀번호를 입력해 주세요.'
-        await focusField(passwordRef)
-        return
+        errors.password = '비밀번호를 입력해 주세요.';
+        await focusField(passwordRef);
+        return;
     }
+
+    isLoggingIn.value = true;
 
     try {
         const res = await login(employeeType.value, {
             email: email.value,
             password: password.value
-        })
+        });
 
-        const { accessToken, grantType, permissions } = res.data
+        const { accessToken, grantType, permissions } = res.data;
 
-        localStorage.setItem('accessToken', `${grantType} ${accessToken}`)
-        localStorage.setItem('permissions', permissions)
+        localStorage.setItem('accessToken', `${grantType} ${accessToken}`);
+        localStorage.setItem('permissions', permissions);
 
-        router.push('/')
+        router.push('/');
     } catch (e) {
         if (e.response?.status === 401) {
             errors.common =
-                '아이디 또는 비밀번호가 올바르지 않습니다. 입력하신 정보를 다시 확인해 주세요.'
-            shakeAll()
-            await focusField(emailRef)
+                '아이디 또는 비밀번호가 올바르지 않습니다. 입력하신 정보를 다시 확인해 주세요.';
+            shakeAll();
+            await focusField(emailRef);
+
+            isLoggingIn.value = false
         }
     }
 }
 
 const focusField = async (refEl) => {
-    await nextTick()
-    refEl?.value?.focus()
+    await nextTick();
+    refEl?.value?.focus();
 }
 
 const shakeAll = () => {
-    emailRef.value?.classList.add('animate-shake')
-    passwordRef.value?.classList.add('animate-shake')
+    emailRef.value?.classList.add('animate-shake');
+    passwordRef.value?.classList.add('animate-shake');
 
     setTimeout(() => {
-        emailRef.value?.classList.remove('animate-shake')
-        passwordRef.value?.classList.remove('animate-shake')
-    }, 300)
+        emailRef.value?.classList.remove('animate-shake');
+        passwordRef.value?.classList.remove('animate-shake');
+    }, 300);
 }
 
 const devLogin = async (type) => {
@@ -170,7 +174,7 @@ const devLogin = async (type) => {
 
         const res = await login(type, data);
 
-        const { accessToken, grantType, permissions } = res.data;
+        const { accessToken, permissions } = res.data;
 
         localStorage.setItem('accessToken', `${accessToken}`);
 

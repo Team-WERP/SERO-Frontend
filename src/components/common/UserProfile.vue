@@ -7,11 +7,15 @@
             <div class="user-profile__name">{{ userName }}</div>
             <div class="user-profile__role">{{ userRole }}</div>
         </div>
+        <button @click="handleLogout" class="ml-4 px-3 py-1 text-[14px] bg-[#4C4CDD] text-white rounded cursor-pointer">
+            로그아웃
+        </button>
     </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { logout } from '@/api/auth'
 
 // TODO: 실제로는 store나 props에서 받아와야 함
 const userName = '김영업'
@@ -20,6 +24,22 @@ const userRole = '영업1팀 · 팀장'
 const userInitial = computed(() => {
     return userName.charAt(0)
 })
+
+const handleLogout = async () => {
+    const permissions = localStorage.getItem('permissions') || '';
+    const isClient = permissions.includes('AC_CLI');
+
+    try {
+        await logout(isClient ? 'client' : 'hq');
+    } catch (error) {
+        console.error('로그아웃 API 실패:', error);
+    } finally {
+        localStorage.removeItem('permissions');
+        localStorage.removeItem('accessToken');
+        
+        window.location.href = '/login';
+    }
+};
 </script>
 
 <style scoped>
