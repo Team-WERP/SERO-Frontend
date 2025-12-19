@@ -1,20 +1,32 @@
 <template>
     <div class="fixed inset-0 z-50 bg-black/30" @click.self="$emit('close')">
         <aside class="w-72 h-full bg-white p-4 overflow-auto">
-            <div v-for="nav in navItems" :key="nav.key" class="mb-2">
+            <div v-for="nav in navItems" :key="nav.key" class="mb-4">
                 <!-- 상단 메뉴 -->
-                <button class="w-full text-left px-3 py-2 font-semibold"
-                    :class="{ 'text-[#4C4CDD]': isActive(nav.key) }" @click="toggle(nav.key)">
-                    {{ nav.label }}
+                <button class="mobile-section-btn" :class="{
+                    'mobile-section-btn--open': opened === nav.key,
+                    'mobile-section-btn--active': isActive(nav.key)
+                }" @click="toggle(nav.key)">
+                    <span class="chevron" :class="{
+                        'chevron--open': opened === nav.key,
+                        'chevron--active': isActive(nav.key)
+                    }">
+                        ▶
+                    </span>
+
+                    <span class="section-label">
+                        {{ nav.label }}
+                    </span>
                 </button>
 
                 <!-- 사이드 메뉴 -->
-                <ul v-show="opened === nav.key">
+                <ul v-show="opened === nav.key" class="mt-2 space-y-1">
+
                     <li v-for="item in menus[nav.key]" :key="item.path">
-                        <RouterLink :to="item.path" class="block px-4 py-2 rounded text-[15px]" :class="{
-                            'bg-[#EFF2FE] font-semibold':
+                        <RouterLink :to="item.path" class="side-menu-link" :class="{
+                            'side-menu-link--active':
                                 route.path.startsWith(item.path)
-                        }" @click="$emit('close')">
+                        }" @click="onClickMenu(nav.key)">
                             {{ item.name }}
                         </RouterLink>
                     </li>
@@ -31,6 +43,7 @@ import { useMenuStore } from '@/stores/menu'
 
 const route = useRoute()
 const menuStore = useMenuStore()
+const emit = defineEmits(['close'])
 
 const navItems = [
     { key: 'clientPortal', label: '고객포털' },
@@ -59,4 +72,56 @@ watch(
     },
     { immediate: true }
 )
+
+const onClickMenu = (key) => {
+    menuStore.setActiveModule(key)
+    emitClose()
+}
+
+const emitClose = () => {
+    emit('close')
+}
+
 </script>
+
+<style>
+.mobile-section-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 4px;
+    font-size: 16px;
+    font-weight: 400;
+    color: #374151;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s ease, font-weight 0.15s ease;
+}
+
+.mobile-section-btn--open {
+    font-weight: 600;
+}
+
+.mobile-section-btn--active {
+    color: #4C4CDD;
+    font-weight: 600;
+}
+
+.chevron {
+    display: inline-block;
+    font-size: 12px;
+    color: #4b5563;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.chevron--open {
+    transform: rotate(90deg);
+}
+
+.chevron--active {
+    color: #4C4CDD;
+}
+</style>
