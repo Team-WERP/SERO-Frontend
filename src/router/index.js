@@ -29,6 +29,7 @@ import WorkResultInput from "@/views/production/WorkResultInput.vue";
 import WorkResultList from "@/views/production/WorkResultList.vue";
 import ProcessFlowManagement from "@/views/production/ProcessFlowManagement.vue";
 import PRDraftDetailView from "@/views/production/PRDraftDetailView.vue";
+import PRDetail from "@/views/production/PRDetail.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
@@ -103,6 +104,7 @@ const router = createRouter({
                 { path: "/production/work-results/management", component: WorkResultList },
                 { path: "/production/process-flow", component: ProcessFlowManagement },
                 { path: "/production/requests/drafts/:prId", component: PRDraftDetailView },
+                { path: "/production/requests/:prId", component: PRDetail },
 
                 // ---------------------
                 // 재고·물류
