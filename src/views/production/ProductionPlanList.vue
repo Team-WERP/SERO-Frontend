@@ -6,8 +6,14 @@
             <div class="pp-title">생산계획 관리</div>
 
             <div class="pp-controls">
-                <div class="month-box">
-                    <input type="month" v-model="month" />
+                <div class="month-nav">
+                    <button class="month-btn" @click="prevMonth">◀</button>
+                    <button class="month-label" @click="openMonthPicker">
+                        {{ displayMonth }}
+                    </button>
+
+                    <input ref="monthInput" type="month" v-model="month" class="hidden-month-input" />
+                    <button class="month-btn" @click="nextMonth">▶</button>
                 </div>
             </div>
         </div>
@@ -174,6 +180,29 @@ const syncScroll = (e) => {
         ganttHeaderRef.value.scrollLeft = e.target.scrollLeft
     }
 }
+const displayMonth = computed(() => {
+    const [y, m] = month.value.split('-').map(Number)
+    return `${y}년 ${m}월`
+})
+
+const prevMonth = () => {
+    const [y, m] = month.value.split('-').map(Number)
+    const d = new Date(y, m - 2, 1)
+    month.value = toMonthValue(d)
+}
+
+const nextMonth = () => {
+    const [y, m] = month.value.split('-').map(Number)
+    const d = new Date(y, m, 1)
+    month.value = toMonthValue(d)
+}
+
+const monthInput = ref(null)
+
+const openMonthPicker = () => {
+    monthInput.value?.showPicker()
+}
+
 
 /**
  * plans grouping by line
@@ -595,5 +624,58 @@ const formatNumber = (v) => (v != null ? Number(v).toLocaleString() : '-')
     font-size: 13px;
     font-weight: 600;
     color: #4C4CDD;
+}
+
+.month-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.month-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid #D9D9D9;
+    background: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.month-btn:hover {
+    background: #F3F4F6;
+}
+
+.month-label {
+    min-width: 110px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.month-picker {
+    position: relative;
+}
+
+.month-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111827;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.month-label:hover {
+    background: #F3F4F6;
+}
+
+.hidden-month-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
 }
 </style>
