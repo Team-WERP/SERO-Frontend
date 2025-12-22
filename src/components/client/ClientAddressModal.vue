@@ -11,12 +11,12 @@
             <div class="modal-body">
                 <form @submit.prevent="handleSubmit">
                     <div class="form-section">
-                        <label for="addressName">
+                        <label for="name">
                             배송지명 <span class="required">*</span>
                         </label>
                         <input
-                            id="addressName"
-                            v-model="formData.addressName"
+                            id="name"
+                            v-model="formData.name"
                             type="text"
                             placeholder="배송지명을 입력하세요"
                             required
@@ -50,12 +50,12 @@
                     </div>
 
                     <div class="form-section">
-                        <label for="phone">
+                        <label for="recipientContact">
                             연락처 <span class="required">*</span>
                         </label>
                         <input
-                            id="phone"
-                            v-model="formData.phone"
+                            id="recipientContact"
+                            v-model="formData.recipientContact"
                             type="tel"
                             placeholder="예: 031-555-8888"
                             required
@@ -104,10 +104,10 @@ const props = defineProps({
 const emit = defineEmits(['close', 'submit'])
 
 const formData = ref({
-    addressName: '',
+    name: '',
     address: '',
     recipientName: '',
-    phone: '',
+    recipientContact: '',
     isDefault: false
 })
 
@@ -120,20 +120,20 @@ watch(() => props.isOpen, (newVal) => {
             isEditMode.value = true
             formData.value = {
                 id: props.addressData.id,
-                addressName: props.addressData.addressName || '',
+                name: props.addressData.name || '',
                 address: props.addressData.address || '',
                 recipientName: props.addressData.recipientName || '',
-                phone: props.addressData.phone || '',
-                isDefault: props.addressData.isDefault || false
+                recipientContact: props.addressData.recipientContact || '',
+                isDefault: props.addressData.isDefault || props.addressData.default || false
             }
         } else {
             // 신규 등록 모드
             isEditMode.value = false
             formData.value = {
-                addressName: '',
+                name: '',
                 address: '',
                 recipientName: '',
-                phone: '',
+                recipientContact: '',
                 isDefault: false
             }
         }
@@ -146,8 +146,8 @@ const handleClose = () => {
 
 const handleSubmit = () => {
     // 유효성 검사
-    if (!formData.value.addressName || !formData.value.address ||
-        !formData.value.recipientName || !formData.value.phone) {
+    if (!formData.value.name || !formData.value.address ||
+        !formData.value.recipientName || !formData.value.recipientContact) {
         alert('필수 항목을 모두 입력해주세요.')
         return
     }

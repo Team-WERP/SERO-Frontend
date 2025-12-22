@@ -38,36 +38,30 @@
                         <th style="width: auto;">상세 주소</th>
                         <th style="width: 120px;">수령 담당자명</th>
                         <th style="width: 150px;">연락처</th>
-                        <th style="width: 100px; text-align: center;">옵션</th>
+                        <th style="width: 120px; text-align: center;">비고</th>
                         <th style="width: 150px; text-align: center;">관리</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="(address, index) in addresses" :key="address.id">
                         <td class="text-center">{{ index + 1 }}</td>
-                        <td>{{ address.addressName }}</td>
+                        <td>{{ address.name }}</td>
                         <td>{{ address.address }}</td>
                         <td>{{ address.recipientName }}</td>
-                        <td>{{ address.phone }}</td>
+                        <td>{{ address.recipientContact }}</td>
                         <td class="text-center">
-                            <span v-if="address.isDefault" class="status-badge status-default">
+                            <span v-if="address.isDefault || address.default" class="status-badge status-default">
                                 기본 배송지
                             </span>
-                            <button
-                                v-else
-                                class="set-default-btn"
-                                @click="setAsDefault(address.id)"
-                            >
-                                기본으로 설정
-                            </button>
+                            <!-- 디버깅: {{ address }} -->
                         </td>
                         <td class="text-center">
                             <div class="action-buttons">
-                                <button class="link-btn" @click="openEditModal(address)">
+                                <button class="action-btn edit-btn" @click="openEditModal(address)">
                                     수정
                                 </button>
                                 <button
-                                    class="link-btn delete"
+                                    class="action-btn delete-btn"
                                     @click="deleteAddress(address.id)"
                                 >
                                     삭제
@@ -101,8 +95,7 @@ import {
     getClientAddresses,
     createClientAddress,
     updateClientAddress,
-    deleteClientAddress as deleteAddressAPI,
-    setDefaultAddress
+    deleteClientAddress as deleteAddressAPI
 } from '@/api/clientAddress'
 import ClientAddressModal from '@/components/client/ClientAddressModal.vue'
 
@@ -110,24 +103,40 @@ const userStore = useUserStore()
 
 const searchKeyword = ref('')
 const addresses = ref([])
+const allAddresses = ref([])
 
 // 모달 관련
 const isModalOpen = ref(false)
 const selectedAddress = ref(null)
 
 // 데이터 조회
-const searchAddresses = async () => {
+const loadAddresses = async () => {
     try {
         const clientId = userStore.getClientId || 1
-
-        const params = {}
-        if (searchKeyword.value) params.keyword = searchKeyword.value
-
-        addresses.value = await getClientAddresses(clientId, params)
+        allAddresses.value = await getClientAddresses(clientId)
+        console.log('조회된 배송지 목록:', allAddresses.value)
+        searchAddresses()
     } catch (error) {
         console.error('배송지 조회 실패:', error)
+        allAddresses.value = []
         addresses.value = []
     }
+}
+
+// 검색 (프론트엔드 필터링)
+const searchAddresses = () => {
+    if (!searchKeyword.value.trim()) {
+        addresses.value = allAddresses.value
+        return
+    }
+
+    const keyword = searchKeyword.value.toLowerCase()
+    addresses.value = allAddresses.value.filter(addr =>
+        addr.name?.toLowerCase().includes(keyword) ||
+        addr.address?.toLowerCase().includes(keyword) ||
+        addr.recipientName?.toLowerCase().includes(keyword) ||
+        addr.recipientContact?.toLowerCase().includes(keyword)
+    )
 }
 
 // 신규 등록 모달 열기
@@ -167,7 +176,7 @@ const handleSubmit = async (formData) => {
         }
 
         closeModal()
-        searchAddresses()
+        loadAddresses()
     } catch (error) {
         console.error('배송지 저장 실패:', error)
         console.error('에러 응답:', error.response?.data)
@@ -179,22 +188,6 @@ const handleSubmit = async (formData) => {
     }
 }
 
-// 기본 배송지 설정
-const setAsDefault = async (addressId) => {
-    if (!confirm('이 배송지를 기본 배송지로 설정하시겠습니까?')) {
-        return
-    }
-
-    try {
-        const clientId = userStore.getClientId || 1
-        await setDefaultAddress(clientId, addressId)
-        alert('기본 배송지로 설정되었습니다.')
-        searchAddresses()
-    } catch (error) {
-        console.error('기본 배송지 설정 실패:', error)
-        alert('기본 배송지 설정에 실패했습니다.')
-    }
-}
 
 // 배송지 삭제
 const deleteAddress = async (addressId) => {
@@ -206,7 +199,7 @@ const deleteAddress = async (addressId) => {
         const clientId = userStore.getClientId || 1
         await deleteAddressAPI(clientId, addressId)
         alert('배송지가 삭제되었습니다.')
-        searchAddresses()
+        loadAddresses()
     } catch (error) {
         console.error('배송지 삭제 실패:', error)
         alert('배송지 삭제에 실패했습니다.')
@@ -215,7 +208,7 @@ const deleteAddress = async (addressId) => {
 
 // 초기 로드
 onMounted(() => {
-    searchAddresses()
+    loadAddresses()
 })
 </script>
 
@@ -375,51 +368,42 @@ onMounted(() => {
     color: #1e40af;
 }
 
-/* 기본 배송지 설정 버튼 */
-.set-default-btn {
-    padding: 4px 12px;
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 12px;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.set-default-btn:hover {
-    background: #f9fafb;
-    border-color: #4C4CDD;
-    color: #4C4CDD;
-}
-
 /* 액션 버튼 */
 .action-buttons {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     justify-content: center;
+    align-items: center;
 }
 
-.link-btn {
-    background: none;
+.action-btn {
+    padding: 8px 20px;
     border: none;
-    color: #4C4CDD;
-    font-size: 14px;
+    border-radius: 6px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    text-decoration: underline;
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-width: 60px;
 }
 
-.link-btn:hover {
-    color: #3d3dbb;
+.edit-btn {
+    background: #3b82f6;
+    color: #ffffff;
 }
 
-.link-btn.delete {
-    color: #dc2626;
+.edit-btn:hover {
+    background: #2563eb;
 }
 
-.link-btn.delete:hover {
-    color: #991b1b;
+.delete-btn {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
 }
 
 /* 빈 메시지 */

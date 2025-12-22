@@ -1,17 +1,8 @@
 import api from './axios'
 
 // 고객사 배송지 목록 조회
-export async function getClientAddresses(clientId, params = {}) {
-    const queryParams = new URLSearchParams()
-
-    if (params.keyword) {
-        queryParams.append('keyword', params.keyword)
-    }
-
-    const queryString = queryParams.toString()
-    const url = `/clients/${clientId}/addresses${queryString ? `?${queryString}` : ''}`
-
-    const response = await api.get(url)
+export async function getClientAddresses(clientId) {
+    const response = await api.get(`/clients/${clientId}/addresses`)
     return response.data
 }
 
