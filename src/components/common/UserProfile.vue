@@ -3,10 +3,12 @@
         <div class="user-profile__avatar">
             {{ userInitial }}
         </div>
+
         <div class="user-profile__info">
             <div class="user-profile__name">{{ userName }}</div>
             <div class="user-profile__role">{{ userRole }}</div>
         </div>
+
         <button @click="handleLogout" class="ml-4 px-3 py-1 text-[14px] bg-[#4C4CDD] text-white rounded cursor-pointer">
             로그아웃
         </button>
@@ -14,30 +16,33 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { logout } from '@/api/auth'
+import { computed } from "vue";
+import { useRouter } from "vue-router";
+import { logout as logoutApi } from "@/api/auth";
+import { useUserStore } from "@/stores/user";
 
-// TODO: 실제로는 store나 props에서 받아와야 함
-const userName = '김영업'
-const userRole = '영업1팀 · 팀장'
+const userStore = useUserStore();
+const router = useRouter();
 
-const userInitial = computed(() => {
-    return userName.charAt(0)
-})
+const userName = computed(() => userStore.userName);
+const userRole = computed(() => userStore.userRoleLabel);
+
+const userInitial = computed(() =>
+    userName.value ? userName.value.charAt(0) : ""
+);
 
 const handleLogout = async () => {
-    const permissions = localStorage.getItem('permissions') || '';
-    const isClient = permissions.includes('AC_CLI');
-
     try {
-        await logout(isClient ? 'client' : 'hq');
-    } catch (error) {
-        console.error('로그아웃 API 실패:', error);
+        const type = userStore.hasAuthority("AC_CLI")
+            ? "client"
+            : "hq";
+
+        await logoutApi(type);
+    } catch (e) {
+        console.error("로그아웃 API 실패", e);
     } finally {
-        localStorage.removeItem('permissions');
-        localStorage.removeItem('accessToken');
-        
-        window.location.href = '/login';
+        userStore.logout();
+        router.replace("/login");
     }
 };
 </script>

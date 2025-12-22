@@ -63,7 +63,14 @@ const router = createRouter({
                 // ---------------------
                 // 로그인
                 // ---------------------
-                { path: "/login", component: Login },
+                {
+                    path: "/login",
+                    component: Login,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
 
                 // ---------------------
                 // 고객포털
