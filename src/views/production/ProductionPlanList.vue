@@ -34,8 +34,8 @@
 
                 <!-- body -->
                 <div class="gantt-left body">
-                    <div v-for="line in lines" :key="line.productionLineId" class="line-cell">
-                        <div class="line-name">{{ line.productionLineName }}</div>
+                    <div v-for="line in lines" :key="line.lineId" class="line-cell">
+                        <div class="line-name">{{ line.lineName }}</div>
                         <div class="line-meta">
                             <div class="meta-row">
                                 <span class="meta-k">제품:</span>
@@ -50,15 +50,15 @@
                 </div>
 
                 <div class="gantt-right body" ref="ganttBodyRef" @scroll="syncScroll">
-                    <div v-for="line in lines" :key="line.productionLineId" class="grid-row"
+                    <div v-for="line in lines" :key="`${line.lineId}-${month}`" class="grid-row"
                         :style="{ width: gridWidthPx + 'px' }">
                         <!-- vertical grid -->
                         <div v-for="d in daysInMonth" :key="d" class="grid-cell" :class="{ today: isToday(d) }" />
 
                         <!-- plan bars -->
                         <div class="bars-layer">
-                            <div v-for="plan in plansByLine[line.productionLineId] || []" :key="plan.ppId"
-                                class="plan-bar" :class="{ draft: plan.status === 'PP_DRAFT' }" :style="barStyle(plan)"
+                            <div v-for="plan in plansByLine[line.lineId] || []" :key="plan.ppId" class="plan-bar"
+                                :class="{ draft: plan.status === 'PP_DRAFT' }" :style="barStyle(plan)"
                                 @click="openPlan(plan)" title="클릭하여 상세보기">
                                 <div class="bar-title">{{ plan.itemName }}</div>
                                 <div class="bar-sub">{{ formatNumber(plan.productionQuantity) }}ea</div>
@@ -119,7 +119,7 @@
         </div>
 
         <!-- modal -->
-        <PlanCreateModal v-if="modal.open" :prItemId="modal.prItemId" :month="month" @close="modal.open = false"
+        <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :month="month" @close="showPlanModal = false"
             @created="onCreated" />
     </div>
 </template>
@@ -141,10 +141,8 @@ const lines = ref([])
 const plans = ref([])
 const unassigned = ref([])
 
-const modal = reactive({
-    open: false,
-    prItemId: null
-})
+const showPlanModal = ref(false)
+const selectedPrItemId = ref(null)
 
 /**
  * 날짜 계산
@@ -195,15 +193,26 @@ const plansByLine = computed(() => {
  * plan: { startDate, endDate } assumed 'YYYY-MM-DD'
  */
 const barStyle = (plan) => {
-    const startDay = Number(plan.startDate?.slice(8, 10))
-    const endDay = Number(plan.endDate?.slice(8, 10))
+    const [y, m] = month.value.split('-').map(Number)
 
-    const left = (startDay - 1) * DAY_WIDTH
-    const width = (endDay - startDay + 1) * DAY_WIDTH
+    const monthStart = new Date(y, m - 1, 1)
+    const monthEnd = new Date(y, m, 0)
+
+    const start = new Date(plan.startDate)
+    const end = new Date(plan.endDate)
+
+    // 월 범위로 clamp
+    const s = start < monthStart ? monthStart : start
+    const e = end > monthEnd ? monthEnd : end
+
+    if (s > e) return { display: 'none' }
+
+    const startDay = s.getDate()
+    const endDay = e.getDate()
 
     return {
-        left: left + 'px',
-        width: Math.max(width, DAY_WIDTH) + 'px',
+        left: (startDay - 1) * DAY_WIDTH + 'px',
+        width: (endDay - startDay + 1) * DAY_WIDTH + 'px',
         height: '38px',
         top: '9px'
     }
@@ -213,8 +222,8 @@ const barStyle = (plan) => {
  * navigation actions
  */
 const openCreate = (prItemId) => {
-    modal.open = true
-    modal.prItemId = prItemId
+    selectedPrItemId.value = prItemId
+    showPlanModal.value = true
 }
 
 const openPlan = (plan) => {
@@ -224,14 +233,14 @@ const openPlan = (plan) => {
 }
 
 const onCreated = async () => {
-    modal.open = false
-    modal.prItemId = null
+    showPlanModal.value = false
+    selectedPrItemId.value = null
     await reloadAll()
 }
 
 const reloadAll = async () => {
-    lines.value = await getProductionLines()
-    // plans.value = await getMonthlyPlans(month.value)
+    lines.value = await getProductionLines(2)
+    plans.value = await getMonthlyPlans(month.value)
     unassigned.value = await getUnassignedTargets()
 }
 watch(month, async () => {

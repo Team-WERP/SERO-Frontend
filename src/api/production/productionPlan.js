@@ -34,3 +34,9 @@ export const getPRItemPlanning = (prItemId) =>
 export const getUnassignedTargets = () =>
     api.get('/production-plans/unassigned').then(r => r.data)
 
+
+// 월별 생산계획 목록
+export const getMonthlyPlans = (month /* 'YYYY-MM' */) =>
+    api.get('/production-plans', {
+        params: { month }
+    }).then(r => r.data)
