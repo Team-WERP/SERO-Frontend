@@ -26,14 +26,17 @@
 
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useResponsive } from '@/composables/useResponsive'
+import { useMenuStore } from '@/stores/menu'
+
 import TopNavBar from '@/components/layout/TopNavBar.vue'
 import SideNavBar from '@/components/layout/SideNavBar.vue'
 
 const route = useRoute()
 const { isMobile } = useResponsive()
+const menuStore = useMenuStore()
 
 const showLayout = computed(() => {
     return !route.meta.hideLayout
@@ -44,6 +47,30 @@ const showSidebar = computed(() => {
     return !isMobile.value
 })
 
+/**
+ * route.path → activeModule 동기화
+ */
+const MODULE_BY_PATH = [
+    { key: 'clientPortal', prefix: '/client-portal' },
+    { key: 'order', prefix: '/order' },
+    { key: 'production', prefix: '/production' },
+    { key: 'warehouse', prefix: '/warehouse' },
+    { key: 'master', prefix: '/master' },
+    { key: 'approval', prefix: '/approval' },
+    { key: 'notices', prefix: '/notices' },
+    { key: 'system', prefix: '/system' }
+]
+
+watch(
+    () => route.path,
+    (path) => {
+        const matched = MODULE_BY_PATH.find(m => path.startsWith(m.prefix))
+        if (matched && menuStore.activeModule !== matched.key) {
+            menuStore.setActiveModule(matched.key)
+        }
+    },
+    { immediate: true }
+)
 </script>
 
 <style scoped>
