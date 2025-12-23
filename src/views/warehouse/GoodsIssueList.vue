@@ -131,6 +131,12 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- 납품서 선택 모달 -->
+        <DeliveryOrderSelectModal
+            :isOpen="isModalOpen"
+            @close="closeModal"
+        />
     </div>
 </template>
 
@@ -140,6 +146,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user.js'
 import { getGIList } from '@/api/shipping/goodsIssue.js'
 import { getWarehouses } from '@/api/warehouse/warehouse.js'
+import DeliveryOrderSelectModal from '@/components/shipping/DeliveryOrderSelectModal.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -165,6 +172,7 @@ const searchKeyword = ref('')
 const selectedStatus = ref('')
 const giList = ref([])
 const warehouseList = ref([])
+const isModalOpen = ref(false)
 
 // 상태 필터 목록
 const statusFilters = [
@@ -270,7 +278,11 @@ const resetFilters = () => {
 
 // 출고지시 등록 모달
 const openCreateModal = () => {
-    router.push('/warehouse/goods-issues/create')
+    isModalOpen.value = true
+}
+
+const closeModal = () => {
+    isModalOpen.value = false
 }
 
 // 상세 페이지 이동
