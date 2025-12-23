@@ -33,6 +33,7 @@ import PRDetail from "@/views/production/PRDetail.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
+import GoodsIssueList from "@/views/warehouse/GoodsIssueList.vue";
 
 // 기준정보
 import ItemBomManagement from "@/views/master/ItemBomManagement.vue";
@@ -111,6 +112,7 @@ const router = createRouter({
                 // ---------------------
                 { path: "/warehouse/stock", component: StockByWarehouse },
                 { path: "/warehouse/delivery-orders", component: DeliveryOrderList },
+                { path: "/warehouse/goods-issues", component: GoodsIssueList },
                 { path: "/warehouse/tracking", component: DeliveryTracking },
 
                 // ---------------------
