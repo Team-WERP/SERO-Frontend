@@ -168,8 +168,8 @@ const warehouseList = ref([])
 
 // 상태 필터 목록
 const statusFilters = [
-    { label: '유효성검토', value: 'GI_RVW' },
-    { label: '결재대기', value: 'GI_APPR_PEND' },
+    { label: '지시검토', value: 'GI_RVW' },
+    { label: '결재중', value: 'GI_APPR_PEND' },
     { label: '결재승인', value: 'GI_APPR_DONE' },
     { label: '결재반려', value: 'GI_APPR_RJCT' },
     { label: '출고완료', value: 'GI_ISSUED' },
@@ -299,14 +299,13 @@ const getStatusClass = (status) => ({
 
 // 상태 라벨 매핑
 const getStatusLabel = (status) => ({
-    GI_RVW: '유효성검토',
-    GI_APPR_PEND: '결재대기',
+    GI_RVW: '지시검토',
+    GI_APPR_PEND: '결재중',
     GI_APPR_DONE: '결재승인',
     GI_APPR_RJCT: '결재반려',
     GI_ISSUED: '출고완료',
     GI_SHIP_ING: '배송중',
-    GI_SHIP_DONE: '배송완료',
-    GI_CANCEL: '취소'
+    GI_SHIP_DONE: '배송완료'
 }[status] || status)
 
 // 초기 로드
