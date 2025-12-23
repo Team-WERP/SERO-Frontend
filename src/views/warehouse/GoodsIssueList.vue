@@ -11,7 +11,7 @@
             <div class="header-actions">
                 <div class="period-selector">
                     <label>기준월(납기일)</label>
-                    <input type="month" v-model="selectedMonth" />
+                    <input type="month" v-model="selectedMonth" @change="onMonthChange" />
                 </div>
                 <button v-if="canCreate" class="create-btn" @click="openCreateModal">
                     + 출고지시 등록
@@ -34,16 +34,17 @@
 
                 <div class="filter-item">
                     <label>창고</label>
-                    <select v-model="warehouseId">
+                    <select v-model="warehouseId" @change="fetchGIList">
                         <option value="">전체</option>
-                        <option value="1">창고 A</option>
-                        <option value="2">창고 B</option>
+                        <option v-for="w in warehouseList" :key="w.id" :value="w.id">
+                            {{ w.warehouseName }}
+                        </option>
                     </select>
                 </div>
 
                 <div class="filter-item">
                     <label>상태</label>
-                    <select v-model="selectedStatus">
+                    <select v-model="selectedStatus" @change="fetchGIList">
                         <option value="">전체</option>
                         <option v-for="s in statusFilters" :key="s.value" :value="s.value">
                             {{ s.label }}
@@ -53,10 +54,17 @@
 
                 <div class="filter-item keyword">
                     <label>출고설정번호</label>
-                    <input type="text" v-model="searchKeyword" placeholder="검색하세요" />
+                    <input type="text" v-model="searchKeyword" placeholder="검색하세요" @keyup.enter="fetchGIList" />
                 </div>
 
-                <button class="search-btn" @click="fetchGIList">검색</button>
+                <div class="button-group">
+                    <button class="reset-btn" @click="resetFilters" title="필터 초기화">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>
+                        </svg>
+                    </button>
+                    <button class="search-btn" @click="fetchGIList">검색</button>
+                </div>
             </div>
         </div>
 
@@ -131,6 +139,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user.js'
 import { getGIList } from '@/api/shipping/goodsIssue.js'
+import { getWarehouses } from '@/api/warehouse/warehouse.js'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -155,6 +164,7 @@ const warehouseId = ref('')
 const searchKeyword = ref('')
 const selectedStatus = ref('')
 const giList = ref([])
+const warehouseList = ref([])
 
 // 상태 필터 목록
 const statusFilters = [
@@ -168,21 +178,44 @@ const statusFilters = [
     { label: '취소', value: 'GI_CANCEL' }
 ]
 
+// 창고 목록 조회
+const fetchWarehouses = async () => {
+    try {
+        warehouseList.value = await getWarehouses()
+    } catch (error) {
+        console.error('창고 목록 조회 실패:', error)
+    }
+}
+
 // 출고지시 목록 조회
 const fetchGIList = async () => {
+    console.log('🔍 fetchGIList 함수 실행됨!')
     try {
         const params = {}
 
         if (searchKeyword.value) params.searchKeyword = searchKeyword.value
         if (selectedStatus.value) params.status = selectedStatus.value
         if (warehouseId.value) params.warehouseId = parseInt(warehouseId.value)
-        if (startDate.value) params.startDate = startDate.value
-        if (endDate.value) params.endDate = endDate.value
+
+        // 날짜 필터는 둘 다 있어야 적용
+        if (startDate.value && endDate.value) {
+            params.startDate = startDate.value
+            params.endDate = endDate.value
+        }
 
         console.log('API 호출 파라미터:', params)
         const result = await getGIList(params)
         console.log('API 응답:', result)
-        giList.value = result
+        console.log('API 응답 타입:', typeof result, Array.isArray(result))
+        console.log('API 응답 길이:', result?.length)
+
+        // 배열인지 확인하고 할당
+        if (Array.isArray(result)) {
+            giList.value = [...result]
+        } else {
+            console.error('예상치 못한 응답 형식:', result)
+            giList.value = []
+        }
     } catch (error) {
         console.error('출고지시 목록 조회 실패:', error)
         console.error('에러 상세:', {
@@ -197,6 +230,42 @@ const fetchGIList = async () => {
             alert('출고지시 목록을 불러오는데 실패했습니다.')
         }
     }
+}
+
+// 기준월 변경 시
+const onMonthChange = () => {
+    if (!selectedMonth.value) return
+
+    const [year, month] = selectedMonth.value.split('-')
+
+    // 해당 월의 시작일과 마지막일 계산
+    startDate.value = `${year}-${month}-01`
+
+    const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate()
+    endDate.value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
+
+    // 자동 검색
+    fetchGIList()
+}
+
+// 필터 초기화
+const resetFilters = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+
+    selectedMonth.value = `${year}-${month}`
+    startDate.value = `${year}-${month}-01`
+
+    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate()
+    endDate.value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
+
+    warehouseId.value = ''
+    selectedStatus.value = ''
+    searchKeyword.value = ''
+
+    // 초기화 후 목록 재조회
+    fetchGIList()
 }
 
 // 출고지시 등록 모달
@@ -250,6 +319,8 @@ onMounted(() => {
     const lastDay = new Date(year, now.getMonth() + 1, 0).getDate()
     endDate.value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
 
+    // 창고 목록과 출고지시 목록 동시 조회
+    fetchWarehouses()
     fetchGIList()
 })
 </script>
@@ -373,6 +444,44 @@ onMounted(() => {
     min-width: 200px;
 }
 
+/* ===== 버튼 그룹 ===== */
+.button-group {
+    display: flex;
+    gap: 8px;
+    align-self: flex-end;
+    margin-top: 18px;
+}
+
+.reset-btn {
+    height: 36px;
+    width: 36px;
+    padding: 0;
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.reset-btn svg {
+    width: 20px;
+    height: 20px;
+    color: #374151;
+}
+
+.reset-btn:hover {
+    background: #e5e7eb;
+}
+
+.reset-btn:hover svg {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
 .search-btn {
     height: 36px;
     padding: 0 24px;
@@ -383,8 +492,6 @@ onMounted(() => {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    align-self: flex-end;
-    margin-top: 18px;
 }
 
 .search-btn:hover {
