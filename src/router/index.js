@@ -19,6 +19,7 @@ import ClientNotices from "@/views/client-portal/ClientNotices.vue";
 import OrderDashboard from "@/views/order/OrderDashboard.vue";
 import OrderManagement from "@/views/order/OrderManagement.vue";
 import ClientManagement from "@/views/order/ClientManagement.vue";
+import OrderDetail from "@/views/order/OrderDetail.vue";
 
 // 생산
 import ProductionDashboard from "@/views/production/ProductionDashboard.vue";
@@ -92,6 +93,7 @@ const router = createRouter({
                 { path: "/order/dashboard", component: OrderDashboard },
                 { path: "/order/management", component: OrderManagement },
                 { path: "/order/clients", component: ClientManagement },
+                { path: "/order/detail/:orderId", component: OrderDetail },
 
                 // ---------------------
                 // 생산
