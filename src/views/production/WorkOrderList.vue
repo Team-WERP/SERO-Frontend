@@ -100,31 +100,65 @@
         <!-- 작업지시 생성 모달 -->
         <div v-if="showModal" class="modal-backdrop">
             <div class="modal">
-                <h3>작업지시 생성</h3>
+                <h3 class="modal-title">작업지시 생성</h3>
 
-                <p class="modal-desc">
-                    {{ selectedRow.lineName }} / {{ selectedRow.ppCode }}
-                </p>
+                <div class="modal-sub">
+                    {{ selectedRow.lineName }} · {{ selectedRow.materialName }}
+                </div>
 
-                <label>생성 수량</label>
-                <input type="number" v-model.number="createQuantity" :max="selectedRow.remainingQuantity" />
+                <div class="modal-info">
+                    <div>
+                        <span class="label">작업일자</span>
+                        <span class="value">{{ selectedDate }}</span>
+                    </div>
+                    <div>
+                        <span class="label">생산계획</span>
+                        <span class="value">{{ selectedRow.ppCode }}</span>
+                    </div>
+                </div>
+
+                <div class="modal-metrics">
+                    <div>
+                        <span class="label">권장 수량</span>
+                        <span class="value highlight">
+                            {{ formatQuantity(recommendedQuantity) }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="label">잔여 수량</span>
+                        <span class="value">
+                            {{ formatQuantity(selectedRow.remainingQuantity) }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="modal-input">
+                    <label>생성 수량</label>
+                    <input type="number" v-model.number="createQuantity" :max="selectedRow.remainingQuantity"
+                        :min="1" />
+                    <small class="hint">
+                        권장 수량 기준으로 자동 설정되며, 필요 시 조정할 수 있습니다.
+                    </small>
+                </div>
 
                 <div class="modal-actions">
                     <button class="btn" @click="showModal = false">
                         취소
                     </button>
-                    <button class="btn primary" @click="createWorkOrder">
-                        확정
+                    <button class="btn primary" :disabled="createQuantity <= 0" @click="createWorkOrder">
+                        작업지시 생성
                     </button>
                 </div>
             </div>
         </div>
+
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getDailyPlanPreview } from '@/api/production/productionPlan.js'
+import { createWorkOrder as createWorkOrderApi } from '@/api/production/workOrder.js'
 
 const selectedDate = ref(new Date().toISOString().slice(0, 10))
 const plans = ref([])
@@ -132,6 +166,8 @@ const plans = ref([])
 const showModal = ref(false)
 const selectedRow = ref(null)
 const createQuantity = ref(0)
+const recommendedQuantity = ref(0)
+
 
 const fetchDailyPreview = async () => {
     plans.value = await getDailyPlanPreview(selectedDate.value)
@@ -139,12 +175,18 @@ const fetchDailyPreview = async () => {
 
 const openCreateModal = (row) => {
     selectedRow.value = row
-    createQuantity.value = row.remainingQuantity
+    recommendedQuantity.value = row.recommendedQuantity
+    createQuantity.value = row.recommendedQuantity
     showModal.value = true
 }
 
 const createWorkOrder = async () => {
-    // 다음 단계에서 API 연결
+    await createWorkOrderApi({
+        ppId: selectedRow.value.ppId,
+        workDate: selectedDate.value,
+        quantity: createQuantity.value
+    })
+
     showModal.value = false
     fetchDailyPreview()
 }
@@ -154,6 +196,7 @@ const formatQuantity = (v) =>
 
 onMounted(fetchDailyPreview)
 </script>
+
 
 <style scoped>
 .pr-page {
@@ -299,6 +342,68 @@ onMounted(fetchDailyPreview)
 
 .empty-message {
     padding: 60px 0;
+    color: #9ca3af;
+}
+
+/* 모달 상세 */
+.modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.modal-sub {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 16px;
+}
+
+.modal-info,
+.modal-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.modal-info .label,
+.modal-metrics .label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.modal-info .value,
+.modal-metrics .value {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.modal-metrics .highlight {
+    color: #4C4CDD;
+}
+
+.modal-input {
+    margin-bottom: 16px;
+}
+
+.modal-input label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.modal-input input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.modal-input .hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
     color: #9ca3af;
 }
 </style>
