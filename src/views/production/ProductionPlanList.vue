@@ -351,7 +351,7 @@ const formatNumber = (v) => (v != null ? Number(v).toLocaleString() : '-')
 .gantt-right.head {
     background: #F9FAFB;
     border-bottom: 1px solid #D9D9D9;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .left-head {
@@ -420,6 +420,7 @@ const formatNumber = (v) => (v != null ? Number(v).toLocaleString() : '-')
     grid-auto-flow: column;
     grid-auto-columns: 34px;
     height: 44px;
+    overflow: hidden;
 }
 
 .day-cell {
@@ -440,11 +441,12 @@ const formatNumber = (v) => (v != null ? Number(v).toLocaleString() : '-')
 
 .day-num {
     transform: translateY(1px);
+    margin-top: 14px;
 }
 
 .today-pill {
     position: absolute;
-    top: -10px;
+    top: 2px;
     left: 50%;
     transform: translateX(-50%);
     background: #EF4444;
