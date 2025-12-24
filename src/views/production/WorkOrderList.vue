@@ -24,87 +24,89 @@
 
         </div>
 
-        <!-- 목록 -->
-        <div class="items-section">
-            <table class="items-table">
-                <thead>
-                    <tr>
-                        <th style="width: 140px;">라인</th>
-                        <th style="width: 200px;">품목</th>
-                        <th style="width: 220px;">PR / PP</th>
-                        <th style="width: 100px;">계획수량</th>
-                        <th style="width: 100px;">누적실적</th>
-                        <th style="width: 180px;">생산계획 기준 진행률</th>
-                        <th style="width: 100px;">잔여</th>
-                        <th style="width: 120px; text-align:center;">작업지시</th>
-                    </tr>
-                </thead>
+        <!-- 라인별 섹션 -->
+        <div v-for="group in lineGroups" :key="group.lineId" class="line-section">
+            <!-- 라인 헤더 -->
+            <div class="line-title">
+                {{ group.lineName }}
+            </div>
 
-                <tbody>
-                    <tr v-for="row in plans" :key="row.ppId">
-                        <td>{{ row.lineName || '미지정' }}</td>
+            <!-- 라인별 테이블 -->
+            <div class="items-section">
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 200px;">품목</th>
+                            <th style="width: 180px;">생산계획(PP)</th>
+                            <th style="width: 180px;">생산요청(PR)</th>
+                            <th style="width: 100px;">생산계획 수량</th>
+                            <th style="width: 100px;">누적실적</th>
+                            <th style="width: 100px;">잔여</th>
+                            <th style="width: 180px;">생산계획 기준 진행률</th>
+                            <th style="width: 120px; text-align:center;">작업지시</th>
+                        </tr>
+                    </thead>
 
-                        <td>
-                            <div class="code">
-                                <div class="primary">{{ row.materialName }}</div>
-                                <div class="secondary">{{ row.materialCode }}</div>
-                            </div>
-                        </td>
+                    <tbody>
+                        <tr v-for="row in group.items" :key="row.ppId">
 
-
-                        <td>
-                            <div class="code">
-                                <div class="primary">{{ row.prCode }}</div>
-                                <div class="secondary">{{ row.ppCode }}</div>
-                            </div>
-                        </td>
-
-                        <td>
-                            {{ formatQuantity(row.plannedQuantity) }}
-                        </td>
-
-                        <td>
-                            {{ formatQuantity(row.totalProducedQty) }}
-                        </td>
-
-                        <td>
-                            <div class="progress-wrap">
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar" :style="{ width: row.progressRate + '%' }" />
+                            <!-- 품목 -->
+                            <td>
+                                <div class="code">
+                                    <div class="primary">{{ row.materialName }}</div>
+                                    <div class="secondary">{{ row.materialCode }}</div>
                                 </div>
-                                <span class="progress-text">
-                                    {{ row.progressRate }}%
-                                </span>
-                            </div>
-                        </td>
+                            </td>
 
-                        <td>
-                            {{ formatQuantity(row.remainingQuantity) }}
-                        </td>
+                            <!-- PP -->
+                            <td class="code-cell">
+                                {{ row.ppCode }}
+                            </td>
 
-                        <td class="text-center">
-                            <button v-if="row.remainingQuantity === 0" class="btn disabled" disabled>
-                                완료
-                            </button>
+                            <!-- PR -->
+                            <td class="code-cell">
+                                {{ row.prCode }}
+                            </td>
 
-                            <button v-else-if="row.todayWorkQuantity > 0" class="btn disabled" disabled>
-                                생성됨
-                            </button>
+                            <td>{{ formatQuantity(row.plannedQuantity) }}</td>
+                            <td>{{ formatQuantity(row.totalProducedQty) }}</td>
+                            <td>{{ formatQuantity(row.remainingQuantity) }}</td>
 
-                            <button v-else class="btn primary" :class="{ disabled: isNotToday }" :disabled="isNotToday"
-                                @click="openCreateModal(row)">
-                                생성
-                            </button>
-                        </td>
-                    </tr>
+                            <td>
+                                <div class="progress-wrap">
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar" :style="{ width: row.progressRate + '%' }" />
+                                    </div>
+                                    <span class="progress-text">
+                                        {{ row.progressRate }}%
+                                    </span>
+                                </div>
+                            </td>
 
-                    <tr v-if="plans.length === 0">
-                        <td colspan="7" class="empty-message text-center">
-                            해당 날짜에 생성할 생산계획이 없습니다.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                            <td class="text-center">
+                                <button v-if="row.remainingQuantity === 0" class="btn disabled" disabled>
+                                    완료
+                                </button>
+
+                                <button v-else-if="row.todayWorkQuantity > 0" class="btn disabled" disabled>
+                                    생성됨
+                                </button>
+
+                                <button v-else class="btn primary" :class="{ disabled: isNotToday }"
+                                    :disabled="isNotToday" @click="openCreateModal(row)">
+                                    생성
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr v-if="group.items.length === 0">
+                            <td colspan="8" class="empty-message text-center">
+                                해당 라인에 생성할 생산계획이 없습니다.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- 작업지시 생성 모달 -->
@@ -161,7 +163,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 </template>
 
@@ -180,9 +181,7 @@ const recommendedQuantity = ref(0)
 
 const today = new Date().toISOString().slice(0, 10)
 
-const isNotToday = computed(() => {
-    return selectedDate.value !== today
-})
+const isNotToday = computed(() => selectedDate.value !== today)
 
 const setToday = () => {
     selectedDate.value = today
@@ -198,10 +197,8 @@ const moveDate = (diff) => {
 
 const lineGroups = computed(() => {
     const map = {}
-
     plans.value.forEach(row => {
         const key = row.lineId || 'NO_LINE'
-
         if (!map[key]) {
             map[key] = {
                 lineId: row.lineId,
@@ -209,14 +206,10 @@ const lineGroups = computed(() => {
                 items: []
             }
         }
-
         map[key].items.push(row)
     })
-
     return Object.values(map)
 })
-
-
 
 const fetchDailyPreview = async () => {
     plans.value = await getDailyPlanPreview(selectedDate.value)
@@ -235,7 +228,6 @@ const createWorkOrder = async () => {
         workDate: selectedDate.value,
         quantity: createQuantity.value
     })
-
     showModal.value = false
     fetchDailyPreview()
 }
@@ -488,5 +480,26 @@ onMounted(fetchDailyPreview)
     margin-top: 4px;
     font-size: 11px;
     color: #9ca3af;
+    text-align: end;
+
+}
+
+.line-section {
+    margin-bottom: 40px;
+}
+
+.line-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #111827;
+}
+
+.main-row {
+    background: #ffffff;
+}
+
+.sub-row td {
+    text-align: center;
 }
 </style>
