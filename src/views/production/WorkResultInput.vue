@@ -1,216 +1,211 @@
 <template>
     <div class="wo-page">
-
-        <!-- 헤더 -->
         <div class="page-header">
             <div>
                 <h1 class="page-title">작업지시 실적 등록</h1>
-                <p class="page-desc">
-                    당일 작업지시를 시작·중지·종료하고 실적을 등록합니다.
-                </p>
+                <p class="page-desc">당일 작업지시를 시작·중지·종료하고 실적을 등록합니다.</p>
             </div>
-
-            <input type="date" v-model="selectedDate" @change="fetchList" />
+            <div class="header-right">
+                <span class="work-date-label">작업일</span>
+                <input type="date" v-model="selectedDate" @change="fetchList" class="date-picker" />
+            </div>
         </div>
 
-        <!-- 라인별 그룹 -->
-        <div v-for="group in lineGroups" :key="group.lineId" class="line-section">
-            <h3 class="line-title">{{ group.lineName }}</h3>
+        <div class="table-container">
+            <div class="table-info">
+                <span>총 {{ list.length }}건</span>
+                <div class="legend">
+                    <span class="dot pause"></span> 일시 중단
+                    <span class="dot run"></span> 가동 중
+                </div>
+            </div>
 
             <table class="wo-table">
                 <thead>
                     <tr>
+                        <th>No</th>
                         <th>작업지시번호</th>
-                        <th>PR</th>
-                        <th>PP</th>
-                        <th>품목</th>
+                        <th>생산요청번호</th>
+                        <th>라인</th>
+                        <th>품목명</th>
                         <th>계획수량</th>
                         <th>상태</th>
-                        <th>경과시간</th>
                         <th>작업제어</th>
+                        <th>로그</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <tr v-for="wo in group.items" :key="wo.woId">
-                        <td>{{ wo.woCode }}</td>
-                        <td>{{ wo.prCode }}</td>
-                        <td>{{ wo.ppCode }}</td>
+                    <tr v-for="(wo, idx) in list" :key="wo.woId">
+                        <td>{{ idx + 1 }}</td>
+                        <td class="code-text">{{ wo.woCode }}</td>
+                        <td class="code-text">{{ wo.prCode }}</td>
+                        <td>{{ wo.lineName }}</td>
+                        <td class="material-text">{{ wo.materialName }}</td>
+                        <td class="qty-text">{{ wo.quantity?.toLocaleString() }}</td>
 
                         <td>
-                            <div class="code">
-                                <div class="primary">{{ wo.materialName }}</div>
-                                <div class="secondary">{{ wo.materialCode }}</div>
-                            </div>
-                        </td>
-
-                        <td>{{ wo.quantity.toLocaleString() }}</td>
-
-                        <td>
-                            <span class="status" :class="wo.woStatus">
+                            <span class="status-badge" :class="wo.woStatus">
                                 {{ statusLabel(wo.woStatus) }}
                             </span>
                         </td>
 
-                        <td class="timer">
-                            {{ timers[wo.woId] || '00:00:00' }}
-                        </td>
-
-                        <!-- 제어 -->
-                        <td class="controls">
+                        <td class="ctrl-group">
                             <!-- READY -->
-                            <button v-if="wo.woStatus === 'WO_READY'" class="ctrl-btn play"
-                                @click="openModal('START', wo)">▶</button>
+                            <button v-if="wo.woStatus === 'WO_READY'" class="btn-ctrl start-btn" @click="openStart(wo)">
+                                ▶ 시작
+                            </button>
 
                             <!-- RUN -->
                             <template v-else-if="wo.woStatus === 'WO_RUN'">
-                                <button class="ctrl-btn pause" @click="openModal('PAUSE', wo)">⏸</button>
-                                <button class="ctrl-btn stop" @click="openModal('END_CONFIRM', wo)">⏹</button>
+                                <div class="timer-box running">
+                                    {{ formatHMS(displaySeconds[wo.woId] ?? 0) }}
+                                </div>
+                                <button class="btn-ctrl pause-btn" @click="openPause(wo)">⏸</button>
+                                <button class="btn-ctrl stop-btn" @click="openEndConfirm(wo)">■</button>
                             </template>
 
                             <!-- PAUSE -->
                             <template v-else-if="wo.woStatus === 'WO_PAUSE'">
-                                <button class="ctrl-btn play" @click="resume(wo)">▶</button>
-                                <button class="ctrl-btn stop" @click="openModal('END_CONFIRM', wo)">⏹</button>
+                                <div class="timer-box paused">
+                                    {{ formatHMS(displaySeconds[wo.woId] ?? 0) }}
+                                </div>
+                                <button class="btn-ctrl resume-btn" @click="resume(wo)">▶</button>
+                                <button class="btn-ctrl stop-btn" @click="openEndConfirm(wo)">■</button>
                             </template>
 
-                            <!-- DONE -->
-                            <span v-else class="muted">완료</span>
+                            <span v-else class="done-text">작업 종료됨</span>
+                        </td>
 
-                            <!-- 로그 -->
-                            <button class="log-btn" @click="openModal('HISTORY', wo)">🧾</button>
+                        <td>
+                            <button class="btn-log" @click="openHistory(wo)">🧾</button>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- ===================== -->
-        <!-- START MODAL -->
-        <!-- ===================== -->
-        <div v-if="activeModal === 'START'" class="modal-backdrop">
-            <div class="modal center">
-                <div class="icon play"></div>
-                <h3>{{ selectedWO.materialName }}</h3>
-                <p>작업을 시작하시겠습니까?</p>
-                <small>라인: {{ selectedWO.lineName }}</small>
+        <!-- CONFIRM MODALS -->
+        <div v-if="['START', 'PAUSE', 'END_CONFIRM'].includes(activeModal)" class="modal-backdrop">
+            <div class="modal confirm-modal">
+                <div class="confirm-icon" :class="activeModal.toLowerCase()">
+                    {{ activeModal === 'START' ? '▶' : activeModal === 'PAUSE' ? '⏸' : '■' }}
+                </div>
 
-                <div class="actions">
-                    <button class="btn ghost" @click="closeModal">취소</button>
-                    <button class="btn primary" @click="start(selectedWO)">시작</button>
+                <h3>
+                    {{ activeModal === 'START' ? '작업 시작' : activeModal === 'PAUSE' ? '일시 중지' : '작업 종료' }}
+                </h3>
+
+                <p v-if="activeModal === 'START'">
+                    <strong>{{ selectedWO?.materialName }}</strong> 작업을 시작하시겠습니까?
+                </p>
+                <p v-else-if="activeModal === 'PAUSE'">작업을 잠시 중단하시겠습니까?</p>
+                <p v-else>작업을 종료하고 실적을 등록하시겠습니까?</p>
+
+                <div class="confirm-actions">
+                    <button class="btn ghost" @click="closeModal">아니오</button>
+                    <button class="btn primary" :class="{ danger: activeModal === 'END_CONFIRM' }"
+                        @click="activeModal === 'START' ? start() : activeModal === 'PAUSE' ? pause() : openResult()">
+                        네, 실행합니다
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- ===================== -->
-        <!-- PAUSE MODAL -->
-        <!-- ===================== -->
-        <div v-if="activeModal === 'PAUSE'" class="modal-backdrop">
-            <div class="modal center">
-                <div class="icon pause"></div>
-                <h3>작업을 잠시 중단할까요?</h3>
-                <p>식사·휴식·설비 점검 시 사용하세요.</p>
-
-                <div class="actions">
-                    <button class="btn ghost" @click="closeModal">취소</button>
-                    <button class="btn primary" @click="pause(selectedWO)">일시정지</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===================== -->
-        <!-- END CONFIRM MODAL -->
-        <!-- ===================== -->
-        <div v-if="activeModal === 'END_CONFIRM'" class="modal-backdrop">
-            <div class="modal center">
-                <div class="icon stop"></div>
-                <h3>작업을 종료하시겠습니까?</h3>
-                <p>종료 후 실적 등록 화면으로 이동합니다.</p>
-
-                <div class="actions">
-                    <button class="btn ghost" @click="closeModal">취소</button>
-                    <button class="btn danger" @click="activeModal = 'RESULT'">종료</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===================== -->
         <!-- RESULT MODAL -->
-        <!-- ===================== -->
         <div v-if="activeModal === 'RESULT'" class="modal-backdrop">
-            <div class="modal large">
+            <div class="modal result-modal">
                 <header class="modal-header">
-                    <h3>생산 실적 등록</h3>
-                    <button @click="closeModal">✕</button>
+                    <div class="header-title">📝 생산 실적 등록</div>
+                    <button class="close-x" @click="closeModal">✕</button>
                 </header>
 
-                <div class="info-box">
-                    <div>작업지시번호: {{ selectedWO.woCode }}</div>
-                    <div>
-                        품목: {{ selectedWO.materialName }}
-                        ({{ selectedWO.materialCode }})
+                <div class="modal-body">
+                    <div class="info-summary">
+                        <div class="info-row">
+                            <span>작업 지시 번호:</span> <strong>{{ selectedWO?.woCode }}</strong>
+                        </div>
+                        <div class="info-row">
+                            <span>품목명:</span>
+                            <span class="blue-text">{{ selectedWO?.materialName }}</span>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>공정 선택</label>
+                            <select class="full-select">
+                                <option>1공정 - 권선/절연</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>양품 수량</label>
+                            <input type="number" v-model.number="endForm.goodQuantity" class="input-good" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="danger-text">불량 수량</label>
+                            <input type="number" v-model.number="endForm.defectiveQuantity" class="input-bad" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>작업 시작</label>
+                            <input type="time" v-model="endForm.startTime" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>작업 종료</label>
+                            <input type="time" v-model="endForm.endTime" />
+                        </div>
+
+                        <div class="form-group full">
+                            <label>비고 (메모)</label>
+                            <textarea v-model="endForm.note" placeholder="특이사항을 입력하세요"></textarea>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-grid">
-                    <div>
-                        <label>양품 수량</label>
-                        <input type="number" v-model.number="endForm.goodQuantity" />
-                    </div>
-
-                    <div>
-                        <label class="danger">불량 수량</label>
-                        <input type="number" v-model.number="endForm.defectiveQuantity" />
-                    </div>
-
-                    <div>
-                        <label>작업 시작</label>
-                        <input type="time" v-model="endForm.startTime" />
-                    </div>
-
-                    <div>
-                        <label>작업 종료</label>
-                        <input type="time" v-model="endForm.endTime" />
-                    </div>
-
-                    <div class="full">
-                        <label>비고</label>
-                        <textarea v-model="endForm.note" />
-                    </div>
-                </div>
-
-                <div class="actions">
+                <footer class="modal-footer">
                     <button class="btn ghost" @click="closeModal">취소</button>
                     <button class="btn primary" @click="end">등록 완료</button>
-                </div>
+                </footer>
             </div>
         </div>
 
-        <!-- ===================== -->
         <!-- HISTORY DRAWER -->
-        <!-- ===================== -->
-        <div v-if="activeModal === 'HISTORY'" class="drawer-backdrop">
+        <div v-if="activeModal === 'HISTORY'" class="modal-backdrop" @click.self="closeModal">
             <div class="drawer">
-                <header>
-                    <h3>작업 로그</h3>
-                    <button @click="closeModal">✕</button>
+                <header class="drawer-header">
+                    <div class="drawer-title">🕒 작업 로그</div>
+                    <button class="close-x-dark" @click="closeModal">✕</button>
                 </header>
 
-                <ul>
-                    <li v-for="h in historyList" :key="h.id">
-                        <strong>{{ h.action }}</strong>
-                        <span>{{ h.createdAt }}</span>
-                        <p>{{ h.note || '-' }}</p>
-                    </li>
-                </ul>
+                <div class="timeline-container">
+                    <div v-for="(h, i) in historyList" :key="i" class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <div class="log-action">{{ historyLabel(h.action) }}</div>
+                            <div class="log-date">{{ h.actedAt }}</div>
+                            <div class="log-box" v-if="h.note">{{ h.note }}</div>
+                        </div>
+                    </div>
+
+                    <div v-if="historyList.length === 0" class="empty-history">
+                        로그가 없습니다.
+                    </div>
+                </div>
+
+                <footer class="drawer-footer">
+                    <button class="btn-close-full" @click="closeModal">닫기</button>
+                </footer>
             </div>
         </div>
-
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import {
     getWorkOrdersByDate,
     startWorkOrder,
@@ -222,7 +217,6 @@ import {
 
 const selectedDate = ref(new Date().toISOString().slice(0, 10))
 const list = ref([])
-const timers = ref({})
 
 const activeModal = ref(null)
 const selectedWO = ref(null)
@@ -236,740 +230,713 @@ const endForm = ref({
     note: ''
 })
 
-const fetchList = async () => {
-    const { data } = await getWorkOrdersByDate(selectedDate.value)
-    list.value = data
+/** ---------------------------
+ * 시간 파서: "YYYY-MM-DD HH:mm:ss"를 안전하게 Date로 변환
+ * (히스토리 actedAt 포맷 기준)
+ * -------------------------- */
+const parseDT = (str) => {
+    if (!str) return null
+    const iso = String(str).replace(' ', 'T') // Safari 호환
+    const d = new Date(iso)
+    return isNaN(d.getTime()) ? null : d
 }
 
-const lineGroups = computed(() => {
-    const map = {}
-    list.value.forEach(wo => {
-        if (!map[wo.lineId]) {
-            map[wo.lineId] = {
-                lineId: wo.lineId,
-                lineName: wo.lineName,
-                items: []
+const isStart = (a) => ['START', '작업 시작', '작업시작'].includes(a)
+const isResume = (a) => ['RESUME', '작업 재개', '작업재개'].includes(a)
+const isPause = (a) => ['PAUSE', '일시 정지', '일시정지'].includes(a)
+const isEnd = (a) => ['END', '작업 종료', '작업 완료', '작업종료', '작업완료'].includes(a)
+
+/**
+ * 히스토리로 누적 시간 계산
+ * - START/RESUME ~ PAUSE/END 구간 누적
+ * - 마지막이 RUN이면 runningFrom(Date) 반환
+ */
+const calcElapsedFromHistory = (history) => {
+    let elapsed = 0
+    let open = null
+
+    for (const h of history) {
+        const t = parseDT(h.actedAt) // ✅ actedAt 사용 (핵심)
+        if (!t) continue
+
+        if (isStart(h.action) || isResume(h.action)) {
+            open = t
+        } else if (isPause(h.action) || isEnd(h.action)) {
+            if (open) {
+                elapsed += Math.max(0, Math.floor((t - open) / 1000))
+                open = null
             }
         }
-        map[wo.lineId].items.push(wo)
-    })
-    return Object.values(map)
-})
-
-const statusLabel = (s) => ({
-    WO_READY: '대기',
-    WO_RUN: '진행중',
-    WO_PAUSE: '일시정지',
-    WO_DONE: '완료'
-}[s])
-
-const openModal = async (type, wo) => {
-    selectedWO.value = wo
-    activeModal.value = type
-
-    if (type === 'HISTORY') {
-        const { data } = await getWorkOrderHistory(wo.woId)
-        historyList.value = data
     }
+    return { elapsed, runningFrom: open }
+}
+
+/** 타이머 상태
+ * baseSeconds[woId]   : 히스토리로 확정된 누적(초) (PAUSE까지 누적)
+ * runningSince[woId]  : RUN이면 마지막 START/RESUME 시각(Date)
+ */
+const baseSeconds = ref({})
+const runningSince = ref({})
+
+/** 화면 표시용: base + live */
+const displaySeconds = ref({})
+
+let tickId = null
+const startTick = () => {
+    if (tickId) return
+    tickId = setInterval(() => {
+        const now = new Date()
+        for (const wo of list.value) {
+            const id = wo.woId
+            const base = baseSeconds.value[id] ?? 0
+            const from = runningSince.value[id]
+            if (wo.woStatus === 'WO_RUN' && from instanceof Date) {
+                const live = base + Math.max(0, Math.floor((now - from) / 1000))
+                displaySeconds.value[id] = live
+            } else {
+                displaySeconds.value[id] = base
+            }
+        }
+    }, 1000)
+}
+
+const stopTick = () => {
+    if (tickId) clearInterval(tickId)
+    tickId = null
+}
+
+/** 목록 로드 + 각 WO 타이머 동기화 */
+const syncOneWO = async (wo) => {
+    // RUN/PAUSE/DONE 모두 누적시간을 보여주기 위해 히스토리를 읽는다.
+    const { data: history } = await getWorkOrderHistory(wo.woId)
+    if (!Array.isArray(history)) return
+
+    const { elapsed, runningFrom } = calcElapsedFromHistory(history)
+
+    baseSeconds.value[wo.woId] = elapsed
+
+    // RUN이면 runningSince 세팅, 그 외는 제거
+    if (wo.woStatus === 'WO_RUN' && runningFrom) {
+        runningSince.value[wo.woId] = runningFrom
+    } else {
+        delete runningSince.value[wo.woId]
+    }
+
+    // 초기 표시값
+    displaySeconds.value[wo.woId] = elapsed
+}
+
+const fetchList = async () => {
+    const { data } = await getWorkOrdersByDate(selectedDate.value)
+    list.value = data || []
+
+    // 타이머 상태 초기화
+    baseSeconds.value = {}
+    runningSince.value = {}
+    displaySeconds.value = {}
+
+    // 각 WO 히스토리로 시간 동기화
+    for (const wo of list.value) {
+        await syncOneWO(wo)
+    }
+
+    startTick()
+}
+
+/* ---------- MODAL OPENERS ---------- */
+const openStart = (wo) => {
+    selectedWO.value = wo
+    activeModal.value = 'START'
+}
+
+const openPause = (wo) => {
+    selectedWO.value = wo
+    activeModal.value = 'PAUSE'
+}
+
+const openEndConfirm = (wo) => {
+    selectedWO.value = wo
+    activeModal.value = 'END_CONFIRM'
+}
+
+const openResult = () => {
+    // 실적 폼 기본값
+    endForm.value.goodQuantity = selectedWO.value?.quantity ?? 0
+    endForm.value.defectiveQuantity = 0
+    endForm.value.note = ''
+    activeModal.value = 'RESULT'
+}
+
+const openHistory = async (wo) => {
+    selectedWO.value = wo
+    const { data } = await getWorkOrderHistory(wo.woId)
+    historyList.value = data || []
+    activeModal.value = 'HISTORY'
 }
 
 const closeModal = () => {
     activeModal.value = null
     selectedWO.value = null
+    historyList.value = []
 }
 
-const start = async (wo) => {
-    await startWorkOrder(wo.woId)
+/* ---------- ACTIONS ---------- */
+const start = async () => {
+    await startWorkOrder(selectedWO.value.woId, '작업 시작')
     closeModal()
-    fetchList()
+    await fetchList()
 }
 
-const pause = async (wo) => {
-    await pauseWorkOrder(wo.woId)
+const pause = async () => {
+    await pauseWorkOrder(selectedWO.value.woId, '일시 정지')
     closeModal()
-    fetchList()
+    await fetchList()
 }
 
 const resume = async (wo) => {
-    await resumeWorkOrder(wo.woId)
-    fetchList()
+    await resumeWorkOrder(wo.woId, '작업 재개')
+    await fetchList()
 }
 
 const end = async () => {
     await endWorkOrder(selectedWO.value.woId, {
-        ...endForm.value,
+        goodQuantity: endForm.value.goodQuantity,
+        defectiveQuantity: endForm.value.defectiveQuantity,
         startTime: `${selectedDate.value} ${endForm.value.startTime}:00`,
-        endTime: `${selectedDate.value} ${endForm.value.endTime}:00`
+        endTime: `${selectedDate.value} ${endForm.value.endTime}:00`,
+        note: endForm.value.note
     })
     closeModal()
-    fetchList()
+    await fetchList()
+}
+
+/* ---------- LABELS / FORMAT ---------- */
+const statusLabel = (s) => ({
+    WO_READY: '대기',
+    WO_RUN: '진행중',
+    WO_PAUSE: '일시정지',
+    WO_DONE: '완료'
+}[s] || s)
+
+const historyLabel = (a) => ({
+    START: '작업 시작',
+    PAUSE: '일시 정지',
+    RESUME: '작업 재개',
+    END: '작업 완료'
+}[a] || a)
+
+const formatHMS = (sec) => {
+    const s = Math.max(0, Number(sec) || 0)
+    const h = String(Math.floor(s / 3600)).padStart(2, '0')
+    const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0')
+    const ss = String(s % 60).padStart(2, '0')
+    return `${h}:${m}:${ss}`
 }
 
 onMounted(fetchList)
+onBeforeUnmount(stopTick)
 </script>
 
+
 <style scoped>
-/* =========================
-       Base / Tokens
-    ========================= */
+/* 1. 기본 레이아웃 및 텍스트 스타일 */
 .wo-page {
-    --bg: #f6f7fb;
-    --card: #ffffff;
-    --text: #111827;
-    --muted: #6b7280;
-    --muted2: #9ca3af;
-
-    --line: #e5e7eb;
-    --line2: #eef2f7;
-
-    --brand: #4C4CDD;
-    /* SERO 톤 */
-    --brand-2: #2f2fb8;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --success: #22c55e;
-
-    --shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
-    --shadow2: 0 2px 10px rgba(17, 24, 39, 0.06);
-
-    background: var(--bg);
-    padding: 22px 22px 40px;
-    border-radius: 12px;
-    min-height: calc(100vh - 80px);
-    color: var(--text);
-    box-sizing: border-box;
+    background-color: #f4f6f9;
+    padding: 24px;
+    color: #333;
+    min-height: 100vh;
 }
 
-/* =========================
-       Header
-    ========================= */
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 18px;
-    margin-bottom: 18px;
+    margin-bottom: 24px;
 }
 
 .page-title {
     font-size: 22px;
     font-weight: 800;
-    letter-spacing: -0.02em;
-    margin: 0 0 4px 0;
+    margin: 0;
+    color: #1a1a1a;
 }
 
 .page-desc {
-    margin: 0;
-    font-size: 13px;
-    color: var(--muted);
-}
-
-.page-header input[type="date"] {
-    height: 34px;
-    padding: 0 12px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: #fff;
-    color: var(--text);
-    font-size: 13px;
-    box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02);
-}
-
-.page-header input[type="date"]:focus {
-    outline: none;
-    border-color: rgba(76, 76, 221, 0.55);
-    box-shadow: 0 0 0 4px rgba(76, 76, 221, 0.12);
-}
-
-/* =========================
-       Line Section (Card-like)
-    ========================= */
-.line-section {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    box-shadow: var(--shadow2);
-    padding: 14px 14px 6px;
-    margin-bottom: 16px;
-}
-
-.line-title {
+    color: #666;
     font-size: 14px;
-    font-weight: 700;
-    color: #111827;
-    margin: 0 0 10px 0;
-    padding: 8px 10px;
-    background: #f3f4f6;
-    border: 1px solid var(--line);
-    border-radius: 10px;
+    margin: 4px 0 0;
 }
 
-/* =========================
-       Table
-    ========================= */
+.date-picker {
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+/* 2. 테이블 디자인 */
+.table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.table-info {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    font-weight: 600;
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #666;
+    font-size: 12px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot.pause {
+    background: #f59e0b;
+}
+
+.dot.run {
+    background: #22c55e;
+}
+
 .wo-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    overflow: hidden;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    background: #fff;
-}
-
-.wo-table thead th {
-    background: #f9fafb;
-    color: #374151;
-    font-weight: 700;
-    font-size: 12.5px;
-    padding: 12px 12px;
-    border-bottom: 1px solid var(--line);
+    border-collapse: collapse;
     text-align: center;
-    white-space: nowrap;
 }
 
-.wo-table tbody td {
+.wo-table th {
+    background: #f8f9fb;
+    padding: 14px;
+    color: #4b5563;
     font-size: 13px;
-    padding: 12px 12px;
-    border-bottom: 1px solid var(--line2);
-    text-align: center;
-    vertical-align: middle;
+    border-bottom: 1px solid #eee;
+}
+
+.wo-table td {
+    padding: 14px;
+    border-bottom: 1px solid #f9f9f9;
+    font-size: 13px;
+}
+
+.code-text {
+    font-weight: 800;
     color: #111827;
 }
 
-.wo-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.wo-table tbody tr:hover td {
-    background: #fbfbff;
-}
-
-/* Table rounded corners */
-.wo-table thead th:first-child {
-    border-top-left-radius: 12px;
-}
-
-.wo-table thead th:last-child {
-    border-top-right-radius: 12px;
-}
-
-.wo-table tbody tr:last-child td:first-child {
-    border-bottom-left-radius: 12px;
-}
-
-.wo-table tbody tr:last-child td:last-child {
-    border-bottom-right-radius: 12px;
-}
-
-/* =========================
-       Code cell
-    ========================= */
-.code {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-}
-
-.code .primary {
+.material-text {
     font-weight: 700;
     color: #111827;
-    line-height: 1.15;
 }
 
-.code .secondary {
-    font-size: 11.5px;
-    color: var(--muted);
-    line-height: 1.15;
-}
-
-/* =========================
-       Status chip (like screenshot)
-    ========================= */
-.status {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 64px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
+.qty-text {
     font-weight: 700;
-    border: 1px solid var(--line);
-    background: #f9fafb;
-    color: #374151;
 }
 
-/* You can tune these per your code colors */
-.status.WO_READY {
+/* 3. 상태 및 제어 버튼 (사진 스타일) */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    background: #eee;
+}
+
+.status-badge.WO_RUN {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-badge.WO_PAUSE {
+    background: #fff8e1;
+    color: #f57f17;
+}
+
+.status-badge.WO_DONE {
     background: #f3f4f6;
     color: #6b7280;
-    border-color: #e5e7eb;
 }
 
-.status.WO_RUN {
-    background: rgba(34, 197, 94, 0.12);
-    color: #15803d;
-    border-color: rgba(34, 197, 94, 0.25);
-}
-
-.status.WO_PAUSE {
-    background: rgba(245, 158, 11, 0.14);
-    color: #b45309;
-    border-color: rgba(245, 158, 11, 0.28);
-}
-
-.status.WO_DONE {
-    background: rgba(148, 163, 184, 0.18);
-    color: #475569;
-    border-color: rgba(148, 163, 184, 0.35);
-}
-
-/* =========================
-       Timer
-    ========================= */
-.timer {
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
-}
-
-/* DONE text */
-.muted {
-    color: var(--muted2);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-/* =========================
-       Controls (icon buttons like screenshot)
-    ========================= */
-.controls {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.ctrl-btn {
-    width: 44px;
-    height: 28px;
-    border: none;
-    border-radius: 999px;
-    cursor: pointer;
-    font-weight: 800;
-    font-size: 12px;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 0 rgba(17, 24, 39, 0.05);
-    transition: transform .06s ease, filter .12s ease, opacity .12s ease;
-}
-
-.ctrl-btn:active {
-    transform: translateY(1px);
-}
-
-.ctrl-btn.play {
-    background: var(--brand);
-    color: #fff;
-}
-
-.ctrl-btn.play:hover {
-    filter: brightness(0.95);
-}
-
-.ctrl-btn.pause {
-    background: #fbbf24;
-    color: #111827;
-}
-
-.ctrl-btn.pause:hover {
-    filter: brightness(0.97);
-}
-
-.ctrl-btn.stop {
-    background: #ef4444;
-    color: #fff;
-}
-
-.ctrl-btn.stop:hover {
-    filter: brightness(0.95);
-}
-
-/* log button (icon only) */
-.log-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    background: #fff;
-    cursor: pointer;
-    transition: background .12s ease, border-color .12s ease, transform .06s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-}
-
-.log-btn:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-}
-
-.log-btn:active {
-    transform: translateY(1px);
-}
-
-/* =========================
-       Modal Backdrop + Base
-    ========================= */
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.38);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 22px;
-    z-index: 50;
-}
-
-.modal {
-    background: #fff;
-    border-radius: 14px;
-    border: 1px solid rgba(229, 231, 235, 0.9);
-    box-shadow: var(--shadow);
-    width: 360px;
-    max-width: 100%;
-    overflow: hidden;
-}
-
-.modal.center {
-    padding: 22px 22px 18px;
-    text-align: center;
-}
-
-.modal.large {
-    width: 640px;
-    max-width: 100%;
-    padding: 0;
-}
-
-/* icon circle */
-.icon {
-    width: 58px;
-    height: 58px;
-    border-radius: 999px;
-    margin: 2px auto 14px;
+.ctrl-group {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.icon.play {
-    background: rgba(34, 197, 94, 0.14);
-}
-
-.icon.pause {
-    background: rgba(245, 158, 11, 0.14);
-}
-
-.icon.stop {
-    background: rgba(239, 68, 68, 0.14);
-}
-
-/* modal headings/text */
-.modal.center h3 {
-    margin: 0 0 6px;
-    font-size: 18px;
-    font-weight: 900;
-    letter-spacing: -0.02em;
-}
-
-.modal.center p {
-    margin: 0 0 10px;
-    font-size: 13px;
-    color: var(--muted);
-}
-
-.modal.center small {
-    display: block;
-    margin-top: 2px;
-    color: var(--muted2);
-    font-size: 12px;
-}
-
-/* =========================
-       Modal Header (blue bar like screenshot)
-    ========================= */
-.modal-header {
-    background: var(--brand);
-    color: #fff;
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.modal-header h3 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 900;
-    letter-spacing: -0.02em;
-}
-
-.modal-header button {
-    border: none;
-    background: transparent;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    opacity: 0.9;
-}
-
-.modal-header button:hover {
-    opacity: 1;
-}
-
-/* =========================
-       Info box in Result Modal
-    ========================= */
-.info-box {
-    margin: 14px 14px 0;
-    padding: 12px 12px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: #f9fafb;
-    font-size: 13px;
-    color: #111827;
-    display: grid;
     gap: 6px;
 }
 
-/* =========================
-       Form Grid in Result Modal
-    ========================= */
+.timer-box {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 92px;
+}
+
+.timer-box.running {
+    background: #3b82f6;
+    color: white;
+}
+
+.timer-box.paused {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-ctrl {
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    height: 32px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.start-btn {
+    background: #3b82f6;
+    color: white;
+    padding: 0 12px;
+}
+
+.pause-btn {
+    background: #f59e0b;
+    color: white;
+    width: 32px;
+}
+
+.stop-btn {
+    background: #ef4444;
+    color: white;
+    width: 32px;
+}
+
+.resume-btn {
+    background: #f59e0b;
+    color: white;
+    width: 32px;
+}
+
+.done-text {
+    color: #9ca3af;
+    font-weight: 700;
+}
+
+.btn-log {
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+/* 4. 결과 등록 모달 */
+.result-modal {
+    width: 500px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: white;
+}
+
+.modal-header {
+    background: #3b82f6;
+    color: white;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-title {
+    font-weight: 900;
+    font-size: 16px;
+}
+
+.close-x {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.info-summary {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.info-row {
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.blue-text {
+    color: #3b82f6;
+    font-weight: 800;
+}
+
 .form-grid {
-    margin: 14px 14px 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 16px;
 }
 
-.form-grid .full {
-    grid-column: 1 / -1;
+.form-group.full {
+    grid-column: span 2;
 }
 
-.form-grid label {
+.form-group label {
     display: block;
-    margin-bottom: 6px;
     font-size: 12px;
     font-weight: 800;
-    color: #374151;
+    margin-bottom: 6px;
+    color: #4a5568;
 }
 
-.form-grid label.danger {
-    color: var(--danger);
+.danger-text {
+    color: #ef4444 !important;
 }
 
-.form-grid input,
-.form-grid textarea {
+input,
+select,
+textarea {
     width: 100%;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px 10px;
-    font-size: 13px;
-    background: #fff;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
     box-sizing: border-box;
 }
 
-.form-grid input:focus,
-.form-grid textarea:focus {
-    outline: none;
-    border-color: rgba(76, 76, 221, 0.55);
-    box-shadow: 0 0 0 4px rgba(76, 76, 221, 0.12);
+.input-good {
+    border: 2px solid #3b82f6;
 }
 
-.form-grid textarea {
-    min-height: 88px;
-    resize: vertical;
+.input-bad {
+    border: 2px solid #ef4444;
 }
 
-/* =========================
-       Common Actions / Buttons
-    ========================= */
-.actions {
+textarea {
+    height: 80px;
+    resize: none;
+}
+
+.modal-footer {
+    padding: 16px 24px 24px;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    padding: 16px 14px 16px;
 }
 
-.modal.center .actions {
+/* 5. 확인 모달 (START/PAUSE/END_CONFIRM) */
+.confirm-modal {
+    width: 320px;
+    padding: 30px;
+    text-align: center;
+    border-radius: 16px;
+    background: white;
+}
+
+.confirm-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    padding: 14px 0 0;
+    font-size: 24px;
+    color: white;
+    font-weight: 900;
+}
+
+.confirm-icon.start {
+    background: #3b82f6;
+}
+
+.confirm-icon.pause {
+    background: #f59e0b;
+}
+
+.confirm-icon.end_confirm {
+    background: #ef4444;
+}
+
+/* 6. 타임라인 드로어 */
+.drawer {
+    width: 380px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: white;
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.drawer-title {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.close-x-dark {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.timeline-container {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 31px;
+    top: 24px;
+    bottom: 24px;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 30px;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 3px;
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #3b82f6;
+    z-index: 2;
+}
+
+.log-action {
+    font-weight: 900;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.log-date {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 8px;
+}
+
+.log-box {
+    background: #f3f4f6;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #4b5563;
+}
+
+.empty-history {
+    color: #9ca3af;
+    font-weight: 700;
+    text-align: center;
+    padding: 40px 0;
+}
+
+.drawer-footer {
+    padding: 16px;
+    border-top: 1px solid #eee;
+}
+
+.btn-close-full {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    background: white;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* 공용 모달 백드롭 */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 .btn {
-    height: 34px;
-    padding: 0 14px;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    background: #fff;
-    color: #111827;
-    font-size: 13px;
-    font-weight: 800;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 900;
     cursor: pointer;
-    transition: transform .06s ease, background .12s ease, border-color .12s ease;
-}
-
-.btn:active {
-    transform: translateY(1px);
+    border: none;
 }
 
 .btn.ghost {
     background: #f3f4f6;
-    border-color: #e5e7eb;
-    color: #374151;
-}
-
-.btn.ghost:hover {
-    background: #eceef2;
+    color: #4b5563;
 }
 
 .btn.primary {
-    background: var(--brand);
-    border-color: var(--brand);
-    color: #fff;
-}
-
-.btn.primary:hover {
-    background: var(--brand-2);
-    border-color: var(--brand-2);
+    background: #3b82f6;
+    color: white;
 }
 
 .btn.danger {
-    background: var(--danger);
-    border-color: var(--danger);
-    color: #fff;
+    background: #ef4444;
+    color: white;
 }
 
-.btn.danger:hover {
-    filter: brightness(0.95);
-}
-
-/* =========================
-       Drawer (History) like screenshot side panel
-    ========================= */
-.drawer-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.28);
-    z-index: 60;
-}
-
-.drawer {
-    position: fixed;
-    top: 0;
-    right: 0;
-    height: 100%;
-    width: 340px;
-    max-width: 90vw;
-    background: #fff;
-    border-left: 1px solid var(--line);
-    box-shadow: -10px 0 30px rgba(17, 24, 39, 0.12);
+.confirm-actions {
     display: flex;
-    flex-direction: column;
-}
-
-.drawer header {
-    padding: 14px 14px;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #fbfbff;
-}
-
-.drawer header h3 {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 900;
-}
-
-.drawer header button {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    background: #fff;
-    cursor: pointer;
-}
-
-.drawer header button:hover {
-    background: #f9fafb;
-}
-
-.drawer ul {
-    list-style: none;
-    margin: 0;
-    padding: 14px;
-    overflow: auto;
-}
-
-.drawer li {
-    border: 1px solid var(--line);
-    background: #fff;
-    border-radius: 12px;
-    padding: 12px 12px;
-    margin-bottom: 10px;
-    box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02);
-}
-
-.drawer li strong {
-    display: inline-block;
-    font-size: 12.5px;
-    font-weight: 900;
-    color: #111827;
-    margin-bottom: 6px;
-}
-
-.drawer li span {
-    display: block;
-    font-size: 11.5px;
-    color: var(--muted);
-    margin-bottom: 6px;
-}
-
-.drawer li p {
-    margin: 0;
-    font-size: 12.5px;
-    color: #374151;
-    line-height: 1.4;
-}
-
-/* =========================
-       Responsive
-    ========================= */
-@media (max-width: 980px) {
-    .wo-page {
-        padding: 16px;
-    }
-
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .modal.large {
-        width: 100%;
-    }
-
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
+    gap: 8px;
+    margin-top: 20px;
+    justify-content: center;
 }
 </style>
