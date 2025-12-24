@@ -151,13 +151,9 @@
 
             <!-- 생산계획/작업지시 -->
             <div v-if="activeTab === 'PLAN'">
-                <div class="plan-box">
-                    <div class="plan-empty">
-                        <img class="empty-character" src="@/assets/새로이새로미.png" alt="결재 없음" />
-                        <div class="ghost">생산계획/작업지시 정보가 없습니다.</div>
-                    </div>
-                </div>
+                <PlanTab :prId="prId" :items="items" @refresh="reloadDetail" />
             </div>
+
 
         </div>
     </div>
@@ -167,6 +163,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPRDetail } from '@/api/production/productionRequest'
+import PlanTab from './PlanTab.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -223,6 +220,11 @@ const getStepState = (idx) => {
     return 'inactive'
 }
 
+const reloadDetail = async () => {
+    const res = await getPRDetail(prId)
+    header.value = res.header
+    items.value = Array.isArray(res.items) ? res.items : []
+}
 
 onMounted(async () => {
     const res = await getPRDetail(prId)
