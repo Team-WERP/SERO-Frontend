@@ -389,12 +389,12 @@ onMounted(() => {
 }
 
 .edit-btn {
-    background: #3b82f6;
+    background: #4C4CDD;
     color: #ffffff;
 }
 
 .edit-btn:hover {
-    background: #2563eb;
+    background: #3d3dbb;
 }
 
 .delete-btn {
