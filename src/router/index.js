@@ -93,7 +93,7 @@ const router = createRouter({
                 { path: "/order/dashboard", component: OrderDashboard },
                 { path: "/order/management", component: OrderManagement },
                 { path: "/order/clients", component: ClientManagement },
-                { path: "/order/detail/:orderId", component: OrderDetail },
+                { path: "/order/management/:orderId", component: OrderDetail },
 
                 // ---------------------
                 // 생산

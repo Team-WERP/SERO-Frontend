@@ -238,7 +238,7 @@ const fetchOrders = async () => {
 
 
 const goToDetail = (orderId) => {
-  router.push(`/order/detail/${orderId}`);
+  router.push(`/order/management/${orderId}`);
 };
 
 const handleSearch = () => {

@@ -43,3 +43,11 @@ export const updatePRDraft = (prId, data) =>
  */
 export const requestProduction = (prId) =>
     api.post(`/production-requests/${prId}/request`)
+
+/**
+ * 생산요청 목록 조회(주문id)
+ */
+export const getPRListByOrderId = (orderId) => {
+    return api.get(`/production-requests/search/${orderId}`, orderId)
+        .then(res => res.data)
+}
