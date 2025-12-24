@@ -60,6 +60,7 @@
           <div class="rounded-xl border border-gray-200 p-5 bg-white min-h-[220px]">
             <h3 class="mb-4 text-lg font-bold text-[#4C4CDD]">기본 주문 정보</h3>
             <div class="space-y-3 text-sm">
+              <div class="flex justify-between"><span class="text-gray-500 font-bold">주문번호</span><span class="text-black">{{ order.orderCode }}</span></div>
               <div class="flex justify-between"><span class="text-gray-500 font-bold">주문일</span><span class="text-black">{{ order.orderedAt }}</span></div>
               <div class="flex justify-between"><span class="text-gray-500 font-bold">납기일</span><span class="text-black">{{ order.shippedAt }}</span></div>
               <div class="flex justify-between"><span class="text-gray-500 font-bold">비고</span><span class="max-w-[150px] text-right text-black">{{ order.note || '-' }}</span></div>
@@ -126,18 +127,11 @@
               </tbody>
               <tfoot class="bg-gray-50 font-medium border-t">
                 <tr>
-                  <!-- No ~ 규격 (1~4) -->
                   <td colspan="4" class="px-4 py-4"></td>
-
-                  <!-- 수량 (5번째, tbody와 동일하게 center) -->
                   <td class="px-4 py-4 text-center font-bold">
                     {{ order.totalQuantity }}
                   </td>
-
-                  <!-- 가용재고 ~ 단가 (6~8) -->
                   <td colspan="3" class="px-4 py-4"></td>
-
-                  <!-- 금액 (9번째) -->
                   <td class="px-4 py-4 text-center text-black text-base font-bold">
                     ₩ {{ formatPrice(order.totalPrice) }}
                   </td>
@@ -153,6 +147,18 @@
           <p class="text-gray-400 font-medium">진행 중인 결재 건이 없습니다.</p>
         </div>
       </div>
+      <div v-if="order.status === 'ORD_RED'" class="flex justify-end mt-5">
+          <button @click="openAssignmentModal" 
+                  class="rounded-lg px-3 py-2 text-sm font-bold text-[#fff] bg-[#4C4CDD] hover:bg-[#4c4cddba]">
+              담당자 배정
+        </button>
+      </div>
+      <ManagerAssignmentModal 
+        v-if="isModalOpen" 
+        :departmentData="deptEmployees"
+        @close="isModalOpen = false"
+        @confirm="onConfirmAssignment"
+      />
     </div>
   </div>
 </template>
@@ -160,11 +166,15 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { getSODetail } from '@/api/order/salesOrder';
+import { getSODetail, assignManager } from '@/api/order/salesOrder';
+import { getEmployees } from '@/api/employee/employee';
+import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 
 const route = useRoute();
 const activeTab = ref('ORDER');
 const order = ref(null);
+const isModalOpen = ref(false);
+const deptEmployees = ref([]);
 
 const steps = ['접수/검토', '주문 결재', '생산/출고', '배송 완료'];
 
@@ -200,6 +210,34 @@ const fetchDetail = async () => {
         order.value = data;
     } catch (err) {
         console.error('상세 정보 조회 실패:', err);
+    }
+};
+
+const openAssignmentModal = async () => {
+  try {
+    const response = await getEmployees('DEPT_SAL');
+    
+    deptEmployees.value = Array.isArray(response[0]) ? response[0] : response; 
+
+    isModalOpen.value = true;
+  } catch (error) {
+    console.error('데이터 로드 실패:', error);
+  }
+};
+
+const onConfirmAssignment = async (employee) => {
+  console.log(employee);
+    try {
+        await assignManager(route.params.orderId, employee.id);
+        
+        alert(`담당자가 ${employee.name}(으)로 배정되었습니다.`);
+        
+        isModalOpen.value = false;
+        
+        await fetchDetail(); 
+    } catch (error) {
+        console.error('담당자 배정 중 오류 발생:', error);
+        alert('담당자 배정에 실패했습니다. 다시 시도해주세요.');
     }
 };
 

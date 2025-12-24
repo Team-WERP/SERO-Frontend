@@ -20,7 +20,18 @@
       </button>
     </div>
 
-    <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
+    <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
+      <div
+        v-if="loading"
+        class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+      >
+        <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+          </path>
+        </svg>
+      </div>
       <h3 class="text-sm font-bold mb-5 text-gray-800">필터 및 검색</h3>
       <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 items-end">
         
@@ -141,7 +152,7 @@
                 </span>
               </td>
             </tr>
-            <tr v-if="orders.length === 0">
+            <tr v-if="!loading && orders.length === 0">
               <td colspan="9" class="px-5 py-24 text-center text-gray-400 font-medium">조회된 데이터가 존재하지 않습니다.</td>
             </tr>
           </tbody>
@@ -184,6 +195,7 @@ const orders = ref([]);
 const currentPage = ref(1);
 const pageSize = 20;
 const isLastPage = ref(false);
+const loading = ref(false);
 
 const searchParams = ref({
   dateField: 'orderedAt',
@@ -199,6 +211,8 @@ const dateError = ref('');
 
 const fetchOrders = async () => {
   try {
+    loading.value = true; 
+
     const payload = {
       statusType: searchParams.value.status || (currentStatus.value === 'ALL' ? null : currentStatus.value),
       dateField: searchParams.value.dateField,
@@ -216,8 +230,12 @@ const fetchOrders = async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (error) {
     console.error('API Error:', error);
+  } finally {
+    loading.value = false;
   }
 };
+
+
 
 const goToDetail = (orderId) => {
   router.push(`/order/detail/${orderId}`); // 상세 페이지 경로에 맞게 수정하세요

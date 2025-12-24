@@ -13,8 +13,9 @@ export const getSODetail = (orderId) => {
   return api.get(`/orders/${orderId}`) 
       .then(res => res.data);
 };
+
 // 주문 담당자 배정
 export const assignManager = (orderId, empId) => {
-  return api.get(`/orders/${orderId}/manager`, { empId: empId })
+  return api.put(`/orders/${orderId}/manager`, { empId: empId })
       .then(res => res.data)
 }
