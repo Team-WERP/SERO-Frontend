@@ -10,9 +10,18 @@
             </div>
 
             <div class="date-box">
-                <label>작업일자</label>
-                <input type="date" v-model="selectedDate" @change="fetchDailyPreview" />
+                <small v-if="isNotToday" class="date-hint">
+                    ※ 작업지시는 당일만 생성 가능합니다
+                </small>
+
+                <div class="date-controls">
+                    <button class="date-btn" @click="setToday">오늘</button>
+                    <button class="date-btn" @click="moveDate(-1)">◀</button>
+                    <input type="date" v-model="selectedDate" @change="fetchDailyPreview" class="date-input" />
+                    <button class="date-btn" @click="moveDate(1)">▶</button>
+                </div>
             </div>
+
         </div>
 
         <!-- 목록 -->
@@ -25,7 +34,7 @@
                         <th style="width: 220px;">PR / PP</th>
                         <th style="width: 100px;">계획수량</th>
                         <th style="width: 100px;">누적실적</th>
-                        <th style="width: 180px;">진행률</th>
+                        <th style="width: 180px;">생산계획 기준 진행률</th>
                         <th style="width: 100px;">잔여</th>
                         <th style="width: 120px; text-align:center;">작업지시</th>
                     </tr>
@@ -82,7 +91,8 @@
                                 생성됨
                             </button>
 
-                            <button v-else class="btn primary" @click="openCreateModal(row)">
+                            <button v-else class="btn primary" :class="{ disabled: isNotToday }" :disabled="isNotToday"
+                                @click="openCreateModal(row)">
                                 생성
                             </button>
                         </td>
@@ -156,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { getDailyPlanPreview } from '@/api/production/productionPlan.js'
 import { createWorkOrder as createWorkOrderApi } from '@/api/production/workOrder.js'
 
@@ -167,6 +177,45 @@ const showModal = ref(false)
 const selectedRow = ref(null)
 const createQuantity = ref(0)
 const recommendedQuantity = ref(0)
+
+const today = new Date().toISOString().slice(0, 10)
+
+const isNotToday = computed(() => {
+    return selectedDate.value !== today
+})
+
+const setToday = () => {
+    selectedDate.value = today
+    fetchDailyPreview()
+}
+
+const moveDate = (diff) => {
+    const d = new Date(selectedDate.value)
+    d.setDate(d.getDate() + diff)
+    selectedDate.value = d.toISOString().slice(0, 10)
+    fetchDailyPreview()
+}
+
+const lineGroups = computed(() => {
+    const map = {}
+
+    plans.value.forEach(row => {
+        const key = row.lineId || 'NO_LINE'
+
+        if (!map[key]) {
+            map[key] = {
+                lineId: row.lineId,
+                lineName: row.lineName || '미지정',
+                items: []
+            }
+        }
+
+        map[key].items.push(row)
+    })
+
+    return Object.values(map)
+})
+
 
 
 const fetchDailyPreview = async () => {
@@ -314,6 +363,7 @@ onMounted(fetchDailyPreview)
     background: #f3f4f6;
     color: #9ca3af;
     cursor: not-allowed;
+    border-color: #9ca3af;
 }
 
 /* 모달 */
@@ -404,6 +454,39 @@ onMounted(fetchDailyPreview)
     display: block;
     margin-top: 4px;
     font-size: 12px;
+    color: #9ca3af;
+}
+
+.date-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.date-input {
+    padding: 6px 10px;
+    font-size: 13px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+}
+
+.date-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.date-btn:hover {
+    background: #e5e7eb;
+}
+
+.date-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
     color: #9ca3af;
 }
 </style>
