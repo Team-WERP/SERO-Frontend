@@ -21,7 +21,14 @@ export const assignManager = (orderId, empId) => {
 }
 
 // 주문 품목별 변동 이력 조회
-export const getItemHistory = (orderId) => {
+export const getOrderItemsHistory = (orderId) => {
   return api.get(`/orders/${orderId}/item-history/latest`) 
+      .then(res => res.data);
+};
+
+
+// 주문 특정 품목 변동 이력 조회
+export const getItemHistory = (orderId, itemId) => {
+  return api.get(`/orders/${orderId}/item-history/${itemId}`) 
       .then(res => res.data);
 };

@@ -180,7 +180,10 @@
                   <td class="px-2 py-4">{{ formatPrice(hItem.shippedQuantity) }}</td>
                   <td class="px-2 py-4">{{ formatPrice(hItem.completedQuantity) }}</td>
                   <td class="px-2 py-4">
-                    <button class="text-[11px] text-gray-400 underline hover:text-black">조회</button>
+                    <button @click="openHistoryModal(hItem.itemId, hItem.item.itemName)" 
+                            class="text-[11px] text-gray-400 underline hover:text-black">
+                      이력 조회
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -252,13 +255,72 @@
         @confirm="onConfirmAssignment"
       />
     </div>
+
+    <div v-if="isHistoryModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl">
+        <div class="flex items-center justify-between border-b p-5">
+          <h3 class="text-xl font-bold text-gray-900">
+            <span class="text-[#4C4CDD]">{{ selectedItemName }}</span> 변동 이력
+          </h3>
+          <button @click="isHistoryModalOpen = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        
+        <div class="p-6">
+          <div class="overflow-hidden rounded-xl border border-gray-200">
+            <table class="w-full text-center text-sm">
+              <thead class="bg-gray-50 text-gray-500 font-bold">
+                <tr>
+                  <th class="px-3 py-3 border-b">가용재고</th>
+                  <th class="px-3 py-3 border-b">생산요청</th>
+                  <th class="px-3 py-3 border-b">생산입고</th>
+                  <th class="px-3 py-3 border-b">기납품수량</th>
+                  <th class="px-3 py-3 border-b">출고지시</th>
+                  <th class="px-3 py-3 border-b">출고완료</th>
+                  <th class="px-3 py-3 border-b">배송완료</th>
+                  <th class="px-3 py-3 border-b">이력 생성일시</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr v-if="historyDetails.length === 0">
+                  <td colspan="8" class="py-12">
+                    <div class="flex flex-col items-center justify-center">
+                      <img 
+                        src="@/assets/새로이새로미.png" 
+                        alt="No Data" 
+                        class="mb-4 h-16 w-auto opacity-40" 
+                      />
+                      <p class="text-gray-400 font-medium">변동 이력 데이터가 없습니다.</p>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-for="h in historyDetails" :key="h.historyId">
+                  <td class="px-3 py-4 font-medium">{{ formatPrice(h.item.availableStock) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.prQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.piQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.doQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.giQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.shippedQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.completedQuantity) }}</td>
+                  <td class="px-3 py-4 text-xs text-gray-500">{{ h.createdAt || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="flex justify-end p-5 border-t">
+          <button @click="isHistoryModalOpen = false" class="rounded-lg bg-gray-100 px-6 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200">닫기</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getSODetail, assignManager, getItemHistory } from '@/api/order/salesOrder';
+import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory } from '@/api/order/salesOrder';
 import { getEmployees } from '@/api/employee/employee';
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 
@@ -269,12 +331,10 @@ const itemHistory = ref(null);
 const isModalOpen = ref(false);
 const deptEmployees = ref([]);
 
-// 문서 섹션 설정 (현재 API가 없으므로 빈 배열로 초기화)
-const docSections = ref([
-  { title: '생산 요청 문서', data: [], statusClass: 'text-red-500' },
-  { title: '납품 요청 문서', data: [], statusClass: 'text-blue-500' },
-  { title: '출고 요청 문서', data: [], statusClass: 'text-orange-500' }
-]);
+const isHistoryModalOpen = ref(false);
+const selectedItemName = ref('');
+const historyDetails = ref([]);
+
 
 const steps = ['접수/검토', '주문 결재', '생산/출고', '배송 완료'];
 
@@ -313,10 +373,31 @@ const fetchDetail = async () => {
 
 const fetchHistory = async () => {
   try {
-    const data = await getItemHistory(route.params.orderId);
+    const data = await getOrderItemsHistory(route.params.orderId);
     itemHistory.value = data;
   } catch (err) {
     console.error('이력 조회 실패:', err);
+  }
+};
+
+const openHistoryModal = async (itemId, itemName) => {
+  if (!itemId) return;
+
+  selectedItemName.value = itemName;
+  historyDetails.value = [];
+
+  try {
+    const data = await getItemHistory(route.params.orderId, itemId);
+    historyDetails.value = data.items || [];
+    isHistoryModalOpen.value = true;
+  } catch (err) {
+    if (err.response && err.response.status === 404) {
+      historyDetails.value = []; 
+      isHistoryModalOpen.value = true;
+    } else {
+      console.error('이력 상세 조회 중 오류 발생:', err);
+      alert('이력 정보를 불러오는 중 오류가 발생했습니다.');
+    }
   }
 };
 

@@ -238,7 +238,7 @@ const fetchOrders = async () => {
 
 
 const goToDetail = (orderId) => {
-  router.push(`/order/detail/${orderId}`); // 상세 페이지 경로에 맞게 수정하세요
+  router.push(`/order/detail/${orderId}`);
 };
 
 const handleSearch = () => {
