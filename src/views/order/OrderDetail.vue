@@ -213,13 +213,13 @@
                 <table class="w-full text-sm text-center">
                   <thead class="bg-gray-50 text-gray-500 font-bold">
                     <tr>
-                      <th class="px-4 py-3 border-b">No</th>
-                      <th class="px-4 py-3 border-b">요청번호</th>
-                      <th class="px-4 py-3 border-b">품목명</th>
-                      <th class="px-4 py-3 border-b">상태</th>
-                      <th class="px-4 py-3 border-b">작성일</th>
-                      <th class="px-4 py-3 border-b">문서</th>
-                      <th class="px-4 py-3 border-b">액션</th>
+                      <th class="w-[100px] px-4 py-3 border-b">No</th>
+                      <th class="w-[150px] px-4 py-3 border-b">요청번호</th>
+                      <th class="w-[200px] px-4 py-3 border-b ">품목명</th> 
+                      <th class="w-[150px] px-4 py-3 border-b">상태</th>
+                      <th class="w-[150px] px-4 py-3 border-b">작성일</th>
+                      <th class="w-[100px] px-4 py-3 border-b">문서</th>
+                      <th class="w-[200px] px-4 py-3 border-b">액션</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -229,47 +229,51 @@
                       </td>
                     </tr>
                     <tr v-for="(doc, dIdx) in section.data" :key="dIdx" class="border-b last:border-0 hover:bg-gray-50 transition-colors">
-  <td class="px-4 py-4 text-gray-400">{{ dIdx + 1 }}</td>
-  
-  <td class="px-4 py-4 font-medium truncate">
-    {{ doc[section.codeField] }}
-  </td>
+                      <td class="px-4 py-4 text-gray-400">{{ dIdx + 1 }}</td>
+                      
+                      <td class="px-4 py-4 font-medium truncate">
+                        {{ doc[section.codeField] }}
+                      </td>
 
-  <td class="px-4 py-4 text-center">
-    {{ doc[section.nameField] }}
-    <span v-if="(doc.itemTypeCount || doc.itemCount) > 1">
-      외 {{ (doc.itemTypeCount || doc.itemCount) - 1 }}건
-    </span>
-  </td>
+                      <td class="px-4 py-4 text-center">
+                        {{ doc[section.nameField] }}
+                        <span v-if="(doc.itemTypeCount || doc.itemCount) > 1">
+                          외 {{ (doc.itemTypeCount || doc.itemCount) - 1 }}건
+                        </span>
+                      </td>
 
-  <td class="px-4 py-4">
-    <span class="inline-block px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-600">
-      {{ doc.status }}
-    </span>
-  </td>
+                      <td class="px-4 py-4">
+                        <span class="inline-block px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-600">
+                          {{ doc.status }}
+                        </span>
+                      </td>
 
-  <td class="px-4 py-4 text-gray-500 text-xs">
-    {{ doc[section.dateField] }}
-  </td>
+                      <td class="px-4 py-4 text-gray-500 text-xs">
+                        {{ doc[section.dateField] }}
+                      </td>
 
-                      <td class="px-4 py-4 text-center"> <div class="flex justify-start items-center gap-1.5 w-fit mx-auto">
-                        <button v-if="section.title === '생산 요청 문서' && doc.status === 'PR_TMP'"
-                                class="rounded border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
-                          수정
+                      <td class="px-4 py-4 text-center">
+                        <button
+                          class="text-xs font-medium text-gray-600 underline underline-offset-2 hover:text-[#4C4CDD]">
+                          미리보기
                         </button>
-                        
-                        <router-link v-if="section.title === '생산 요청 문서'"
-                                    :to="`/production/requests/${doc.prId}`"
-                                    class="rounded bg-[#4C4CDD] px-2 py-1 text-[11px] font-bold text-white hover:bg-[#3b3bbb] flex items-center whitespace-nowrap">
-                          바로가기
-                        </router-link>
-                        
-                        <button v-else 
-                                class="rounded bg-[#4C4CDD] px-2 py-1 text-[11px] font-bold text-white hover:bg-[#3b3bbb] whitespace-nowrap">
-                          {{ section.title.split(' ')[0] }} 바로가기
-                        </button>
-                      </div>
-                    </td>
+                      </td>
+                      <td class="px-4 py-4 text-center">
+                        <div class="flex justify-center flex-row items-center gap-1.5">
+                          <button
+                            v-if="section.title === '생산 요청 문서' && doc.status === 'PR_TMP'"
+                            class="rounded border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
+                            수정
+                          </button>
+                          <router-link
+                            :to="getLinkPath(section.type, doc)"
+                            class="h-7 flex items-center justify-center rounded bg-[#4C4CDD] px-2.5 text-[11px] font-bold text-white hover:bg-[#3b3bbb] whitespace-nowrap"
+                          >
+                            {{ section.title.split(' ')[0] }} 바로가기
+                          </router-link>
+                        </div>
+                      </td>
+
                     </tr>
                   </tbody>
                 </table>
@@ -458,7 +462,7 @@ const docSections = ref([
     data: [] 
   },
   { 
-    title: '출고 요청 문서', 
+    title: '출고 지시 문서', 
     type: 'ISSUE', 
     codeField: 'giCode',    
     nameField: 'itemName', 
@@ -467,6 +471,22 @@ const docSections = ref([
     data: [] 
   }
 ]);
+
+// !! 납품 & 출고 지시 부분 주소 수정 필요 
+const getLinkPath = (type, doc) => {
+  if (!doc) return '#';
+  
+  switch (type) {
+    case 'PRODUCTION':
+      return `/production/requests/${doc.prId}`;
+    case 'DELIVERY': 
+      return `/warehouse/delivery-orders/${doc.doCode}`;
+    case 'ISSUE':     
+      return `/warehouse/delivery-orders/goods-issues/${doc.id}`; 
+    default:
+      return '#';
+  }
+};
 
 const fetchAllDocuments = async () => {
   const orderId = route.params.orderId;
