@@ -40,7 +40,7 @@
       </div>
     </div>
 
-    <div class="rounded-xl bg-white p-6  border border-gray-200">
+    <div class="rounded-xl bg-white p-6 border border-gray-200">
       <div class="relative mb-6 flex gap-6">
         <button @click="activeTab = 'ORDER'" 
                 :class="activeTab === 'ORDER' ? 'font-bold text-black border-b-4 border-[#4C4CDD]' : 'text-gray-500 hover:text-black'"
@@ -50,7 +50,7 @@
         <button @click="activeTab = 'PRODUCTION'" 
                 :class="activeTab === 'PRODUCTION' ? 'font-bold text-black border-b-4 border-[#4C4CDD]' : 'text-gray-500 hover:text-black'"
                 class="pb-3 text-lg transition-all">
-          생산/출고 관리
+          생산/납품/출고 관리
         </button>
         <div class="absolute bottom-0 h-[1px] w-full bg-gray-200"></div>
       </div>
@@ -125,34 +125,126 @@
                   <td class="px-4 py-4 ">{{ formatPrice(item.totalPrice) }}</td>
                 </tr>
               </tbody>
-              <tfoot class="bg-gray-50 font-medium border-t">
-                <tr>
-                  <td colspan="4" class="px-4 py-4"></td>
-                  <td class="px-4 py-4 text-center font-bold">
-                    {{ order.totalQuantity }}
-                  </td>
-                  <td colspan="3" class="px-4 py-4"></td>
-                  <td class="px-4 py-4 text-center text-black text-base font-bold">
-                    ₩ {{ formatPrice(order.totalPrice) }}
-                  </td>
-                </tr>
-              </tfoot>
             </table>
           </div>
         </div>
-
         <h3 class="mb-4 text-lg font-bold text-[#4C4CDD]">주문 결재 진행 상황</h3>
-        <div class="flex h-64 flex-col items-center justify-center rounded-xl bg-[#F9FAFB] border border-dashed border-gray-300">
+        <div class="flex h-50 flex-col items-center justify-center rounded-xl bg-[#F9FAFB] border border-dashed border-gray-300">
           <img src="@/assets/새로이새로미.png" alt="No Approval" class="mb-4 h-24 w-auto opacity-40" />
           <p class="text-gray-400 font-medium">진행 중인 결재 건이 없습니다.</p>
         </div>
       </div>
-      <div v-if="order.status === 'ORD_RED'" class="flex justify-end mt-5">
+
+
+
+      <div v-if="activeTab === 'PRODUCTION'">
+        <div class="mb-8">
+          <div class="flex justify-between items-end mb-3">
+            <div>
+              <h3 class="text-lg font-bold text-[#4C4CDD]">생산 · 납품 · 출고 현황</h3>
+              <p class="text-[11px] text-gray-400 mt-1">
+                * 최신 변동 이력 기준
+              </p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm mb-5">
+            <table class="w-full text-left text-sm min-w-[1000px]">
+              <thead class="bg-gray-50 text-gray-500 font-bold text-center">
+                <tr>
+                  <th class="px-2 py-3 border-b">No</th>
+                  <th class="px-2 py-3 border-b">품목코드</th>
+                  <th class="px-2 py-3 border-b">품목명</th>
+                  <th class="px-2 py-3 border-b">주문수량</th>
+                  <th class="px-2 py-3 border-b">가용재고</th>
+                  <th class="px-2 py-3 border-b">생산요청</th>
+                  <th class="px-2 py-3 border-b">생산입고</th>
+                  <th class="px-2 py-3 border-b">기납품수량</th>
+                  <th class="px-2 py-3 border-b">출고지시</th>
+                  <th class="px-2 py-3 border-b">출고완료</th>
+                  <th class="px-2 py-3 border-b">배송완료</th>
+                  <th class="px-2 py-3 border-b">이력조회</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr v-for="(hItem, idx) in itemHistory?.items" :key="hItem.itemId" class="text-center hover:bg-gray-50">
+                  <td class="px-2 py-4 text-gray-400 text-xs">{{ idx + 1 }}</td>
+                  <td class="px-2 py-4">{{ hItem.item.itemCode }}</td>
+                  <td class="px-2 py-4 text-gray-900">{{ hItem.item.itemName }}</td>
+                  <td class="px-2 py-4 font-medium">{{ formatPrice(hItem.item.quantity) }}</td>
+                  <td class="px-2 py-4 font-medium">{{ formatPrice(hItem.item.availableStock) }}</td>
+                  <td class="px-2 py-4">{{ formatPrice(hItem.prQuantity) }}</td>
+                  <td class="px-2 py-4">{{ formatPrice(hItem.piQuantity) }}</td>
+                  <td class="px-2 py-4">{{ formatPrice(hItem.doQuantity) }}</td>
+                  <td class="px-2 py-4">{{ formatPrice(hItem.giQuantity) }}</td>
+                  <td class="px-2 py-4">{{ formatPrice(hItem.shippedQuantity) }}</td>
+                  <td class="px-2 py-4">{{ formatPrice(hItem.completedQuantity) }}</td>
+                  <td class="px-2 py-4">
+                    <button class="text-[11px] text-gray-400 underline hover:text-black">조회</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex gap-2 justify-end mb-5">
+            <button class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">생산 설정</button>
+            <button class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">납품 설정</button>
+          </div>
+
+          <div class="space-y-8">
+            <section v-for="section in docSections" :key="section.title">
+              <h3 class="mb-3 text-lg font-bold text-[#4C4CDD]">{{ section.title }}</h3>
+              <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <table class="w-full text-left text-sm text-center">
+                  <thead class="bg-gray-50 text-gray-500 font-bold">
+                    <tr>
+                      <th class="px-4 py-3 border-b">No</th>
+                      <th class="px-4 py-3 border-b">요청번호</th>
+                      <th class="px-4 py-3 border-b">품목명</th>
+                      <th class="px-4 py-3 border-b">상태</th>
+                      <th class="px-4 py-3 border-b">작성일</th>
+                      <th class="px-4 py-3 border-b">문서</th>
+                      <th class="px-4 py-3 border-b">액션</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="section.data.length === 0">
+                      <td colspan="7" class="py-12 text-center text-gray-400 font-medium">
+                        등록된 문서가 없습니다.
+                      </td>
+                    </tr>
+                    <tr v-for="(doc, dIdx) in section.data" :key="doc.code" class="border-b last:border-0">
+                      <td class="px-4 py-4">{{ dIdx + 1 }}</td>
+                      <td class="px-4 py-4 font-medium text-[#4C4CDD]">{{ doc.code }}</td>
+                      <td class="px-4 py-4">{{ doc.itemName }}</td>
+                      <td class="px-4 py-4">
+                        <span :class="section.statusClass">{{ doc.status }}</span>
+                      </td>
+                      <td class="px-4 py-4 text-gray-500">{{ doc.date }}</td>
+                      <td class="px-4 py-4">
+                        <button class="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50">미리보기</button>
+                      </td>
+                      <td class="px-4 py-4 flex justify-center gap-1">
+                        <button class="rounded border border-gray-300 px-2 py-1 text-xs">수정</button>
+                        <button class="rounded bg-[#4C4CDD] px-2 py-1 text-xs text-white">바로가기</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="order.status === 'ORD_RED' && activeTab === 'ORDER'" class="flex justify-end mt-5">
           <button @click="openAssignmentModal" 
                   class="rounded-lg px-3 py-2 text-sm font-bold text-[#fff] bg-[#4C4CDD] hover:bg-[#4c4cddba]">
               담당자 배정
         </button>
       </div>
+      
       <ManagerAssignmentModal 
         v-if="isModalOpen" 
         :departmentData="deptEmployees"
@@ -164,28 +256,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getSODetail, assignManager } from '@/api/order/salesOrder';
+import { getSODetail, assignManager, getItemHistory } from '@/api/order/salesOrder';
 import { getEmployees } from '@/api/employee/employee';
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 
 const route = useRoute();
 const activeTab = ref('ORDER');
 const order = ref(null);
+const itemHistory = ref(null);
 const isModalOpen = ref(false);
 const deptEmployees = ref([]);
+
+// 문서 섹션 설정 (현재 API가 없으므로 빈 배열로 초기화)
+const docSections = ref([
+  { title: '생산 요청 문서', data: [], statusClass: 'text-red-500' },
+  { title: '납품 요청 문서', data: [], statusClass: 'text-blue-500' },
+  { title: '출고 요청 문서', data: [], statusClass: 'text-orange-500' }
+]);
 
 const steps = ['접수/검토', '주문 결재', '생산/출고', '배송 완료'];
 
 const currentStepIndex = computed(() => {
-    const status = order.value.status;
-    
+    const status = order.value?.status;
+    if (!status) return -1;
     if (['ORD_RED', 'ORD_RVW'].includes(status)) return 0;
     if (status.includes('APPR')) return 1;
     if (['ORD_WORK_REQ', 'ORD_PRO', 'ORD_SHIP_READY', 'ORD_SHIPPING'].includes(status)) return 2;
     if (status === 'ORD_DONE') return 3;
-    
     return -1;
 });
 
@@ -197,7 +296,6 @@ const getStepDotClass = (idx) => {
     if (idx === cur) return 'bg-[#4C4CDD]';
     return 'bg-[#CBD5E0]';
 };
-
 
 const getStepDate = (idx) => {
     if (idx === 0) return order.value?.orderedAt?.slice(0, 10);
@@ -213,12 +311,25 @@ const fetchDetail = async () => {
     }
 };
 
+const fetchHistory = async () => {
+  try {
+    const data = await getItemHistory(route.params.orderId);
+    itemHistory.value = data;
+  } catch (err) {
+    console.error('이력 조회 실패:', err);
+  }
+};
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'PRODUCTION') {
+    fetchHistory();
+  }
+});
+
 const openAssignmentModal = async () => {
   try {
     const response = await getEmployees('DEPT_SAL');
-    
     deptEmployees.value = Array.isArray(response[0]) ? response[0] : response; 
-
     isModalOpen.value = true;
   } catch (error) {
     console.error('데이터 로드 실패:', error);
@@ -226,14 +337,10 @@ const openAssignmentModal = async () => {
 };
 
 const onConfirmAssignment = async (employee) => {
-  console.log(employee);
     try {
         await assignManager(route.params.orderId, employee.id);
-        
         alert(`담당자가 ${employee.name}(으)로 배정되었습니다.`);
-        
         isModalOpen.value = false;
-        
         await fetchDetail(); 
     } catch (error) {
         console.error('담당자 배정 중 오류 발생:', error);
@@ -242,7 +349,6 @@ const onConfirmAssignment = async (employee) => {
 };
 
 const formatPrice = (p) => p ? new Intl.NumberFormat('ko-KR').format(p) : '0';
-
 
 const getStatusBadgeClass = (s) => {
   const styles = {
@@ -270,11 +376,21 @@ const getStatusLabel = (s) => {
     return map[s] || s;
 };
 
-onMounted(fetchDetail);
+onMounted(() => {
+  fetchDetail();
+});
 </script>
 
 <style scoped>
 .font-sans {
   font-family: 'Pretendard', sans-serif;
+}
+
+::-webkit-scrollbar {
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 10px;
 }
 </style>

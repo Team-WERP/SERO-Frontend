@@ -19,3 +19,9 @@ export const assignManager = (orderId, empId) => {
   return api.put(`/orders/${orderId}/manager`, { empId: empId })
       .then(res => res.data)
 }
+
+// 주문 품목별 변동 이력 조회
+export const getItemHistory = (orderId) => {
+  return api.get(`/orders/${orderId}/item-history/latest`) 
+      .then(res => res.data);
+};
