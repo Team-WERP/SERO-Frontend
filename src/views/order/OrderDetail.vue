@@ -140,7 +140,7 @@
       <div v-if="activeTab === 'PRODUCTION'">
         <div
             v-if="isLoading"
-            class="fixed inset-0 z-[9999] inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+            class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
           >
             <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -148,7 +148,7 @@
                 d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
               </path>
             </svg>
-        </div>
+          </div>
         <div class="mb-8">
           <div class="flex justify-between items-end mb-3">
             <div>
@@ -228,17 +228,30 @@
                         등록된 문서가 없습니다.
                       </td>
                     </tr>
-                    <tr v-for="(doc, dIdx) in section.data" :key="doc.code" class="border-b last:border-0">
-                      <td class="px-4 py-4">{{ dIdx + 1 }}</td>
-                      <td class="px-4 py-4 font-medium">{{ doc.soCode }}</td>
-                      <td class="px-4 py-4">{{ doc.mainItemName }}</td>
-                      <td class="px-4 py-4">
-                        <span>{{ doc.status }}</span>
-                      </td>
-                      <td class="px-4 py-4 text-gray-500">{{ doc.requestedAt }}</td>
-                      <td class="px-4 py-4">
-                        <button class="rounded px-2 py-1 text-xs text-decoration-line: underline hover:text-gray-400">미리보기</button>
-                      </td>
+                    <tr v-for="(doc, dIdx) in section.data" :key="dIdx" class="border-b last:border-0 hover:bg-gray-50 transition-colors">
+  <td class="px-4 py-4 text-gray-400">{{ dIdx + 1 }}</td>
+  
+  <td class="px-4 py-4 font-medium truncate">
+    {{ doc[section.codeField] }}
+  </td>
+
+  <td class="px-4 py-4 text-center">
+    {{ doc[section.nameField] }}
+    <span v-if="(doc.itemTypeCount || doc.itemCount) > 1">
+      외 {{ (doc.itemTypeCount || doc.itemCount) - 1 }}건
+    </span>
+  </td>
+
+  <td class="px-4 py-4">
+    <span class="inline-block px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-600">
+      {{ doc.status }}
+    </span>
+  </td>
+
+  <td class="px-4 py-4 text-gray-500 text-xs">
+    {{ doc[section.dateField] }}
+  </td>
+
                       <td class="px-4 py-4 text-center"> <div class="flex justify-start items-center gap-1.5 w-fit mx-auto">
                         <button v-if="section.title === '생산 요청 문서' && doc.status === 'PR_TMP'"
                                 class="rounded border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
@@ -280,7 +293,6 @@
         @confirm="onConfirmAssignment"
       />
     </div>
-
     <div v-if="isHistoryModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b p-5">
@@ -292,61 +304,47 @@
           </button>
         </div>
         
-       <div class="space-y-8">
-          <section v-for="section in docSections" :key="section.title">
-            <h3 class="mb-3 text-lg font-bold text-[#4C4CDD]">{{ section.title }}</h3>
-            <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <table class="w-full text-sm text-center table-fixed"> <thead class="bg-gray-50 text-gray-500 font-bold">
-                  <tr>
-                    <th class="w-12 px-4 py-3 border-b">No</th>
-                    <th class="w-1/4 px-4 py-3 border-b">요청번호</th>
-                    <th class="px-4 py-3 border-b">품목명</th>
-                    <th class="w-24 px-4 py-3 border-b">상태</th>
-                    <th class="w-28 px-4 py-3 border-b">작성일</th>
-                    <th class="w-20 px-4 py-3 border-b">문서</th>
-                    <th class="w-[160px] px-4 py-3 border-b">액션</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-if="section.data.length === 0">
-                    <td colspan="7" class="py-12 text-center text-gray-400 font-medium">
-                      등록된 문서가 없습니다.
-                    </td>
-                  </tr>
-                  <tr v-for="(doc, dIdx) in section.data" :key="doc.code" class="border-b last:border-0 hover:bg-gray-50 transition-colors">
-                    <td class="px-4 py-4">{{ dIdx + 1 }}</td>
-                    <td class="px-4 py-4 font-medium text-gray-900">{{ doc.soCode }}</td>
-                    <td class="px-4 py-4 text-left truncate">{{ doc.mainItemName }}</td> <td class="px-4 py-4">
-                      <span class="inline-block px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-600">{{ doc.status }}</span>
-                    </td>
-                    <td class="px-4 py-4 text-gray-500">{{ doc.requestedAt }}</td>
-                    <td class="px-4 py-4">
-                      <button class="text-[11px] text-gray-500 underline decoration-gray-300 underline-offset-4 hover:text-[#4C4CDD]">미리보기</button>
-                    </td>
-                    <td class="px-4 py-4">
-                      <div class="flex justify-center items-center gap-2">
-                        <button v-if="section.title === '생산 요청 문서' && doc.status === 'PR_TMP'"
-                                class="h-7 rounded border border-gray-300 px-2 text-[11px] font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
-                          수정
-                        </button>
-                        
-                        <router-link v-if="section.title === '생산 요청 문서'"
-                                    :to="`/production/requests/${doc.prId}`"
-                                    class="h-7 rounded bg-[#4C4CDD] px-3 text-[11px] font-bold text-white hover:bg-[#3b3bbb] flex items-center justify-center whitespace-nowrap">
-                          바로가기
-                        </router-link>
-                        
-                        <button v-else 
-                                class="h-7 rounded bg-[#4C4CDD] px-3 text-[11px] font-bold text-white hover:bg-[#3b3bbb] whitespace-nowrap">
-                          {{ section.title.split(' ')[0] }} 바로가기
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
+        <div class="p-6">
+          <div class="overflow-hidden rounded-xl border border-gray-200">
+            <table class="w-full text-center text-sm">
+              <thead class="bg-gray-50 text-gray-500 font-bold">
+                <tr>
+                  <th class="px-3 py-3 border-b">가용재고</th>
+                  <th class="px-3 py-3 border-b">생산요청</th>
+                  <th class="px-3 py-3 border-b">생산입고</th>
+                  <th class="px-3 py-3 border-b">기납품수량</th>
+                  <th class="px-3 py-3 border-b">출고지시</th>
+                  <th class="px-3 py-3 border-b">출고완료</th>
+                  <th class="px-3 py-3 border-b">배송완료</th>
+                  <th class="px-3 py-3 border-b">이력 생성일시</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr v-if="historyDetails.length === 0">
+                  <td colspan="8" class="py-12">
+                    <div class="flex flex-col items-center justify-center">
+                      <img 
+                        src="@/assets/새로이새로미.png" 
+                        alt="No Data" 
+                        class="mb-4 h-16 w-auto opacity-40" 
+                      />
+                      <p class="text-gray-400 font-medium">변동 이력 데이터가 없습니다.</p>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-for="h in historyDetails" :key="h.historyId">
+                  <td class="px-3 py-4 font-medium">{{ formatPrice(h.item.availableStock) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.prQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.piQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.doQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.giQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.shippedQuantity) }}</td>
+                  <td class="px-3 py-4">{{ formatPrice(h.completedQuantity) }}</td>
+                  <td class="px-3 py-4 text-xs text-gray-500">{{ h.createdAt || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
         <div class="flex justify-end p-5 border-t">
           <button @click="isHistoryModalOpen = false" class="rounded-lg bg-gray-100 px-6 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200">닫기</button>
@@ -363,6 +361,8 @@ import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory } from
 import { getEmployees } from '@/api/employee/employee';
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 import { getPRListByOrderId } from '@/api/production/productionRequest';
+import { getDOListByOrderId } from '@/api/shipping/deliveryOrder';
+import { getGIListByOrderId } from '@/api/shipping/goodsIssue';
 
 const route = useRoute();
 const activeTab = ref('ORDER');
@@ -422,16 +422,6 @@ const fetchHistory = async () => {
   }
 };
 
-const fetchPRDocuments = async () => {
-  try {
-    const data = await getPRListByOrderId(route.params.orderId);
-    docSections.value[0].data = data || [];
-  } catch (err) {
-    console.error('생산 요청 문서 조회 실패:', err);
-    docSections.value[0].data = [];
-  }
-};
-
 const openHistoryModal = async (itemId, itemName) => {
   if (!itemId) return;
 
@@ -451,31 +441,60 @@ const openHistoryModal = async (itemId, itemName) => {
 const docSections = ref([
   { 
     title: '생산 요청 문서', 
-    data: []
+    type: 'PRODUCTION', 
+    codeField: 'prCode',   
+    nameField: 'mainItemName', 
+    dateField: 'requestedAt',
+    fetchFn: getPRListByOrderId, 
+    data: [] 
   },
   { 
-    title: '납품 요청 문서',
-    data: []
+    title: '납품 요청 문서', 
+    type: 'DELIVERY', 
+    codeField: 'doCode',   
+    nameField: 'itemName', 
+    dateField: 'createdAt',
+    fetchFn: getDOListByOrderId, 
+    data: [] 
   },
   { 
     title: '출고 요청 문서', 
-    data: []
+    type: 'ISSUE', 
+    codeField: 'giCode',    
+    nameField: 'itemName', 
+    dateField: 'createdAt',
+    fetchFn: getGIListByOrderId, 
+    data: [] 
   }
 ]);
 
-watch(activeTab, async (newTab) => {
-  if (newTab === 'PRODUCTION') {
-    isLoading.value = true;
+const fetchAllDocuments = async () => {
+  const orderId = route.params.orderId;
+  
+  const promises = docSections.value.map(async (section) => {
     try {
-      await Promise.all([
-        fetchHistory(),
-        fetchPRDocuments()
-      ]);
+      const response = await section.fetchFn(orderId);
+      section.data = response || [];
     } catch (err) {
-      console.error('데이터 로드 중 오류:', err);
-    } finally {
-      isLoading.value = false;
+      console.error(`${section.title} 조회 실패:`, err);
+      section.data = [];
     }
+  });
+
+  await Promise.all(promises);
+};
+
+watch(activeTab, async (newTab) => {
+  if (newTab !== 'PRODUCTION') return;
+
+  isLoading.value = true;
+  try {
+    await Promise.all([
+      fetchHistory(),
+      fetchAllDocuments()
+    ]);
+  } finally {
+    isLoading.value = false;
   }
 });
 
