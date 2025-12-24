@@ -12,8 +12,8 @@
       <div class="title-left">
         <div class="flex items-center gap-3">
           <h1 class="text-3xl font-bold text-black">{{ order.orderCode }}</h1>
-          <span :class="getStatusBadgeClass(order.status)" class="rounded-full px-3 py-1 text-sm font-bold">
-            {{ getStatusLabel(order.status) }}
+          <span :class="getOrderStatusBadgeClass(order.status)" class="rounded-full px-3 py-1 text-sm font-bold">
+            {{ getOrderStatusLabel(order.status) }}
           </span>
         </div>
         <div class="mt-2 text-sm font-medium text-[#898989]">
@@ -140,7 +140,7 @@
       <div v-if="activeTab === 'PRODUCTION'">
         <div
             v-if="isLoading"
-            class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+            class="absolute inset-0 z-[9999] flex items-center justify-center bg-white/70 backdrop-blur-sm"
           >
             <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -192,7 +192,7 @@
                   <td class="px-2 py-4">{{ formatPrice(hItem.completedQuantity) }}</td>
                   <td class="px-2 py-4">
                     <button @click="openHistoryModal(hItem.itemId, hItem.item.itemName)" 
-                            class="text-[11px] text-gray-400 underline hover:text-black">
+                            class="text-[13px] underline hover:text-gray-700">
                       이력 조회
                     </button>
                   </td>
@@ -243,18 +243,23 @@
                       </td>
 
                       <td class="px-4 py-4">
-                        <span class="inline-block px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-600">
-                          {{ doc.status }}
+                        <span 
+                          :class="section.badgeFn(doc.status)" 
+                          class="rounded-full px-3 py-1 text-[11px] font-bold whitespace-nowrap"
+                        >
+                          {{ section.labelFn(doc.status) }}
                         </span>
                       </td>
 
-                      <td class="px-4 py-4 text-gray-500 text-xs">
+                      <td class="px-4 py-4">
                         {{ doc[section.dateField] }}
                       </td>
 
                       <td class="px-4 py-4 text-center">
-                        <button
-                          class="text-xs font-medium text-gray-600 underline underline-offset-2 hover:text-[#4C4CDD]">
+                        <button 
+                          v-if="!(section.type === 'PRODUCTION' && doc.status === 'PR_TMP')"
+                          class="text-[12px] font-medium underline underline-offset-4 hover:text-gray-400 hover:decoration-gray-400 transition-all"
+                        >
                           미리보기
                         </button>
                       </td>
@@ -442,36 +447,6 @@ const openHistoryModal = async (itemId, itemName) => {
   }
 };
 
-const docSections = ref([
-  { 
-    title: '생산 요청 문서', 
-    type: 'PRODUCTION', 
-    codeField: 'prCode',   
-    nameField: 'mainItemName', 
-    dateField: 'requestedAt',
-    fetchFn: getPRListByOrderId, 
-    data: [] 
-  },
-  { 
-    title: '납품 요청 문서', 
-    type: 'DELIVERY', 
-    codeField: 'doCode',   
-    nameField: 'itemName', 
-    dateField: 'createdAt',
-    fetchFn: getDOListByOrderId, 
-    data: [] 
-  },
-  { 
-    title: '출고 지시 문서', 
-    type: 'ISSUE', 
-    codeField: 'giCode',    
-    nameField: 'itemName', 
-    dateField: 'createdAt',
-    fetchFn: getGIListByOrderId, 
-    data: [] 
-  }
-]);
-
 // !! 납품 & 출고 지시 부분 주소 수정 필요 
 const getLinkPath = (type, doc) => {
   if (!doc) return '#';
@@ -542,7 +517,7 @@ const onConfirmAssignment = async (employee) => {
 
 const formatPrice = (p) => p ? new Intl.NumberFormat('ko-KR').format(p) : '0';
 
-const getStatusBadgeClass = (s) => {
+const getOrderStatusBadgeClass = (s) => {
   const styles = {
     'ORD_RED': 'bg-[#FFFBEB] text-[#B4540A]',
     'ORD_RVW': 'bg-[#FFFBEB] text-[#B4540A]',
@@ -559,7 +534,7 @@ const getStatusBadgeClass = (s) => {
   return styles[s] || 'bg-gray-100 text-gray-600';
 };
 
-const getStatusLabel = (s) => {
+const getOrderStatusLabel = (s) => {
     const map = { 
         'ORD_RED': '접수대기', 'ORD_RVW': '주문검토', 'ORD_APPR_PEND': '주문결재중', 
         'ORD_APPR_DONE': '결재승인', 'ORD_PRO': '생산중', 'ORD_SHIP_READY': '배송중', 'ORD_SHIPPING': '출고중', 
@@ -567,6 +542,110 @@ const getStatusLabel = (s) => {
     };
     return map[s] || s;
 };
+
+const getPRStatusBadgeClass = (s) => {
+  const styles = {
+    'PR_TMP': 'bg-[#dbc4ad] text-[#fff]',
+    'PR_RVW': 'bg-[#FFFBEB] text-[#B4540A]',
+    'PR_APPR_PEND': 'bg-[#ECFEF6] text-[#278465]',
+    'PR_APPR_DONE': 'bg-[#ECFEF6] text-[#278465]',
+    'PR_PLANNED': 'bg-[#F0F6FF] text-[#1E4ED8]',
+    'PR_PRODUCING': 'bg-[#F0F6FF] text-[#1E4ED8]',
+    'PR_DONE': 'bg-[#F3F4F6] text-[#000000]',
+    'PR_APPR_RJCT': 'bg-[#FFD8D8] text-[#D34242]',
+    'PR_CANCEL': 'bg-[#FFD8D8] text-[#D34242]'
+  };
+  return styles[s] || 'bg-gray-100 text-gray-600';
+};
+
+const getPRStatusLabel = (s) => {
+    const map = { 
+        'PR_TMP': '임시저장', 'PR_RVW': '요청검토', 'PR_APPR_PEND': '결재중', 
+        'PR_APPR_DONE': '결재승인', 'PR_APPR_RJCT': '결재반려', 'PR_PLANNED': '계획수립', 'PR_PRODUCING': '생산중', 
+        'PR_DONE': '생산완료', 'PR_CANCEL': '취소' 
+    };
+    return map[s] || s;
+};
+
+const getDOStatusBadgeClass = (s) => {
+  const styles = {
+    'DO_BEFORE_GI': 'bg-[#FFFBEB] text-[#B4540A]',
+    'DO_AFTER_GI': 'bg-[#F3F4F6] text-[#000000]'
+  };
+  return styles[s] || 'bg-gray-100 text-gray-600';
+};
+
+const getDOStatusLabel = (s) => {
+    const map = { 
+        'DO_BEFORE_GI': '출고지시 대기', 'DO_AFTER_GI': '출고지시 완료'
+    };
+    return map[s] || s;
+};
+
+const getGIStatusBadgeClass = (s) => {
+  const styles = {
+    'GI_RVW': 'bg-[#FFFBEB] text-[#B4540A]',
+    'GI_APPR_PEND': 'bg-[#ECFEF6] text-[#278465]',
+    'GI_APPR_DONE': 'bg-[#ECFEF6] text-[#278465]',
+    'GI_ISSUED': 'bg-[#F0F6FF] text-[#1E4ED8]',
+    'GI_SHIP_ING': 'bg-[#F0F6FF] text-[#1E4ED8]',
+    'GI_SHIP_DONE': 'bg-[#F3F4F6] text-[#000000]',
+    'GI_APPR_RJCT': 'bg-[#FFD8D8] text-[#D34242]',
+    'GI_CANCEL': 'bg-[#FFD8D8] text-[#D34242]'
+  };
+  return styles[s] || 'bg-gray-100 text-gray-600';
+};
+
+const getGIStatusLabel = (s) => {
+    const map = { 
+        'GI_RVW': '접수대기', 'GI_APPR_PEND': '주문검토', 'GI_APPR_DONE': '주문결재중', 
+        'GI_ISSUED': '출고완료', 'GI_SHIP_ING': '배송중', 'GI_SHIP_DONE': '배송완료', 'GI_APPR_RJCT': '결재반려', 
+        'GI_CANCEL': '취소'
+    };
+    return map[s] || s;
+};
+
+
+const docSections = ref([
+  { 
+    title: '생산 요청 문서', 
+    type: 'PRODUCTION', 
+    btnLabel: '생산요청',
+    codeField: 'prCode',   
+    nameField: 'mainItemName', 
+    dateField: 'requestedAt',
+    badgeFn: getPRStatusBadgeClass, 
+    labelFn: getPRStatusLabel,     
+    fetchFn: getPRListByOrderId, 
+    data: [] 
+  },
+  { 
+    title: '납품 요청 문서', 
+    type: 'DELIVERY', 
+    btnLabel: '납품서',
+    codeField: 'doCode',   
+    nameField: 'itemName', 
+    dateField: 'createdAt',
+    badgeFn: getDOStatusBadgeClass, 
+    labelFn: getDOStatusLabel,      
+    fetchFn: getDOListByOrderId, 
+    data: [] 
+  },
+  { 
+    title: '출고 지시 문서', 
+    type: 'ISSUE', 
+    btnLabel: '출고지시',
+    codeField: 'giCode',    
+    nameField: 'itemName', 
+    dateField: 'createdAt',
+    badgeFn: getGIStatusBadgeClass, 
+    labelFn: getGIStatusLabel,      
+    fetchFn: getGIListByOrderId, 
+    data: [] 
+  }
+]);
+
+
 
 onMounted(() => {
   fetchDetail();
