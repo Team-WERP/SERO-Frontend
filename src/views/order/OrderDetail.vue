@@ -159,7 +159,7 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm mb-5">
+          <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white mb-5">
             <table class="w-full text-left text-sm min-w-[1000px]">
               <thead class="bg-gray-50 text-gray-500 font-bold text-center">
                 <tr>
@@ -228,7 +228,7 @@
                         등록된 문서가 없습니다.
                       </td>
                     </tr>
-                    <tr v-for="(doc, dIdx) in section.data" :key="dIdx" class="border-b last:border-0 hover:bg-gray-50 transition-colors">
+                    <tr v-for="(doc, dIdx) in section.data" :key="dIdx" class="border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-colors">
                       <td class="px-4 py-4 text-gray-400">{{ dIdx + 1 }}</td>
                       
                       <td class="px-4 py-4 font-medium truncate">
