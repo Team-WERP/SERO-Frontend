@@ -1,0 +1,527 @@
+<template>
+    <div class="delivery-management-page">
+        <!-- 헤더 -->
+        <div class="page-header">
+            <h1 class="logo">SERO DELIVERY</h1>
+        </div>
+
+        <!-- 배송 목록 -->
+        <div class="delivery-list">
+            <div
+                v-for="delivery in deliveries"
+                :key="delivery.id"
+                class="delivery-card"
+                :class="getCardClass(delivery.status)"
+            >
+                <div class="card-header">
+                    <span class="status-badge" :class="getStatusBadgeClass(delivery.status)">
+                        {{ getStatusText(delivery.status) }}
+                    </span>
+                </div>
+
+                <div class="card-body">
+                    <h3 class="delivery-location">{{ delivery.deliveryLocation }}</h3>
+                    <div class="delivery-details">
+                        <div class="detail-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            </svg>
+                            <span>{{ delivery.address }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="contact-info">
+                        <span class="contact-label">수령인: {{ delivery.recipientName }}</span>
+                        <div class="contact-actions">
+                            <a :href="`tel:${delivery.recipientContact}`" class="icon-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                                </svg>
+                            </a>
+                            <button class="icon-btn" @click="openMap(delivery)">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 상태별 버튼 -->
+                    <button
+                        v-if="delivery.status === 'GI_SHIP_ISSUED'"
+                        class="action-btn start-btn"
+                        @click="handleStartDelivery(delivery)"
+                    >
+                        배송 시작
+                    </button>
+                    <button
+                        v-else-if="delivery.status === 'GI_SHIP_ING'"
+                        class="action-btn complete-btn"
+                        @click="handleCompleteDelivery(delivery)"
+                    >
+                        배송 완료
+                    </button>
+                    <div v-else-if="delivery.status === 'GI_SHIP_DONE'" class="completed-badge">
+                        ✓ 배송 완료됨
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배송 목록이 없을 때 -->
+            <div v-if="deliveries.length === 0 && !loading" class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="empty-icon">
+                    <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
+                </svg>
+                <p>배송할 항목이 없습니다.</p>
+            </div>
+        </div>
+
+        <!-- 지도 모달 -->
+        <div v-if="showMapModal" class="modal-overlay" @click="closeMap">
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h3>{{ selectedDelivery?.deliveryLocation }}</h3>
+                    <button class="close-btn" @click="closeMap">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="map-placeholder">
+                        <p>🗺️ 지도 연동 예정</p>
+                        <p class="address-text">{{ selectedDelivery?.address }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { getGoodsIssueList, startDelivery, completeDelivery } from '@/api/delivery'
+
+const deliveries = ref([])
+const loading = ref(false)
+const showMapModal = ref(false)
+const selectedDelivery = ref(null)
+
+// 배송 목록 조회
+const loadDeliveries = async () => {
+    loading.value = true
+    try {
+        // 출고 완료 및 배송 중인 항목만 조회
+        const result = await getGoodsIssueList({
+            status: 'GI_SHIP_ISSUED,GI_SHIP_ING,GI_SHIP_DONE'
+        })
+
+        // API 응답을 배송 관리에 맞게 변환
+        deliveries.value = result.map(item => ({
+            id: item.id,
+            giCode: item.giCode,
+            soCode: item.soCode,
+            doCode: item.doCode,
+            status: item.status,
+            deliveryLocation: item.itemName || '배송지',
+            address: item.warehouseName || '주소 정보 없음',
+            recipientName: item.managerName || '담당자 정보 없음',
+            recipientContact: '010-111-1111', // 실제로는 API에서 받아와야 함
+            shippedAt: item.shippedAt
+        }))
+    } catch (error) {
+        console.error('배송 목록 조회 실패:', error)
+        alert('배송 목록을 불러오는데 실패했습니다.')
+    } finally {
+        loading.value = false
+    }
+}
+
+// 배송 시작
+const handleStartDelivery = async (delivery) => {
+    if (!confirm(`${delivery.deliveryLocation} 배송을 시작하시겠습니까?`)) {
+        return
+    }
+
+    try {
+        await startDelivery(delivery.giCode)
+        alert('배송이 시작되었습니다.')
+        await loadDeliveries() // 목록 새로고침
+    } catch (error) {
+        console.error('배송 시작 실패:', error)
+        alert('배송 시작에 실패했습니다.')
+    }
+}
+
+// 배송 완료
+const handleCompleteDelivery = async (delivery) => {
+    if (!confirm(`${delivery.deliveryLocation} 배송을 완료 처리하시겠습니까?`)) {
+        return
+    }
+
+    try {
+        await completeDelivery(delivery.giCode)
+        alert('배송이 완료되었습니다.')
+        await loadDeliveries() // 목록 새로고침
+    } catch (error) {
+        console.error('배송 완료 실패:', error)
+        alert('배송 완료 처리에 실패했습니다.')
+    }
+}
+
+// 지도 열기
+const openMap = (delivery) => {
+    selectedDelivery.value = delivery
+    showMapModal.value = true
+}
+
+// 지도 닫기
+const closeMap = () => {
+    showMapModal.value = false
+    selectedDelivery.value = null
+}
+
+// 상태 텍스트
+const getStatusText = (status) => {
+    const statusMap = {
+        'GI_SHIP_ISSUED': '배송중',
+        'GI_SHIP_ING': '배송중',
+        'GI_SHIP_DONE': '배송완료'
+    }
+    return statusMap[status] || status
+}
+
+// 카드 클래스
+const getCardClass = (status) => {
+    if (status === 'GI_SHIP_DONE') return 'card-completed'
+    if (status === 'GI_SHIP_ING') return 'card-shipping'
+    return 'card-issued'
+}
+
+// 상태 뱃지 클래스
+const getStatusBadgeClass = (status) => {
+    if (status === 'GI_SHIP_DONE') return 'badge-completed'
+    if (status === 'GI_SHIP_ING') return 'badge-shipping'
+    return 'badge-issued'
+}
+
+// 초기 로드
+onMounted(() => {
+    loadDeliveries()
+})
+</script>
+
+<style scoped>
+.delivery-management-page {
+    min-height: 100vh;
+    background: #f3f4f6;
+    padding-bottom: 20px;
+}
+
+/* 헤더 */
+.page-header {
+    background: #4C4CDD;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+/* 배송 목록 */
+.delivery-list {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* 배송 카드 */
+.delivery-card {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.delivery-card:active {
+    transform: scale(0.98);
+}
+
+.card-issued {
+    border-left: 4px solid #fbbf24;
+}
+
+.card-shipping {
+    border-left: 4px solid #3b82f6;
+}
+
+.card-completed {
+    border-left: 4px solid #10b981;
+    opacity: 0.8;
+}
+
+.card-header {
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-issued {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-shipping {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.card-body {
+    padding: 16px;
+}
+
+.delivery-location {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 12px 0;
+}
+
+.delivery-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.detail-item .icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.card-footer {
+    padding: 16px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.contact-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.contact-label {
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.contact-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: #4C4CDD;
+}
+
+.icon-btn:hover {
+    background: #f3f4f6;
+    border-color: #4C4CDD;
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.start-btn {
+    background: #4C4CDD;
+    color: #ffffff;
+}
+
+.start-btn:hover {
+    background: #3d3dbb;
+}
+
+.complete-btn {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.complete-btn:hover {
+    background: #059669;
+}
+
+.completed-badge {
+    text-align: center;
+    padding: 14px;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* 빈 상태 */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9ca3af;
+}
+
+.empty-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin: 0;
+}
+
+/* 모달 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.close-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    color: #6b7280;
+}
+
+.close-btn:hover {
+    background: #e5e7eb;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.map-placeholder {
+    background: #f9fafb;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.map-placeholder p {
+    margin: 8px 0;
+    color: #6b7280;
+}
+
+.address-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* 반응형 */
+@media (min-width: 768px) {
+    .delivery-list {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+}
+</style>

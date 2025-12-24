@@ -33,6 +33,8 @@ import PRDetail from "@/views/production/PRDetail.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
+import DeliveryManagement from "@/views/delivery/DeliveryManagement.vue";
+import DriverLogin from "@/views/delivery/DriverLogin.vue";
 
 // 기준정보
 import ItemBomManagement from "@/views/master/ItemBomManagement.vue";
@@ -68,6 +70,14 @@ const router = createRouter({
                 {
                     path: "/login",
                     component: Login,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
+                {
+                    path: "/driver/login",
+                    component: DriverLogin,
                     meta: {
                         hideLayout: true,
                         noPadding: true
@@ -112,6 +122,14 @@ const router = createRouter({
                 { path: "/warehouse/stock", component: StockByWarehouse },
                 { path: "/warehouse/delivery-orders", component: DeliveryOrderList },
                 { path: "/warehouse/tracking", component: DeliveryTracking },
+                {
+                    path: "/delivery/management",
+                    component: DeliveryManagement,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
 
                 // ---------------------
                 // 기준정보
