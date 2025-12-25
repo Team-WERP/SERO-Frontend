@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 html,
 body {
     margin: 0;
@@ -9,4 +11,26 @@ body {
 
 * {
     box-sizing: border-box;
+}
+
+/* ===== 공통 사이드 메뉴 링크 ===== */
+.side-menu-link {
+    height: 38px;
+    display: block;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 400;
+    color: #4b5563;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.side-menu-link:hover {
+    background-color: #f3f4ff;
+}
+
+.side-menu-link--active {
+    background-color: #EFF2FE;
+    font-weight: 600;
 }
