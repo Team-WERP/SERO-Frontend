@@ -18,7 +18,7 @@
               :key="warehouse.id"
               :value="warehouse.id"
             >
-              {{ warehouse.name }}
+              {{ warehouse.warehouseName }}
             </option>
           </select>
         </div>

@@ -7,7 +7,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localho
 export const API_ENDPOINTS = {
   // Warehouse Stock APIs
   warehouse: {
-    list: '/warehouse/warehouses',
+    list: '/warehouses',
     stocks: '/warehouse/stocks',
     stockDetail: (id) => `/warehouse/stocks/${id}`
   },
@@ -39,18 +39,35 @@ export const apiClient = {
 
       console.log('API Request:', fullUrl)
 
+      const token = localStorage.getItem('accessToken')
+      const headers = {
+        'Content-Type': 'application/json',
+      }
+      if (token) {
+        headers.Authorization = `Bearer ${token}`
+      }
+
       const response = await fetch(fullUrl, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        mode: 'cors'
+        headers,
+        mode: 'cors',
+        credentials: 'include'
       })
 
       if (!response.ok) {
         const errorText = await response.text()
         console.error('API Error Response:', errorText)
-        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+
+        // 401 Unauthorized - 로그인 페이지로 리다이렉트
+        if (response.status === 401) {
+          localStorage.removeItem('accessToken')
+          const currentPath = window.location.pathname
+          if (!currentPath.startsWith('/login')) {
+            window.location.href = '/login'
+          }
+        }
+
+        throw new Error(`API Error: ${response.status}`)
       }
 
       const data = await response.json()
@@ -63,47 +80,139 @@ export const apiClient = {
   },
 
   async post(url, data = {}) {
+    const token = localStorage.getItem('accessToken')
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
+      headers,
+      body: JSON.stringify(data),
+      credentials: 'include'
     })
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('API Error Response:', errorText)
+
+      // 401 Unauthorized - 로그인 페이지로 리다이렉트
+      if (response.status === 401) {
+        localStorage.removeItem('accessToken')
+        const currentPath = window.location.pathname
+        if (!currentPath.startsWith('/login')) {
+          window.location.href = '/login'
+        }
+      }
+
+      throw new Error(`API Error: ${response.status}`)
     }
 
     return response.json()
   },
 
   async put(url, data = {}) {
+    const token = localStorage.getItem('accessToken')
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
+      headers,
+      body: JSON.stringify(data),
+      credentials: 'include'
     })
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('API Error Response:', errorText)
+
+      // 401 Unauthorized - 로그인 페이지로 리다이렉트
+      if (response.status === 401) {
+        localStorage.removeItem('accessToken')
+        const currentPath = window.location.pathname
+        if (!currentPath.startsWith('/login')) {
+          window.location.href = '/login'
+        }
+      }
+
+      throw new Error(`API Error: ${response.status}`)
     }
 
     return response.json()
   },
 
   async delete(url) {
+    const token = localStorage.getItem('accessToken')
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      }
+      headers,
+      credentials: 'include'
     })
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('API Error Response:', errorText)
+
+      // 401 Unauthorized - 로그인 페이지로 리다이렉트
+      if (response.status === 401) {
+        localStorage.removeItem('accessToken')
+        const currentPath = window.location.pathname
+        if (!currentPath.startsWith('/login')) {
+          window.location.href = '/login'
+        }
+      }
+
+      throw new Error(`API Error: ${response.status}`)
+    }
+
+    return response.json()
+  },
+
+  async patch(url, data = {}) {
+    const token = localStorage.getItem('accessToken')
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(data),
+      credentials: 'include'
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('API Error Response:', errorText)
+
+      // 401 Unauthorized - 로그인 페이지로 리다이렉트
+      if (response.status === 401) {
+        localStorage.removeItem('accessToken')
+        const currentPath = window.location.pathname
+        if (!currentPath.startsWith('/login')) {
+          window.location.href = '/login'
+        }
+      }
+
+      throw new Error(`API Error: ${response.status}`)
     }
 
     return response.json()

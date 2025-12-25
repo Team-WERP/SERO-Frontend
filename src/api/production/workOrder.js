@@ -1,23 +1,23 @@
-import api from '@/api/axios.js'
+import { apiClient } from '@/config/api'
 
 
 export const createWorkOrder = (payload) =>
-    api.post('/work-orders', payload)
+    apiClient.post('/work-orders', payload)
 
 export const getWorkOrdersByDate = (date) =>
-    api.get('/work-orders/by-date', { params: { date } })
+    apiClient.get('/work-orders/by-date', { date })
 
 export const startWorkOrder = (woId, note) =>
-    api.post(`/work-orders/${woId}/start`, null, { params: { note } })
+    apiClient.post(`/work-orders/${woId}/start?note=${note || ''}`)
 
 export const pauseWorkOrder = (woId, note) =>
-    api.post(`/work-orders/${woId}/pause`, null, { params: { note } })
+    apiClient.post(`/work-orders/${woId}/pause?note=${note || ''}`)
 
 export const resumeWorkOrder = (woId, note) =>
-    api.post(`/work-orders/${woId}/resume`, null, { params: { note } })
+    apiClient.post(`/work-orders/${woId}/resume?note=${note || ''}`)
 
 export const endWorkOrder = (woId, payload) =>
-    api.post(`/work-orders/${woId}/end`, payload)
+    apiClient.post(`/work-orders/${woId}/end`, payload)
 
 export const getWorkOrderHistory = (woId) =>
-    api.get(`/work-orders/${woId}/history`)
+    apiClient.get(`/work-orders/${woId}/history`)
