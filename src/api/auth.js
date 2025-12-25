@@ -1,4 +1,4 @@
-import api from './axios';
+import { apiClient } from '@/config/api';
 
 const LOGIN_URL = {
     hq: '/auth/login',
@@ -10,5 +10,5 @@ const LOGOUT_URL = {
     client: '/clients/auth/logout'
 };
 
-export const login = (employeeType, data) => api.post(LOGIN_URL[employeeType], data);
-export const logout = (employeeType) => api.post(LOGOUT_URL[employeeType]);
+export const login = (employeeType, data) => apiClient.post(LOGIN_URL[employeeType], data);
+export const logout = (employeeType) => apiClient.post(LOGOUT_URL[employeeType]);
