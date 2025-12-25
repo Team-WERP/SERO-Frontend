@@ -269,8 +269,8 @@
                             <tr>
                                 <td><span class="badge-sm green">기안</span></td>
                                 <td>{{ giDetail.drafterName || '-' }}</td>
-                                <td>-</td>
-                                <td>-</td>
+                                <td>{{ formatRole(giDetail.drafterRank, giDetail.drafterPosition) }}</td>
+                                <td>{{ giDetail.drafterDepartment || '-' }}</td>
                                 <td><span class="status-text approved">승인</span></td>
                                 <td>{{ formatDateTime(giDetail.createdAt) }}</td>
                                 <td>-</td>
@@ -292,7 +292,7 @@
                                     </span>
                                 </td>
                                 <td>{{ formatDateTime(line.processedAt) }}</td>
-                                <td>-</td>
+                                <td>{{ line.note || '-' }}</td>
                             </tr>
 
                             <!-- 결재선이 없을 경우 -->
