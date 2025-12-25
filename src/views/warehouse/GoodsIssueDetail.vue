@@ -341,6 +341,13 @@
             :delivery-order="deliveryOrderData"
             @close="closeDeliveryOrderPreview"
         />
+
+        <!-- 출고지시서 미리보기 모달 -->
+        <GoodsIssuePreviewModal
+            :is-open="isGoodsIssueModalOpen"
+            :goods-issue="giDetail"
+            @close="closeGIPreview"
+        />
     </div>
 </template>
 
@@ -351,6 +358,7 @@ import { useUserStore } from '@/stores/user'
 import { getGIDetail, assignGIManager, completeGI } from '@/api/shipping/goodsIssue'
 import { getDODetail } from '@/api/shipping/deliveryOrder'
 import DeliveryOrderPreviewModal from '@/components/modals/DeliveryOrderPreviewModal.vue'
+import GoodsIssuePreviewModal from '@/components/modals/GoodsIssuePreviewModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -400,6 +408,9 @@ const activeTab = ref('issue')
 
 // 납품서 미리보기 모달 상태
 const isDeliveryOrderModalOpen = ref(false)
+
+// 출고지시서 미리보기 모달 상태
+const isGoodsIssueModalOpen = ref(false)
 
 // 납품서 데이터 (실제 API에서 가져온 데이터)
 const deliveryOrderData = ref({
@@ -457,9 +468,17 @@ const closeDeliveryOrderPreview = () => {
     isDeliveryOrderModalOpen.value = false
 }
 
-// 출고지시서 미리보기 핸들러 (TODO: 출고지시서 모달 구현 필요)
+// 출고지시서 미리보기 핸들러
 const openGIPreview = () => {
-    alert('출고지시서 인쇄 기능은 준비 중입니다.')
+    console.log('출고지시서 미리보기 열기:', {
+        giCode: giDetail.value.giCode,
+        status: giDetail.value.status
+    })
+    isGoodsIssueModalOpen.value = true
+}
+
+const closeGIPreview = () => {
+    isGoodsIssueModalOpen.value = false
 }
 
 // 출고지시 상세 데이터
