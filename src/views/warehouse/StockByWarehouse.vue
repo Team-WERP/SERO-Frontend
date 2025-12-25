@@ -138,27 +138,27 @@
             </div>
 
             <h4 class="history-title">변경 이력</h4>
-            <div v-if="selectedStockDetail.stockHistories.length > 0" class="history-list">
+            <div v-if="selectedStockDetail.stockHistory && selectedStockDetail.stockHistory.length > 0" class="history-list">
               <table class="history-table">
                 <thead>
                   <tr>
                     <th>일시</th>
-                    <th>구분</th>
-                    <th>변경수량</th>
+                    <th>변경 유형</th>
+                    <th>변경 수량</th>
                     <th>변경 후 재고</th>
                     <th>사유</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="history in selectedStockDetail.stockHistories" :key="history.id">
+                  <tr v-for="history in selectedStockDetail.stockHistory" :key="history.id">
                     <td>{{ formatDateTime(history.createdAt) }}</td>
                     <td>
-                      <span class="history-type" :class="history.type === 'IN' ? 'type-in' : 'type-out'">
-                        {{ history.type === 'IN' ? '입고' : '출고' }}
+                      <span class="history-type" :class="history.changedQuantity > 0 ? 'type-in' : 'type-out'">
+                        {{ history.changedQuantity > 0 ? '입고' : '출고' }}
                       </span>
                     </td>
-                    <td :class="history.type === 'IN' ? 'text-positive' : 'text-negative'">
-                      {{ history.type === 'IN' ? '+' : '-' }}{{ formatNumber(Math.abs(history.changedQuantity)) }}
+                    <td :class="history.changedQuantity > 0 ? 'text-positive' : 'text-negative'">
+                      {{ history.changedQuantity > 0 ? '+' : '' }}{{ formatNumber(history.changedQuantity) }}
                     </td>
                     <td>{{ formatNumber(history.currentStock) }}</td>
                     <td>{{ history.reason || '-' }}</td>
