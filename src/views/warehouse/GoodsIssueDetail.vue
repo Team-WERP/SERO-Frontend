@@ -32,7 +32,7 @@
                         </div>
                         <div class="step-line" :class="{ active: currentStep > 1 }"></div>
 
-                        <div class="step" :class="{ active: currentStep >= 2, completed: currentStep > 2 }">
+                        <div class="step" :class="{ active: currentStep >= 2, completed: currentStep >= 2 }">
                             <div class="step-circle">2</div>
                             <div class="step-label">출고 완료</div>
                         </div>
@@ -189,7 +189,7 @@
                 <div class="section-header">
                     <h2 class="section-title">특이사항</h2>
                     <div class="button-group">
-                        <button class="btn-secondary">난포서 인쇄</button>
+                        <button class="btn-secondary">납품서 인쇄</button>
                         <button class="btn-secondary">출고지시서 인쇄</button>
                     </div>
                 </div>
@@ -200,12 +200,109 @@
 
             <!-- 출고 지시 결재 진행 상황 -->
             <div class="section">
-                <h2 class="section-title">출고 지시 결재 진행 상황</h2>
-                <div class="approval-status">
+                <div class="section-header">
+                    <h2 class="section-title">출고 지시 결재 진행 상황</h2>
+                    <router-link
+                        v-if="giDetail.approvalCode"
+                        :to="`/approvals/${giDetail.approvalCode}`"
+                        class="view-approval-link"
+                    >
+                        결재 바로가기 →
+                    </router-link>
+                </div>
+
+                <!-- 결재가 없는 경우 -->
+                <div v-if="!giDetail.approvalCode" class="approval-status">
                     <div class="empty-state">
                         <img src="@/assets/새로이새로미.png" alt="결재 없음" class="empty-icon" />
                         <p class="empty-message">진행 중인 결재가 없습니다.</p>
                     </div>
+                </div>
+
+                <!-- 결재가 있는 경우 -->
+                <div v-else class="approval-progress">
+                    <!-- 결재 진행 상황 헤더 -->
+                    <div class="approval-flow">
+                        <!-- 기안 단계 -->
+                        <div class="flow-step">
+                            <div class="flow-circle completed">기안</div>
+                            <div class="flow-info">
+                                <div class="flow-label">기안</div>
+                            </div>
+                        </div>
+
+                        <!-- 결재 단계들 (동적) -->
+                        <template v-for="(line, index) in sortedApprovalLines" :key="index">
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div
+                                    class="flow-circle"
+                                    :class="{
+                                        completed: line.status === 'ALS_APPR',
+                                        active: line.status === 'ALS_RVW'
+                                    }"
+                                >
+                                    {{ getLineTypeLabel(line.lineType) }}
+                                </div>
+                                <div class="flow-info">
+                                    <div class="flow-label">{{ line.approverName }} · {{ line.approverDepartment }}</div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- 결재선 상세 테이블 -->
+                    <table class="approval-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">구분</th>
+                                <th style="width: 120px;">이름</th>
+                                <th style="width: 150px;">직급/직책</th>
+                                <th style="width: 180px;">소속</th>
+                                <th style="width: 100px;">상태</th>
+                                <th style="width: 180px;">결재일</th>
+                                <th>비고</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 기안자 -->
+                            <tr>
+                                <td><span class="badge-sm green">기안</span></td>
+                                <td>{{ giDetail.drafterName || '-' }}</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td><span class="status-text approved">승인</span></td>
+                                <td>{{ formatDateTime(giDetail.createdAt) }}</td>
+                                <td>-</td>
+                            </tr>
+
+                            <!-- 결재선 목록 -->
+                            <tr v-for="(line, index) in sortedApprovalLines" :key="index">
+                                <td>
+                                    <span :class="['badge-sm', getApprovalBadgeClass(line.status)]">
+                                        {{ getLineTypeLabel(line.lineType) }}
+                                    </span>
+                                </td>
+                                <td>{{ line.approverName || '-' }}</td>
+                                <td>{{ formatRole(line.approverRank, line.approverPosition) }}</td>
+                                <td>{{ line.approverDepartment || '-' }}</td>
+                                <td>
+                                    <span :class="['status-text', getApprovalStatusClass(line.status)]">
+                                        {{ getApprovalStatusLabel(line.status) }}
+                                    </span>
+                                </td>
+                                <td>{{ formatDateTime(line.processedAt) }}</td>
+                                <td>-</td>
+                            </tr>
+
+                            <!-- 결재선이 없을 경우 -->
+                            <tr v-if="sortedApprovalLines.length === 0">
+                                <td colspan="7" style="text-align: center; color: #9ca3af; padding: 20px;">
+                                    결재선 정보가 없습니다.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -219,12 +316,22 @@
 
         <!-- 하단 고정 버튼 -->
         <div class="fixed-footer">
+            <!-- 담당자 미배정 시: 담당자 배정 버튼 -->
             <button
-                v-if="canAssignManager && !giDetail.managerName"
-                class="btn-primary"
+                v-if="showAssignManagerButton"
+                class="btn-primary-large"
                 @click="assignManager"
             >
                 담당자 배정
+            </button>
+
+            <!-- 담당자 배정 완료 & 결재 미요청 시: 결재 요청 버튼 -->
+            <button
+                v-if="showApprovalRequestButton"
+                class="btn-primary-large"
+                @click="requestApproval"
+            >
+                결재 요청
             </button>
         </div>
     </div>
@@ -243,6 +350,40 @@ const userStore = useUserStore()
 // 권한 체크
 const canAssignManager = computed(() => {
     return userStore.hasAuthority('AC_WHS')
+})
+
+// 담당자 배정 버튼 표시 여부
+const showAssignManagerButton = computed(() => {
+    const result = canAssignManager.value &&
+           !giDetail.value.managerName &&
+           giDetail.value.status === 'GI_RVW'
+
+    console.log('showAssignManagerButton:', {
+        canAssignManager: canAssignManager.value,
+        managerName: giDetail.value.managerName,
+        managerNameType: typeof giDetail.value.managerName,
+        notManagerName: !giDetail.value.managerName,
+        status: giDetail.value.status,
+        result: result
+    })
+
+    return result
+})
+
+// 결재 요청 버튼 표시 여부
+const showApprovalRequestButton = computed(() => {
+    const result = giDetail.value.managerName &&
+           giDetail.value.status === 'GI_RVW' &&
+           !giDetail.value.approvalCode
+
+    console.log('showApprovalRequestButton:', {
+        managerName: giDetail.value.managerName,
+        status: giDetail.value.status,
+        approvalCode: giDetail.value.approvalCode,
+        result: result
+    })
+
+    return result
 })
 
 // 탭 상태
@@ -266,7 +407,8 @@ const giDetail = ref({
     warehouseName: '',
     note: '',
     approvalCode: '',
-    items: []
+    items: [],
+    approvalLines: []
 })
 
 // 현재 단계 계산 (프로그레스 바)
@@ -286,12 +428,98 @@ const totalQuantity = computed(() => {
     return formatNumber(total)
 })
 
+// 결재선 정렬 (sequence 기준)
+const sortedApprovalLines = computed(() => {
+    if (!giDetail.value.approvalLines || giDetail.value.approvalLines.length === 0) return []
+    return [...giDetail.value.approvalLines].sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
+})
+
+// 결재 진행 상태 확인
+const hasApprovedLine = computed(() => {
+    return sortedApprovalLines.value.some(line => line.status === 'ALS_APPR')
+})
+
+const hasReviewingLine = computed(() => {
+    return sortedApprovalLines.value.some(line => line.status === 'ALS_RVW')
+})
+
+const allApproved = computed(() => {
+    if (sortedApprovalLines.value.length === 0) return false
+    return sortedApprovalLines.value.every(line => line.status === 'ALS_APPR')
+})
+
+// 결재 구분 라벨
+const getLineTypeLabel = (lineType) => {
+    const labels = {
+        'AT_APPR': '결재',
+        'AT_RVW': '협조'
+    }
+    return labels[lineType] || '결재'
+}
+
+// 결재 상태 라벨
+const getApprovalStatusLabel = (status) => {
+    const labels = {
+        'ALS_APPR': '승인',
+        'ALS_RVW': '검토중',
+        'ALS_PEND': '대기',
+        'ALS_RJCT': '반려'
+    }
+    return labels[status] || '-'
+}
+
+// 결재 상태 CSS 클래스
+const getApprovalStatusClass = (status) => {
+    if (status === 'ALS_APPR') return 'approved'
+    if (status === 'ALS_RVW') return 'pending'
+    if (status === 'ALS_PEND') return 'pending'
+    if (status === 'ALS_RJCT') return 'rejected'
+    return ''
+}
+
+// 결재 뱃지 CSS 클래스
+const getApprovalBadgeClass = (status) => {
+    if (status === 'ALS_APPR') return 'green'
+    return ''
+}
+
+// 직급/직책 포맷팅
+const formatRole = (rank, position) => {
+    if (!rank && !position) return '-'
+    if (rank && position) return `${rank}/${position}`
+    return rank || position
+}
+
+// 날짜 시간 포맷팅
+const formatDateTime = (dateTime) => {
+    if (!dateTime) return '-'
+    if (typeof dateTime === 'string') {
+        // ISO 8601 형식 처리 (YYYY-MM-DDTHH:mm:ss)
+        if (dateTime.includes('T')) {
+            return dateTime.replace('T', ' ').substring(0, 16)
+        }
+        // 이미 포맷된 형태라면 그대로 반환
+        return dateTime
+    }
+    return '-'
+}
+
 // 출고지시 상세 조회
 const fetchGIDetail = async () => {
     try {
         const giCode = route.params.giCode
         const response = await getGIDetail(giCode)
         giDetail.value = response
+
+        // 디버깅: 담당자 배정 관련 정보 출력
+        console.log('GI Detail:', {
+            giCode: giDetail.value.giCode,
+            status: giDetail.value.status,
+            managerName: giDetail.value.managerName,
+            approvalCode: giDetail.value.approvalCode,
+            canAssignManager: canAssignManager.value,
+            buttonShouldShow: canAssignManager.value && !giDetail.value.managerName && giDetail.value.status === 'GI_RVW'
+        })
     } catch (error) {
         console.error('출고지시 상세 조회 실패:', error)
         if (error.response?.status === 404) {
@@ -315,6 +543,13 @@ const assignManager = async () => {
         console.error('담당자 배정 실패:', error)
         alert(error.response?.data?.message || '담당자 배정에 실패했습니다.')
     }
+}
+
+// 결재 요청
+const requestApproval = () => {
+    // TODO: 결재 요청 모달 구현 필요
+    // 현재는 임시로 알림만 표시
+    alert('결재 요청 기능은 준비 중입니다.\n결재선 선택 모달을 구현해야 합니다.')
 }
 
 // 주문 상세 페이지로 이동
@@ -341,12 +576,6 @@ const handleGoodsIssue = async () => {
         console.error('출고 지시 실패:', error)
         alert(error.response?.data?.message || '출고 지시에 실패했습니다.')
     }
-}
-
-// 날짜 포맷팅
-const formatDateTime = (value) => {
-    if (!value) return '-'
-    return value.replace('T', ' ').substring(0, 16)
 }
 
 // 숫자 포맷팅
@@ -793,6 +1022,155 @@ onMounted(() => {
     margin: 0;
 }
 
+.view-approval-link {
+    font-size: 13px;
+    color: #4C4CDD;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.view-approval-link:hover {
+    text-decoration: underline;
+}
+
+/* ===== 결재 진행 상황 ===== */
+.approval-progress {
+    padding: 20px 0;
+}
+
+/* 결재 플로우 */
+.approval-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.flow-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    border: 3px solid #e5e7eb;
+    transition: all 0.3s;
+}
+
+.flow-circle.completed {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #10b981;
+}
+
+.flow-circle.active {
+    background: #dbeafe;
+    color: #1e40af;
+    border-color: #3b82f6;
+}
+
+.flow-info {
+    text-align: center;
+}
+
+.flow-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.flow-arrow {
+    font-size: 24px;
+    color: #d1d5db;
+    margin: 0 20px;
+    margin-bottom: 30px;
+}
+
+/* 결재 테이블 */
+.approval-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.approval-table thead {
+    background: #f9fafb;
+}
+
+.approval-table th {
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.approval-table td {
+    padding: 14px 16px;
+    text-align: center;
+    font-size: 14px;
+    color: #111827;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.approval-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.approval-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.badge-sm {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.badge-sm.green {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-text {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.status-text.approved {
+    color: #10b981;
+}
+
+.status-text.pending {
+    color: #f59e0b;
+}
+
+.status-text.rejected {
+    color: #ef4444;
+}
+
 /* ===== 버튼 ===== */
 .button-group {
     display: flex;
@@ -846,7 +1224,7 @@ onMounted(() => {
     right: 0;
     background: #ffffff;
     border-top: 1px solid #e5e7eb;
-    padding: 16px 24px;
+    padding: 20px 40px;
     display: flex;
     justify-content: flex-end;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
@@ -866,6 +1244,24 @@ onMounted(() => {
 }
 
 .btn-primary:hover {
+    background: #3d3dbb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(76, 76, 221, 0.3);
+}
+
+.btn-primary-large {
+    padding: 14px 48px;
+    background: #4C4CDD;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary-large:hover {
     background: #3d3dbb;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(76, 76, 221, 0.3);

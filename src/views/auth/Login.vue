@@ -133,15 +133,14 @@ const handleLogin = async () => {
             password: password.value
         });
 
-        const { accessToken, grantType } = res.data;
+        const { accessToken } = res.data;
 
-        localStorage.setItem(
-            'accessToken',
-            grantType ? `${grantType} ${accessToken}` : accessToken
-        );
+        // 토큰에서 공백 제거 후 저장 (grantType은 axios 인터셉터에서 처리)
+        const cleanToken = accessToken.trim();
+        localStorage.setItem('accessToken', cleanToken);
 
         const userStore = useUserStore();
-        userStore.setFromToken(accessToken);
+        userStore.setFromToken(cleanToken);
 
         router.replace('/');
     } catch (e) {
@@ -182,10 +181,12 @@ const devLogin = async (type) => {
 
         const { accessToken } = res.data;
 
-        localStorage.setItem('accessToken', accessToken);
+        // 토큰에서 공백 제거 후 저장
+        const cleanToken = accessToken.trim();
+        localStorage.setItem('accessToken', cleanToken);
 
         const userStore = useUserStore();
-        userStore.setFromToken(accessToken);
+        userStore.setFromToken(cleanToken);
 
         router.replace('/');
     } catch (e) {
