@@ -189,8 +189,8 @@
                 <div class="section-header">
                     <h2 class="section-title">특이사항</h2>
                     <div class="button-group">
-                        <button class="btn-secondary">납품서 인쇄</button>
-                        <button class="btn-secondary">출고지시서 인쇄</button>
+                        <button class="btn-secondary" @click="openDeliveryOrderPreview">납품서 인쇄</button>
+                        <button class="btn-secondary" @click="openGIPreview">출고지시서 인쇄</button>
                     </div>
                 </div>
                 <div class="notes-box">
@@ -334,6 +334,13 @@
                 결재 요청
             </button>
         </div>
+
+        <!-- 납품서 미리보기 모달 -->
+        <DeliveryOrderPreviewModal
+            :is-open="isDeliveryOrderModalOpen"
+            :delivery-order="deliveryOrderData"
+            @close="closeDeliveryOrderPreview"
+        />
     </div>
 </template>
 
@@ -342,6 +349,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getGIDetail, assignGIManager, completeGI } from '@/api/shipping/goodsIssue'
+import { getDODetail } from '@/api/shipping/deliveryOrder'
+import DeliveryOrderPreviewModal from '@/components/modals/DeliveryOrderPreviewModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -389,6 +398,70 @@ const showApprovalRequestButton = computed(() => {
 // 탭 상태
 const activeTab = ref('issue')
 
+// 납품서 미리보기 모달 상태
+const isDeliveryOrderModalOpen = ref(false)
+
+// 납품서 데이터 (실제 API에서 가져온 데이터)
+const deliveryOrderData = ref({
+    doCode: '',
+    createdAt: '',
+    recipient: '',
+    companyName: '',
+    ceoName: '',
+    businessNo: '',
+    companyContact: '',
+    address: '',
+    businessType: '',
+    businessItem: '',
+    totalAmount: 0,
+    shippedAt: '',
+    deliveryLocation: '',
+    note: '',
+    items: []
+})
+
+// 납품서 상세 조회
+const fetchDeliveryOrderDetail = async (doCode) => {
+    try {
+        const response = await getDODetail(doCode)
+        deliveryOrderData.value = response
+        console.log('납품서 상세 조회 성공:', response)
+    } catch (error) {
+        console.error('납품서 상세 조회 실패:', error)
+        alert('납품서 정보를 불러오는데 실패했습니다.')
+    }
+}
+
+// 납품서 미리보기 모달 핸들러
+const openDeliveryOrderPreview = async () => {
+    console.log('납품서 미리보기 열기 시도:', {
+        giCode: giDetail.value.giCode,
+        doCode: giDetail.value.doCode,
+        hasDoCode: !!giDetail.value.doCode
+    })
+
+    if (!giDetail.value.doCode) {
+        console.error('doCode가 없습니다. giDetail:', giDetail.value)
+        alert('납품서 정보가 없습니다.\n출고지시와 연결된 납품서가 없는 것 같습니다.')
+        return
+    }
+
+    // 납품서 데이터 조회
+    await fetchDeliveryOrderDetail(giDetail.value.doCode)
+
+    // 모달 열기
+    isDeliveryOrderModalOpen.value = true
+}
+
+const closeDeliveryOrderPreview = () => {
+    isDeliveryOrderModalOpen.value = false
+}
+
+// 출고지시서 미리보기 핸들러 (TODO: 출고지시서 모달 구현 필요)
+const openGIPreview = () => {
+    alert('출고지시서 인쇄 기능은 준비 중입니다.')
+}
+
 // 출고지시 상세 데이터
 const giDetail = ref({
     giCode: '',
@@ -402,6 +475,7 @@ const giDetail = ref({
     recipientName: '',
     recipientContact: '',
     soCode: '',
+    doCode: '',
     clientName: '',
     shippedAt: '',
     warehouseName: '',
@@ -514,6 +588,7 @@ const fetchGIDetail = async () => {
         // 디버깅: 담당자 배정 관련 정보 출력
         console.log('GI Detail:', {
             giCode: giDetail.value.giCode,
+            doCode: giDetail.value.doCode,
             status: giDetail.value.status,
             managerName: giDetail.value.managerName,
             approvalCode: giDetail.value.approvalCode,
