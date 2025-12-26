@@ -77,11 +77,12 @@
                             <th class="text-center" style="width: 100px; min-width: 100px;">결재 상태</th>
                             <th class="text-center" style="width: 180px; min-width: 180px;">진행 상황</th>
                             <th class="text-center" style="width: 110px; min-width: 110px;">기안일</th>
+                            <th class="text-center" style="width: 120px; min-width: 120px;">완료일</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="approvals.length === 0">
-                            <td colspan="8" class="text-center empty-message">검색된 결과가 없습니다.</td>
+                            <td colspan="9" class="text-center empty-message">검색된 결과가 없습니다.</td>
                         </tr>
                         <tr v-for="(item, index) in approvals" :key="item.approvalId">
                             <td class="text-center">
@@ -154,6 +155,7 @@
                             </td>
                             
                             <td class="text-center">{{ formatDate(item.draftedAt) }}</td>
+                            <td class="text-center">{{ formatDate(item.completedAt) }}</td>
                         </tr>
                     </tbody>
                 </table>
