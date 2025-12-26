@@ -112,6 +112,7 @@
                         <div class="cell code">품목코드</div>
                         <div class="cell name">품목명</div>
                         <div class="cell spec">규격</div>
+                        <div class="cell unit">단위</div>
                         <div class="cell qty">생산요청수량</div>
                     </div>
 
@@ -120,6 +121,7 @@
                         <div class="cell code">{{ i.itemCode }}</div>
                         <div class="cell name">{{ i.itemName }}</div>
                         <div class="cell spec">{{ i.spec }}</div>
+                        <div class="cell unit">{{ i.unit }}</div>
                         <div class="cell qty">{{ formatNumber(i.requestedQuantity) }}</div>
                     </div>
 
@@ -128,6 +130,7 @@
                         <div class="cell code"></div>
                         <div class="cell name"></div>
                         <div class="cell spec"></div>
+                        <div class="cell unit"></div>
                         <div class="cell qty sum-value">
                             {{ formatNumber(header.totalQuantity) }}
                         </div>
@@ -175,6 +178,7 @@ const header = ref({
     prCode: '',
     soCode: '',
     status: '',
+    productionProgress: '',
     requestedAt: '',
     dueAt: '',
     drafterName: '',
@@ -184,41 +188,64 @@ const header = ref({
 const items = ref([])
 
 const steps = [
-    { code: 'PR_RVW', label: '생산요청 결재' },
-    { code: 'PR_PLANNED', label: '계획수립' },
-    { code: 'PR_PRODUCING', label: '생산 중' },
-    { code: 'PR_DONE', label: '생산 완료' }
+    { key: 'APPR', label: '생산요청 결재' },
+    { key: 'PLAN', label: '계획수립' },
+    { key: 'PROD', label: '생산 중' },
+    { key: 'DONE', label: '생산 완료' }
 ]
 
 const CURRENT_STEP_MAP = {
-    PR_RVW: null,        // 시작 전
-    PR_APPR: 0,          // 결재중
-    PR_APPR_DONE: 1,     // 결재 완료
-    PR_PLANNED: 1,       // 계획 수립 완료
-    PR_PRODUCING: 2,     // 생산 중
-    PR_DONE: 3,          // 생산 완료
-    PR_RJCT: -1,
-    PR_CANCEL: -1,
+    PR_RVW: 0,
+    PR_APPR_PEND: 0,
+    PR_APPR_DONE: 1,
+    PR_PLANNED: 1,
+    PR_PRODUCING: 2,
+    PR_DONE: 3,
+    PR_APPR_RJCT: -1,
+    PR_CANCEL: -1
 }
 
 const currentStepIndex = computed(() => {
-    return CURRENT_STEP_MAP[header.value.status] ?? null
+    const status = header.value.status
+    const progress = header.value.productionProgress
+
+    // ❗ 아직 결재조차 시작 안 함
+    if (status === 'PR_RVW' || status === 'PR_TMP') {
+        return -1
+    }
+
+    // ❗ 결재 진행 중
+    if (status === 'PR_APPR_PEND') {
+        return 0
+    }
+
+    // ❗ 결재 완료
+    if (status === 'PR_APPR_DONE') {
+        switch (progress) {
+            case 'PLANNING':
+            case 'PLANNED':
+                return 1
+            case 'PRODUCING':
+                return 2
+            case 'COMPLETED':
+                return 3
+            default:
+                return 0
+        }
+    }
+
+    return -1
 })
+
 
 const getStepState = (idx) => {
     const cur = currentStepIndex.value
-
-    if (cur === null || cur < 0) return 'inactive'
+    if (cur === -1) return 'inactive'
     if (idx < cur) return 'done'
-    if (idx === cur) {
-        // 완료 상태는 current가 아니라 done
-        if (['PR_PLANNED', 'PR_DONE'].includes(header.value.status)) {
-            return 'done'
-        }
-        return 'current'
-    }
+    if (idx === cur) return 'current'
     return 'inactive'
 }
+
 
 const reloadDetail = async () => {
     const res = await getPRDetail(prId)
@@ -234,19 +261,16 @@ onMounted(async () => {
 
 const statusLabel = computed(() => ({
     PR_RVW: '요청검토',
-    PR_APPR: '결재중',
+    PR_APPR_PEND: '결재중',
     PR_APPR_DONE: '결재승인',
-    PR_RJCT: '결재반려',
-    PR_PLANNED: '계획수립',
-    PR_PRODUCING: '생산중',
-    PR_DONE: '생산완료',
+    PR_APPR_RJCT: '결재반려',
     PR_CANCEL: '취소'
 }[header.value.status] || header.value.status))
 
 const statusClass = computed(() => {
     const s = header.value.status
-    if (s === 'PR_RVW' || s === 'PR_APPR') return 'green'
-    if (s === 'PR_RJCT') return 'red'
+    if (s === 'PR_RVW' || s === 'PR_APPR_PEND') return 'green'
+    if (s === 'PR_APPR_RJCT') return 'red'
     if (s === 'PR_PLANNED') return 'yellow'
     if (s === 'PR_PRODUCING') return 'purple'
     if (s === 'PR_DONE') return 'blue'
@@ -254,8 +278,6 @@ const statusClass = computed(() => {
 })
 
 const stepDateText = (idx) => {
-    if (idx === 0) return header.value.requestedAt?.slice(0, 10) || '-'
-    if (idx === 3) return header.value.completedAt?.slice(0, 10) || '-'
     return '-'
 }
 
@@ -276,7 +298,6 @@ const goList = () => {
 </script>
 
 <style scoped>
-/* 페이지 배경: Figma 스펙 */
 .pr-detail-wrap {
     background: #F9FAFB;
     padding: 24px;
@@ -334,7 +355,7 @@ const goList = () => {
     color: #FF3B30;
 }
 
-/* 상태 pill (Frame 77) */
+/* 상태 pill */
 .status-pill {
     display: inline-flex;
     align-items: center;
@@ -429,7 +450,7 @@ const goList = () => {
     margin-top: 20px;
 }
 
-/* 메인 흰 패널 (Rectangle 663) */
+/* 메인 흰 패널 */
 .panel {
     background: #fff;
     border-radius: 10px;
@@ -474,19 +495,7 @@ const goList = () => {
     height: 3px;
     background: #4C4CDD;
     z-index: 2;
-    /* divider 위 */
 }
-
-/* .tab.active::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: 0px;
-    width: 100%;
-    height: 3px;
-    background: #4C4CDD;
-    border-radius: 2px;
-} */
 
 .divider {
     position: relative;
@@ -496,7 +505,7 @@ const goList = () => {
     margin-bottom: 18px;
 }
 
-/* 공통 아웃라인 버튼 (Frame 100/115) */
+/* 공통 아웃라인 버튼 */
 .outline-btn {
     border: 1px solid #4C4CDD;
     color: #4C4CDD;
@@ -571,24 +580,43 @@ const goList = () => {
 
 /* 품목 섹션 타이틀 row */
 .section-row {
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* 품목 테이블 (Frame 63) */
+/* 품목 테이블 */
+.thead,
+.trow,
+.tfoot {
+    display: grid;
+    grid-template-columns:
+        60px minmax(120px, 1.2fr) minmax(200px, 2fr) minmax(140px, 1.2fr) minmax(80px, 0.6fr) minmax(120px, 1fr);
+}
+
+.items-table {
+    width: 100%;
+    max-width: none;
+    overflow-x: auto;
+}
+
+.thead,
+.trow,
+.tfoot {
+    min-width: 900px;
+}
+
 .items-table {
     border-radius: 10px;
     overflow: hidden;
     width: 100%;
-    max-width: 1300px;
     border: 1px solid #D9D9D9;
     margin-top: 10px;
 }
 
 .thead {
     display: grid;
-    grid-template-columns: 120px 140px 1fr 160px 170px;
     background: #F9FAFB;
     border-bottom: 1px solid #D9D9D9;
     height: 47px;
@@ -597,7 +625,6 @@ const goList = () => {
 
 .trow {
     display: grid;
-    grid-template-columns: 120px 140px 1fr 160px 170px;
     background: #fff;
     border-bottom: 1px solid #D9D9D9;
     height: 47px;
@@ -626,7 +653,6 @@ const goList = () => {
 
 .tfoot {
     display: grid;
-    grid-template-columns: 120px 140px 1fr 160px 170px;
     background: #F9FAFB;
     height: 47px;
     align-items: center;
@@ -640,7 +666,7 @@ const goList = () => {
 }
 
 
-/* 결재 진행 박스 (Rectangle 688) */
+/* 결재 진행 박스 */
 .approval-box {
     background: #F9FAFB;
     border-radius: 10px;
