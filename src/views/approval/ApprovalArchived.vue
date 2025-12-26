@@ -143,9 +143,9 @@
                                         ></div>
                                     </div>
 
-                                    <div class="current-approver" v-if="(item.approvalStatus === 'AS_ING' || item.approvalStatus === 'AS_RJCT') && (item.currentApproverName || item.rejectedApproverName)">
+                                    <div class="current-approver" v-if="(item.approvalStatus === 'AS_ING' || item.approvalStatus === 'AS_RJCT') && (item.currentApproverName || item.rejecterName)">
                                         <span class="dot" :class="{'dot-red': item.approvalStatus === 'AS_RJCT'}"></span> 
-                                        <span v-if="item.approvalStatus === 'AS_RJCT'">반려자: {{ item.rejectedApproverName }}</span>
+                                        <span v-if="item.approvalStatus === 'AS_RJCT'">반려자: {{ item.rejecterName }}</span>
                                         <span v-else>현 결재: {{ item.currentApproverName }}</span>
                                     </div>
                                     <div class="current-approver" v-else style="visibility: hidden;">&nbsp;</div>
