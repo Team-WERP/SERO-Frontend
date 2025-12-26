@@ -1,7 +1,7 @@
 <template>
-  <div class="p-8 bg-gray-50 min-h-screen font-sans">
+  <div class="bg-gray-50 min-h-screen font-sans">
     <header class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">주문 관리</h1>
+      <h1 class="text-[32px] font-bold text-gray-900 tracking-tight">주문 관리</h1>
       <p class="text-sm text-gray-500 mt-3">전체 주문을 조회합니다.</p>
     </header>
 
@@ -107,7 +107,7 @@
 
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div class="p-4 border-b border-gray-100 flex items-center bg-gray-50/50 text-sm text-gray-600 font-medium">
-        조회 결과: <span class="text-indigo-600 font-bold mx-1">{{ orders.length }}</span>건
+        조회 결과: <span class="text-indigo-600 font-bold mx-1">{{ orders[0].orderCount }}</span>건
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">

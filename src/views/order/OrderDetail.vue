@@ -1,7 +1,7 @@
 <template>
   <div v-if="order" class="min-h-screen bg-[#F9FAFB] p-6 font-sans">
-    <nav class="mb-2 text-sm text-gray-500">
-      <router-link to="/order/management" class="font-medium text-[#4C4CDD] hover:underline">
+    <nav class="mb-2 text-gray-500">
+      <router-link to="/order/management" class="font-medium text-[#4C4CDD] over:underline">
         주문 관리
       </router-link>
       <span class="mx-2 text-gray-400">›</span>
@@ -442,8 +442,13 @@ const openHistoryModal = async (itemId, itemName) => {
     historyDetails.value = data.items || [];
     isHistoryModalOpen.value = true;
   } catch (err) {
-    console.error('이력 상세 조회 중 오류 발생:', err);
-    alert('이력 정보를 불러오는 중 오류가 발생했습니다.');
+    if (err.response && err.response.status === 404) {
+      historyDetails.value = []; 
+      isHistoryModalOpen.value = true;
+    } else {
+      console.error('이력 상세 조회 중 오류 발생:', err);
+      alert('이력 정보를 불러오는 중 오류가 발생했습니다.');
+    }
   }
 };
 
