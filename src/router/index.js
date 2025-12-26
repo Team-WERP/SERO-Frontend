@@ -43,6 +43,9 @@ import EmployeeList from "@/views/master/EmployeeList.vue";
 import ApprovalDashboard from "@/views/approval/ApprovalDashboard.vue";
 import ApprovalSubmitted from "@/views/approval/ApprovalSubmitted.vue";
 import ApprovalReceived from "@/views/approval/ApprovalReceived.vue";
+import ApprovalRequested from "@/views/approval/ApprovalRequested.vue";
+import ApprovalArchived from "@/views/approval/ApprovalArchived.vue";
+import ApprovalReferenced from "@/views/approval/ApprovalReferenced.vue";
 
 // 공지사항
 import NoticeList from "@/views/notices/NoticeList.vue";
@@ -126,7 +129,10 @@ const router = createRouter({
                 // ---------------------
                 { path: "/approval/dashboard", component: ApprovalDashboard },
                 { path: "/approval/submitted", component: ApprovalSubmitted },
+                { path: "/approval/requested", component: ApprovalRequested },
+                { path: "/approval/archived", component: ApprovalArchived },
                 { path: "/approval/received", component: ApprovalReceived },
+                { path: "/approval/referenced", component: ApprovalReferenced },
 
                 // ---------------------
                 // 공지사항
