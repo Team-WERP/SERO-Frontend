@@ -160,6 +160,29 @@
 
         </div>
     </div>
+
+    <!-- 인쇄 미리보기 모달 -->
+    <div v-if="showPrintModal" class="print-modal-backdrop">
+        <div class="print-modal">
+            <div class="print-modal-header">
+                <span>생산요청서 미리보기</span>
+                <button class="close-btn" @click="closePrint">✕</button>
+            </div>
+
+            <div class="print-modal-body">
+                <div class="print-area">
+                    <PRPrintDocument :header="header" :items="items" />
+                </div>
+            </div>
+
+            <div class="print-modal-footer">
+                <button class="outline-btn primary-fill" @click="handlePrint">
+                    출력하기
+                </button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup>
@@ -167,6 +190,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPRDetail } from '@/api/production/productionRequest'
 import PlanTab from './PlanTab.vue'
+import PRPrintDocument from '@/components/production/PRPrintDocument.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -293,6 +317,21 @@ const goSO = () => {
 
 const goList = () => {
     router.push('/production/requests')
+}
+
+const showPrintModal = ref(false)
+
+const onPrint = () => {
+    showPrintModal.value = true
+}
+
+const handlePrint = () => {
+    window.print();
+    showPrintModal.value = false
+};
+
+const closePrint = () => {
+    showPrintModal.value = false
 }
 
 </script>
@@ -722,5 +761,115 @@ const goList = () => {
 
 .dot.done {
     background: #0FBA81;
+}
+
+.print-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.print-modal {
+    background: #fff;
+    width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.print-modal-body {
+    overflow: auto;
+    padding: 16px;
+}
+
+.print-modal-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+}
+
+.print-modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #ddd;
+    border-bottom: none;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+}
+</style>
+
+<style>
+@media print {
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    html,
+    body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .pr-detail-wrap,
+    .title-row,
+    .breadcrumb,
+    .stepper,
+    .tabs,
+    .divider,
+    .print-modal-header,
+    .print-modal-footer {
+        display: none !important;
+    }
+
+    .print-modal-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: #fff !important;
+        z-index: 9999 !important;
+    }
+
+    .print-modal {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .print-modal-body {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        /* 스크롤바가 페이지를 생성하는 것 방지 */
+    }
+
+    .print-area {
+        width: 210mm;
+        height: 297mm;
+    }
 }
 </style>
