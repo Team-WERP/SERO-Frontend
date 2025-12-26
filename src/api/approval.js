@@ -12,4 +12,9 @@ export const getSubmittedApprovals = (params = {}) => {
 export const getRequestedApprovals = (params = {}) => {
     return api.get('/approvals/requested', { params })
         .then(res => res.data)
-}
+};
+
+export const getReceivedApprovals = (params = {}) => {
+    return api.get('/approvals/received', { params })
+        .then(res => res.data)
+};
