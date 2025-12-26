@@ -139,16 +139,86 @@
                 </div>
 
                 <!-- approvals -->
-                <div class="section-title" style="margin-top: 24px;">
-                    생산요청 결재 진행 상황
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">생산요청 결재 진행 상황</h2>
+                    </div>
+
+                    <!-- 결재 없음 -->
+                    <div v-if="!header.approvalCode" class="approval-status">
+                        <div class="approval-empty">
+                            <img class="empty-character" src="@/assets/새로이새로미.png" alt="결재 없음" />
+                            <div class="ghost">진행 중인 결재 건이 없습니다.</div>
+                        </div>
+                    </div>
+
+                    <!-- 결재 있음 -->
+                    <div v-else class="approval-progress">
+                        <!-- 플로우 -->
+                        <div class="approval-flow">
+                            <div class="flow-step">
+                                <div class="flow-circle completed">기안</div>
+                                <div class="flow-label">{{ header.drafterName }}</div>
+                            </div>
+
+                            <template v-for="(line, idx) in sortedApprovalLines" :key="idx">
+                                <div class="flow-arrow">→</div>
+                                <div class="flow-step">
+                                    <div class="flow-circle"
+                                        :class="{ completed: line.status === 'ALS_APPR', active: line.status === 'ALS_RVW' }">
+                                        {{ getLineTypeLabel(line.lineType) }}
+                                    </div>
+                                    <div class="flow-label">{{ line.approverName }}</div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- 테이블 -->
+                        <table class="approval-table">
+                            <thead>
+                                <tr>
+                                    <th>구분</th>
+                                    <th>이름</th>
+                                    <th>직급/직책</th>
+                                    <th>소속</th>
+                                    <th>상태</th>
+                                    <th>결재일</th>
+                                    <th>비고</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 기안자 -->
+                                <tr>
+                                    <td>기안</td>
+                                    <td>{{ header.drafterName }}</td>
+                                    <td>{{ formatRole(header.drafterRank, header.drafterPosition) }}</td>
+                                    <td>{{ header.drafterDepartment }}</td>
+                                    <td>승인</td>
+                                    <td>{{ header.requestedAt }}</td>
+                                    <td>-</td>
+                                </tr>
+
+                                <tr v-for="(line, idx) in sortedApprovalLines" :key="idx">
+                                    <td>{{ getLineTypeLabel(line.lineType) }}</td>
+                                    <td>{{ line.approverName }}</td>
+                                    <td>{{ formatRole(line.approverRank, line.approverPosition) }}</td>
+                                    <td>{{ line.approverDepartment }}</td>
+                                    <td>{{ getApprovalStatusLabel(line.status) }}</td>
+                                    <td>{{ line.processedAt }}</td>
+                                    <td>{{ line.note || '-' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="section-footer">
+                            <router-link v-if="header.approvalCode" :to="`/approvals/${header.approvalId}`"
+                                class="view-approval-link">
+                                결재 바로가기 →
+                            </router-link>
+                        </div>
+                    </div>
+
                 </div>
 
-                <div class="approval-box">
-                    <div class="approval-empty">
-                        <img class="empty-character" src="@/assets/새로이새로미.png" alt="결재 없음" />
-                        <div class="ghost">진행 중인 결재 건이 없습니다.</div>
-                    </div>
-                </div>
 
                 <div v-if="showAssignManagerBtn || showRequestApprovalBtn" class="assign-btn-row">
                     <button v-if="showAssignManagerBtn" class="assign-btn" @click="openAssignmentModal">
@@ -212,9 +282,12 @@ const prId = Number(route.params.prId)
 const activeTab = ref('PR') // PR | PLAN
 const isModalOpen = ref(false)
 const deptEmployees = ref([])
+const approvalLines = ref([])
+
 
 const header = ref({
     prId: null,
+    soId: null,
     prCode: '',
     soCode: '',
     status: '',
@@ -223,7 +296,12 @@ const header = ref({
     dueAt: '',
     managerId: null,
     drafterName: '',
+    drafterDepartment: '',
+    drafterPosition: '',
+    drafterRank: '',
     managerName: '',
+    approvalId: null,
+    approvalCode: '',
     totalQuantity: 0
 })
 const items = ref([])
@@ -289,12 +367,47 @@ const reloadDetail = async () => {
     const res = await getPRDetail(prId)
     header.value = res.header
     items.value = Array.isArray(res.items) ? res.items : []
+    approvalLines.value = Array.isArray(res.approvalLines)
+        ? res.approvalLines
+        : []
 }
+
+const sortedApprovalLines = computed(() => {
+    return [...approvalLines.value].sort(
+        (a, b) => (a.sequence || 0) - (b.sequence || 0)
+    )
+})
+
+const getLineTypeLabel = (lineType) => {
+    const map = {
+        AT_APPR: '결재',
+        AT_RVW: '협조'
+    }
+    return map[lineType] || '결재'
+}
+
+const getApprovalStatusLabel = (status) => {
+    const map = {
+        ALS_APPR: '승인',
+        ALS_RVW: '검토중',
+        ALS_PEND: '대기',
+        ALS_RJCT: '반려'
+    }
+    return map[status] || '-'
+}
+
+const formatRole = (rank, position) => {
+    if (!rank && !position) return '-'
+    if (rank && position) return `${rank}/${position}`
+    return rank || position
+}
+
 
 onMounted(async () => {
     const res = await getPRDetail(prId)
     header.value = res.header
     items.value = Array.isArray(res.items) ? res.items : []
+    await reloadDetail()
 })
 
 const statusLabel = computed(() => ({
@@ -327,7 +440,9 @@ const showAssignManagerBtn = computed(() => {
 const showRequestApprovalBtn = computed(() => {
     return header.value.status === 'PR_RVW'
         && !!header.value.managerId
+        && !header.value.approvalCode
 })
+
 
 const requestApproval = async () => {
     if (!header.value.managerId) {
@@ -625,6 +740,11 @@ const closePrint = () => {
     margin: 10px 0 12px;
 }
 
+.section-footer {
+    margin-top: 15px;
+    text-align: right;
+}
+
 /* 기본정보 카드 2개 (Rectangle 679/680) */
 .info-cards {
     display: grid;
@@ -885,6 +1005,92 @@ const closePrint = () => {
 
 .assign-btn:hover {
     background: #3B3BB0;
+}
+
+/* 결재 진행 상황 전체 박스 */
+.approval-progress {
+    background: #F9FAFB;
+    border-radius: 10px;
+    padding: 24px;
+    margin-top: 10px;
+}
+
+/* 시각적 결재 플로우 (원형) */
+.approval-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 80px;
+}
+
+.flow-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #D9D9D9;
+    color: #898989;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.flow-circle.completed {
+    background: #ECFEF6;
+    border-color: #0FBA81;
+    color: #0FBA81;
+}
+
+.flow-circle.active {
+    background: #EDE9FE;
+    border-color: #4C4CDD;
+    color: #4C4CDD;
+}
+
+.flow-arrow {
+    color: #D9D9D9;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* 결재 테이블 스타일 */
+.approval-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    font-size: 13px;
+}
+
+.approval-table th,
+.approval-table td {
+    border: 1px solid #D9D9D9;
+    padding: 10px;
+    text-align: center;
+}
+
+.approval-table th {
+    background: #F3F4F6;
+    color: #4B5563;
+    font-weight: 600;
+}
+
+/* 결재 바로가기 링크 */
+.view-approval-link {
+    font-size: 13px;
+    color: #4C4CDD;
+    text-decoration: none;
+    font-weight: bold;
 }
 </style>
 
