@@ -51,3 +51,9 @@ export const getPRListByOrderId = (orderId) => {
     return api.get(`/production-requests/search/${orderId}`, orderId)
         .then(res => res.data)
 }
+
+export const assignPRManager = (prId, managerId) => {
+    return api.put(`/production-requests/${prId}/manager`, {
+        managerId
+    })
+}

@@ -150,6 +150,18 @@
                     </div>
                 </div>
 
+                <div v-if="showAssignManagerBtn || showRequestApprovalBtn" class="assign-btn-row">
+                    <button v-if="showAssignManagerBtn" class="assign-btn" @click="openAssignmentModal">
+                        담당자 배정
+                    </button>
+                    <ManagerAssignmentModal v-if="isModalOpen" :departmentData="deptEmployees"
+                        @close="isModalOpen = false" @confirm="onConfirmAssignment" />
+
+                    <button v-if="showRequestApprovalBtn" class="assign-btn" @click="requestApproval">
+                        결재 요청
+                    </button>
+                </div>
+
             </div>
 
             <!-- 생산계획/작업지시 -->
@@ -188,7 +200,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getPRDetail } from '@/api/production/productionRequest'
+import { getPRDetail, assignPRManager } from '@/api/production/productionRequest'
+import { getEmployees } from '@/api/employee/employee'
+import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 import PlanTab from './PlanTab.vue'
 import PRPrintDocument from '@/components/production/PRPrintDocument.vue'
 
@@ -196,6 +210,8 @@ const route = useRoute()
 const router = useRouter()
 const prId = Number(route.params.prId)
 const activeTab = ref('PR') // PR | PLAN
+const isModalOpen = ref(false)
+const deptEmployees = ref([])
 
 const header = ref({
     prId: null,
@@ -205,6 +221,7 @@ const header = ref({
     productionProgress: '',
     requestedAt: '',
     dueAt: '',
+    managerId: null,
     drafterName: '',
     managerName: '',
     totalQuantity: 0
@@ -233,17 +250,14 @@ const currentStepIndex = computed(() => {
     const status = header.value.status
     const progress = header.value.productionProgress
 
-    // ❗ 아직 결재조차 시작 안 함
     if (status === 'PR_RVW' || status === 'PR_TMP') {
         return -1
     }
 
-    // ❗ 결재 진행 중
     if (status === 'PR_APPR_PEND') {
         return 0
     }
 
-    // ❗ 결재 완료
     if (status === 'PR_APPR_DONE') {
         switch (progress) {
             case 'PLANNING':
@@ -303,6 +317,49 @@ const statusClass = computed(() => {
 
 const stepDateText = (idx) => {
     return '-'
+}
+
+const showAssignManagerBtn = computed(() => {
+    return header.value.status === 'PR_RVW'
+        && !header.value.managerId
+})
+
+const showRequestApprovalBtn = computed(() => {
+    return header.value.status === 'PR_RVW'
+        && !!header.value.managerId
+})
+
+const requestApproval = async () => {
+    if (!header.value.managerId) {
+        alert('담당자를 먼저 배정해주세요.')
+        return
+    }
+
+    if (!confirm('결재를 요청하시겠습니까?')) return
+
+}
+
+const openAssignmentModal = async () => {
+    try {
+        const res = await getEmployees('DEPT_PRO') // 생산팀 기준
+        deptEmployees.value = Array.isArray(res[0]) ? res[0] : res
+        isModalOpen.value = true
+    } catch (e) {
+        console.error(e)
+        alert('담당자 목록을 불러오지 못했습니다.')
+    }
+}
+
+const onConfirmAssignment = async (employee) => {
+    try {
+        await assignPRManager(prId, employee.id)
+        alert(`담당자가 ${employee.name}(으)로 배정되었습니다.`)
+        isModalOpen.value = false
+        await reloadDetail()
+    } catch (e) {
+        console.error(e)
+        alert('담당자 배정에 실패했습니다.')
+    }
 }
 
 
@@ -806,6 +863,28 @@ const closePrint = () => {
     border: none;
     font-size: 18px;
     cursor: pointer;
+}
+
+/* 담당자 배정 버튼 (PR) */
+.assign-btn-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.assign-btn {
+    background: #4C4CDD;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.assign-btn:hover {
+    background: #3B3BB0;
 }
 </style>
 
