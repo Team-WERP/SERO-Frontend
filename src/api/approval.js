@@ -18,3 +18,13 @@ export const getReceivedApprovals = (params = {}) => {
     return api.get('/approvals/received', { params })
         .then(res => res.data)
 };
+
+export const getProcessedApprovals = (params = {}) => {
+    return api.get('/approvals/archived', { params })
+        .then(res => res.data)
+};
+
+export const getReferencedApprovals = (params = {}) => {
+    return api.get('/approvals/referenced', { params })
+        .then(res => res.data)
+};
