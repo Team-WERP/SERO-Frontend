@@ -146,9 +146,9 @@ const managers = ref([
 const statusFilters = [
     { label: '전체', value: '' },
     { label: '주문검토', value: 'PR_RVW' },
-    { label: '결재중', value: 'PR_APPR' },
+    { label: '결재중', value: 'PR_APPR_PEND' },
     { label: '결재승인', value: 'PR_APPR_DONE' },
-    { label: '결재반려', value: 'PR_RJCT' },
+    { label: '결재반려', value: 'PR_APPR_RJCT' },
     { label: '계획수립', value: 'PR_PLANNED' },
     { label: '생산중', value: 'PR_PRODUCING' },
     { label: '생산완료', value: 'PR_DONE' },
@@ -194,9 +194,9 @@ const formatQuantity = (qty) => {
 
 const getStatusClass = (status) => ({
     PR_RVW: 'status-badge status-review',
-    PR_APPR: 'status-badge status-review',
+    PR_APPR_PEND: 'status-badge status-review',
     PR_APPR_DONE: 'status-badge status-approved',
-    PR_RJCT: 'status-badge status-reject',
+    PR_APPR_RJCT: 'status-badge status-reject',
     PR_PLANNED: 'status-badge status-plan',
     PR_PRODUCING: 'status-badge status-progress',
     PR_DONE: 'status-badge status-complete',
@@ -205,9 +205,9 @@ const getStatusClass = (status) => ({
 
 const getStatusLabel = (status) => ({
     PR_RVW: '주문검토',
-    PR_APPR: '결재중',
+    PR_APPR_PEND: '결재중',
     PR_APPR_DONE: '결재승인',
-    PR_RJCT: '결재반려',
+    PR_APPR_RJCT: '결재반려',
     PR_PLANNED: '계획수립',
     PR_PRODUCING: '생산중',
     PR_DONE: '생산완료',
