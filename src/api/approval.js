@@ -8,3 +8,8 @@ export const getSubmittedApprovals = (params = {}) => {
     return api.get('/approvals/submitted', { params })
         .then(res => res.data)
 };
+
+export const getRequestedApprovals = (params = {}) => {
+    return api.get('/approvals/requested', { params })
+        .then(res => res.data)
+}
