@@ -55,8 +55,11 @@ export const useMenuStore = defineStore("menu", {
             // 6. 전자결재
             approval: [
                 { name: "대시보드", path: "/approval/dashboard" },
-                { name: "결재 상신함", path: "/approval/submitted" },
-                { name: "결재 수신함", path: "/approval/received" }
+                { name: "기안 문서함", path: "/approval/submitted" },
+                { name: "결재 요청함", path: "/approval/requested" },
+                { name: "결재 문서함", path: "/approval/archived" },
+                { name: "수신 문서함", path: "/approval/received" },
+                { name: "참조 문서함", path: "/approval/referenced" },
             ],
 
             // 7. 공지사항

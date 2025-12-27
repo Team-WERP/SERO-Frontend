@@ -1,14 +1,14 @@
 <template>
-    <div class="received-approval-page">
-        <div class="breadcrumb">전자결재 > 수신 문서함</div>
+    <div class="requested-approval-page">
+        <div class="breadcrumb">전자결재 > 결재 요청함</div>
         <div class="page-header">
             <div>
-                <h1 class="page-title">수신 문서함</h1>
+                <h1 class="page-title">결재 요청함</h1>
                 <p class="page-description">
-                    최종 승인 후 수신자로 지정되어 접수된 결재 문서를 조회합니다.
+                    결재선에 본인이 포함되어 있으며, 현재 결재 차례가 본인인 결재 목록을 조회합니다.
                 </p>
             </div>
-        </div>
+            </div>
 
         <div class="search-section">
             <h2 class="filter-title">필터 및 검색</h2>
@@ -69,21 +69,21 @@
                 <table class="items-table">
                     <thead>
                         <tr>
-                            <th class="text-center" style="width: 50px; min-width: 50px;">No</th>
-                            <th class="text-center" style="width: 130px; min-width: 130px;">결재 번호</th>
-                            <th class="text-center" style="width: 100px; min-width: 100px;">문서 구분</th>
-                            <th style="min-width: 300px;">제목</th>
-                            <th class="text-center" style="width: 60px; min-width: 60px;">첨부</th>
-                            <th class="text-center" style="width: 100px; min-width: 100px;">결재 상태</th>
-                            <th class="text-center" style="width: 100px; min-width: 100px;">기안자</th>
-                            <th class="text-center" style="width: 120px; min-width: 120px;">기안 부서</th>
-                            <th class="text-center" style="width: 120px; min-width: 120px;">기안일</th>
-                            <th class="text-center" style="width: 120px; min-width: 120px;">완료일</th>
+                            <th style="width: 20px; min-width: 20px;">No</th>
+                            <th style="width: 130px; min-width: 130px;">결재 번호</th>
+                            <th style="width: 100px; min-width: 100px;">문서 구분</th>
+                            <th style="min-width: 250px;">제목</th>
+                            <th style="width: 50px; min-width: 50px;">첨부</th>
+                            <th style="width: 90px; min-width: 90px;">결재 상태</th>
+                            <th style="width: 160px; min-width: 160px;">진행 상황</th>
+                            <th style="width: 90px; min-width: 90px;">기안자</th>
+                            <th style="width: 100px; min-width: 100px;">기안 부서</th>
+                            <th style="width: 100px; min-width: 100px;">기안일</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="approvals.length === 0">
-                            <td colspan="10" class="text-center empty-message">수신된 결재 문서가 없습니다.</td>
+                            <td colspan="10" class="text-center empty-message">요청된 결재 문서가 없습니다.</td>
                         </tr>
                         <tr v-for="(item, index) in approvals" :key="item.approvalId">
                             <td class="text-center">
@@ -92,7 +92,7 @@
                             
                             <td class="text-center code-text">{{ item.approvalCode }}</td>
                             
-                            <td class="text-center">
+                            <td>
                                 <span class="doc-type-badge" :class="getRefDocTypeClass(item.refDocType)">
                                     {{ getRefDocTypeName(item.refDocType) }}
                                 </span>
@@ -117,17 +117,38 @@
                                 <span v-else>-</span>
                             </td>
                             
-                            <td class="text-center">
+                            <td>
                                 <span class="status-badge" :class="getStatusBadgeClass(item.approvalStatus)">
                                     {{ getStatusName(item.approvalStatus) }}
                                 </span>
                             </td>
                             
-                            <td class="text-center">{{ item.drafterName }}</td>
-                            <td class="text-center text-gray">{{ item.drafterDepartment }}</td>
+                            <td class="text-center align-middle">
+                                <div class="progress-cell">
+                                    <div class="progress-info">
+                                        <span class="step-text">
+                                            승인 <b>{{ item.currentApprovedCount }}</b> / {{ item.totalLine }}
+                                        </span>
+                                        <span class="percent-text">
+                                            {{ Math.round((item.currentApprovedCount / item.totalLine) * 100) }}%
+                                        </span>
+                                    </div>
+                                    <div class="progress-track">
+                                        <div 
+                                            class="progress-fill bar-active" 
+                                            :style="{ width: getProgressWidth(item) + '%' }"
+                                        ></div>
+                                    </div>
+                                    <div class="current-approver">
+                                        <span class="dot"></span> 현 결재: {{ item.currentApproverName }}
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>{{ item.drafterName }}</td>
+                            <td class="text-gray">{{ item.drafterDepartment }}</td>
                             
-                            <td class="text-center">{{ formatDate(item.draftedAt) }}</td>
-                            <td class="text-center">{{ formatDate(item.completedAt) }}</td>
+                            <td>{{ formatDate(item.draftedAt) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -164,14 +185,15 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { getReceivedApprovals } from '@/api/approval.js'; 
+import { getRequestedApprovals } from '@/api/approval.js'; 
 
 const searchFilter = ref({
     keyword: '',
     startDate: '',
     endDate: '',
     refDocType: '',
-    isRead: null // null: 전체, true: 열람, false: 미열람
+    isRead: null, // null: 전체, true: 열람, false: 미열람
+    approvalType: ''
 });
 
 const pageInfo = ref({
@@ -182,7 +204,7 @@ const pageInfo = ref({
 });
 
 const approvals = ref([]);
-const unreadCount = ref(0);
+const unreadCount = ref(0); // 안 읽은 문서 개수 (선택사항)
 
 // === 매핑 함수 ===
 const getRefDocTypeName = (code) => {
@@ -198,12 +220,20 @@ const getStatusName = (code) => {
     return map[code] || code;
 };
 const getStatusBadgeClass = (code) => {
+    // 요청함에 들어온 이상 대부분 '진행중'이겠지만, 반려 후 재상신 등의 케이스 대비
     if (code === 'AS_APPR') return 'status-active';
-    return 'status-active'; // 수신함은 기본적으로 승인된 문서라 active 처리
+    if (code === 'AS_RJCT') return 'status-reject';
+    return 'status-progress';
 };
 const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     return dateStr.substring(0, 10);
+};
+
+// 진행률 계산
+const getProgressWidth = (item) => {
+    if (item.totalLine === 0) return 0;
+    return (item.currentApprovedCount / item.totalLine) * 100;
 };
 
 // 페이징 계산
@@ -227,35 +257,36 @@ const changePage = (page) => {
 
 const goToDetail = (id) => {
     console.log('상세 페이지 이동:', id);
-    // 상세 이동 로직
+    // 상세 이동 로직 (router.push 등)
 };
 
 // === API 호출 ===
 const fetchData = async () => {
+    // 필터 조건 구성
     const params = {
         keyword: searchFilter.value.keyword || null,
         startDate: searchFilter.value.startDate,
         endDate: searchFilter.value.endDate,
         refDocType: searchFilter.value.refDocType || null,
-        isRead: searchFilter.value.isRead,
+        isRead: searchFilter.value.isRead, // API 스펙에 맞게 전송 (null/true/false)
+        approvalType: searchFilter.value.approvalType || null,
         page: pageInfo.value.number,
         size: pageInfo.value.size
     };
 
-    console.log('수신 문서함 조회 params:', params);
+    console.log('결재 요청함 조회 params:', params);
 
     try {
-        const response = await getReceivedApprovals(params);
+        const response = await getRequestedApprovals(params);
         if (response) {
             approvals.value = response.approvals || [];
             pageInfo.value.totalElements = response.totalElements || 0;
             pageInfo.value.totalPages = response.totalPages || 0;
             
-            // 안 읽은 건수 (화면상 계산)
             unreadCount.value = approvals.value.filter(item => !item.viewedAt).length;
         }
     } catch (error) {
-        console.error('수신 문서함 조회 실패:', error);
+        console.error('결재 요청함 조회 실패:', error);
         approvals.value = [];
     }
 };
@@ -267,7 +298,7 @@ onMounted(() => {
 
 <style scoped>
 /* ===== 레이아웃 ===== */
-.received-approval-page { padding: 5px; width: 100%; }
+.requested-approval-page { padding: 5px; width: 100%; }
 .page-header { margin-bottom: 24px; }
 .breadcrumb { font-size: 14px; color: #6b7280; margin: 0 0 4px 0; }
 .page-title { font-size: 28px; font-weight: 700; color: #111827; margin-bottom: 8px; }
@@ -308,9 +339,6 @@ onMounted(() => {
 .items-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
 .items-table thead { background: #f9fafb; border-bottom: 2px solid #e5e7eb; }
 .items-table th { padding: 12px 12px; font-size: 14px; font-weight: 600; color: #374151; text-align: left; }
-/* 헤더 가운데 정렬 */
-.items-table th.text-center { text-align: center; }
-
 .items-table td { padding: 12px 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; color: #111827; vertical-align: middle; }
 .items-table tbody tr:hover { background: #f9fafb; }
 
@@ -318,16 +346,17 @@ onMounted(() => {
 .text-gray { color: #6b7280; font-size: 13px; }
 .link { color: #4C4CDD; cursor: pointer; font-weight: 500; }
 .link:hover { text-decoration: underline; }
-.font-bold { font-weight: 700; color: #111827; } 
+.font-bold { font-weight: 700; color: #111827; } /* 안 읽었을 때 진하게 */
 .code-text { font-family: monospace; color: #6b7280; font-weight: 600; }
 
-/* 뱃지 */
+/* ★ 안 읽음 뱃지 스타일 */
 .title-wrapper { display: flex; align-items: center; gap: 6px; }
 .badge-new {
     background-color: #ef4444; color: white; font-size: 10px; font-weight: 700;
     padding: 1px 5px; border-radius: 4px; line-height: 1.2;
 }
 
+/* 뱃지 */
 .doc-type-badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .badge-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
 .badge-green { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
@@ -335,6 +364,20 @@ onMounted(() => {
 
 .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
 .status-active { background: #dcfce7; color: #166534; }
+.status-reject { background: #fee2e2; color: #991b1b; }
+.status-progress { background: #ede9fe; color: #5b21b6; }
+
+/* 진행 Bar */
+.progress-cell { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 4px; width: 100%; }
+.progress-info { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-bottom: 2px; }
+.step-text b { color: #4C4CDD; font-weight: 700; }
+.percent-text { font-weight: 600; color: #374151; }
+.progress-track { width: 100%; height: 6px; background-color: #f3f4f6; border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+.bar-active { background-color: #4C4CDD; }
+
+.current-approver { font-size: 11px; color: #4b5563; text-align: left; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.current-approver .dot { width: 6px; height: 6px; background-color: #4C4CDD; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 
 .empty-message { padding: 60px 0; color: #9ca3af; font-size: 14px; }
 
