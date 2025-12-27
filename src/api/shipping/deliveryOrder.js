@@ -12,8 +12,8 @@ export const getDOListForGI = (params = {}) => {
             ...params,
             status: 'DO_BEFORE_GI'
         }
-    }).then(res => res.data)
-}
+    }).then(res => res.data);
+};
 
 /**
  * 납품서 상세 조회
@@ -22,5 +22,15 @@ export const getDOListForGI = (params = {}) => {
  */
 export const getDODetail = (doCode) => {
     return api.get(`/delivery-orders/${doCode}`)
-        .then(res => res.data)
-}
+        .then(res => res.data);
+};
+
+/**
+ * 납품서 목록 조회 (주문 ID 기준)
+ * @param {number} orderId - 주문 ID
+ * @returns {Promise<Array>} 납품서 목록
+ */
+export const getDOListByOrderId = (orderId) => {
+    return api.get(`/delivery-orders/search/${orderId}`)
+        .then(res => res.data);
+};
