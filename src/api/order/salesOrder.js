@@ -33,8 +33,21 @@ export const getItemHistory = (orderId, itemId) => {
       .then(res => res.data);
 };
 
+
+// ====================== 고객사 =============================
+
 // 고객사 주문
 export const createClientOrder = (orderData) => {
   return api.post('/clients/orders', orderData)
     .then(res => res.data);
+};
+
+// 최근 주문 이력 목록 조회
+export const getOrderHistory = () => {
+  return api.get('/clients/orders/history').then(res => res.data);
+};
+
+// 특정 주문 정보 복사 조회
+export const getOrderCopyInfo = (orderId) => {
+  return api.get(`/clients/orders/${orderId}/copy-info`).then(res => res.data);
 };
