@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gray-50 p-8 font-sans">
+    <div class="min-h-screen bg-gray-50 font-sans">
       <header class="mb-8">
         <h1 class="text-[32px] font-bold text-gray-900">주문 조회</h1>
       </header>
