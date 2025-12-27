@@ -1,4 +1,4 @@
-import api from './axios'
+import api from '../axios'
 
 // 고객사 배송지 목록 조회
 export async function getClientAddresses(clientId) {

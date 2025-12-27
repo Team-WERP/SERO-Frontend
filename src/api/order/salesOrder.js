@@ -32,3 +32,9 @@ export const getItemHistory = (orderId, itemId) => {
   return api.get(`/orders/${orderId}/item-history/${itemId}`) 
       .then(res => res.data);
 };
+
+// 고객사 주문
+export const createClientOrder = (orderData) => {
+  return api.post('/clients/orders', orderData)
+    .then(res => res.data);
+};
