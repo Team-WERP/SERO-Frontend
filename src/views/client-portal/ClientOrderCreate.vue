@@ -1,7 +1,6 @@
 <template>
     <div class="min-h-screen bg-gray-50 p-8 font-sans">
       <header class="mb-8">
-        <router-link to="/order/list" class="text-sm text-gray-500 hover:underline">‹ 목록으로 돌아가기</router-link>
         <h1 class="text-[32px] font-bold text-gray-900 mt-2">주문 등록</h1>
       </header>
   
