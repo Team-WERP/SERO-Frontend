@@ -71,7 +71,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { getPriceHistory } from '@/api/clientItem'
+import { getPriceHistory } from '@/api/client/clientItem'
 import { useUserStore } from '@/stores/user'
 
 const props = defineProps({
@@ -132,12 +132,10 @@ const formatDate = (dateString) => {
     })
 }
 
-// 가격 포맷팅
 const formatPrice = (price) => {
     return price ? `${price.toLocaleString()}원` : '-'
 }
 
-// 상태 클래스
 const getStatusClass = (status) => {
     const statusClasses = {
         'TRADE_NORMAL': 'status-badge status-active',
@@ -147,7 +145,6 @@ const getStatusClass = (status) => {
     return statusClasses[status] || 'status-badge'
 }
 
-// 상태 라벨
 const getStatusLabel = (status) => {
     const statusLabels = {
         'TRADE_NORMAL': '정상',

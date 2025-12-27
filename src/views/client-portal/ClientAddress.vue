@@ -96,7 +96,7 @@ import {
     createClientAddress,
     updateClientAddress,
     deleteClientAddress as deleteAddressAPI
-} from '@/api/clientAddress'
+} from '@/api/client/clientAddress'
 import ClientAddressModal from '@/components/client/ClientAddressModal.vue'
 
 const userStore = useUserStore()

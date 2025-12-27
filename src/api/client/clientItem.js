@@ -1,4 +1,4 @@
-import api from './axios'
+import api from "../axios"
 
 // 고객사 거래 품목 조회
 export async function getClientItems(clientId, params = {}) {

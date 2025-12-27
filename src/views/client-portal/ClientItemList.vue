@@ -95,7 +95,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'    
 import { useUserStore } from '@/stores/user'
-import { getClientItems } from '@/api/clientItem'
+import { getClientItems } from '@/api/client/clientItem';
 import PriceHistoryModal from '@/components/client/PriceHistoryModal.vue'
 
 const userStore = useUserStore()
