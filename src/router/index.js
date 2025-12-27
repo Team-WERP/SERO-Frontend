@@ -34,6 +34,9 @@ import PRDetail from "@/views/production/PRDetail.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
+import GoodsIssueList from "@/views/warehouse/GoodsIssueList.vue";
+import GoodsIssueCreate from "@/views/warehouse/GoodsIssueCreate.vue";
+import GoodsIssueDetail from "@/views/warehouse/GoodsIssueDetail.vue";
 
 // 기준정보
 import ItemBomManagement from "@/views/master/ItemBomManagement.vue";
@@ -113,6 +116,9 @@ const router = createRouter({
                 // ---------------------
                 { path: "/warehouse/stock", component: StockByWarehouse },
                 { path: "/warehouse/delivery-orders", component: DeliveryOrderList },
+                { path: "/warehouse/goods-issues", component: GoodsIssueList },
+                { path: "/warehouse/goods-issues/create/:doCode", name: "GoodsIssueCreate", component: GoodsIssueCreate },
+                { path: "/warehouse/goods-issues/:giCode", name: "GoodsIssueDetail", component: GoodsIssueDetail },
                 { path: "/warehouse/tracking", component: DeliveryTracking },
 
                 // ---------------------

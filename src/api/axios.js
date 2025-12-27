@@ -15,8 +15,10 @@ api.interceptors.request.use(
         const token = localStorage.getItem('accessToken');
 
         if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        };
+            // 토큰에서 공백 제거
+            const cleanToken = token.trim();
+            config.headers.Authorization = `Bearer ${cleanToken}`;
+        }
 
         return config;
     },
