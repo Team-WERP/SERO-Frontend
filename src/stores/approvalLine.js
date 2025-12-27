@@ -28,7 +28,6 @@ export const useApprovalLineStore = defineStore("approvalLine", {
         },
         close() {
             this.isOpen = false;
-            this.reset();
         },
         reset() {
             this.approvalLines = [];
@@ -37,6 +36,11 @@ export const useApprovalLineStore = defineStore("approvalLine", {
             this.mode = "CREATE";
             this.originalSnapshot = null;
         },
+        setLines(payload) {
+            this.approvalLines = payload.approval || [];
+            this.recipientLines = payload.recipient || [];
+            this.referenceLines = payload.reference || [];
+        },
     },
     getters: {
         totalLines: (state) => [
@@ -44,13 +48,12 @@ export const useApprovalLineStore = defineStore("approvalLine", {
             ...state.referenceLines,
             ...state.recipientLines,
         ],
-        isDirty: (state) => {
+        isDirty: (state) =>
             JSON.stringify(state.originalSnapshot) !==
-                JSON.stringify({
-                    approvalLines: state.approvalLines,
-                    referenceLines: state.referenceLines,
-                    recipientLines: state.recipientLines,
-                });
-        },
+            JSON.stringify({
+                approvalLines: state.approvalLines,
+                referenceLines: state.referenceLines,
+                recipientLines: state.recipientLines,
+            }),
     },
 });

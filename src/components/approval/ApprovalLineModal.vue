@@ -32,8 +32,7 @@
 
                 <div class="w-16 shrink-0 items-center">
                     <div class="h-full flex flex-col items-center justify-center">
-                        <!-- @click="addToTarget" -->
-                        <button :disabled="!selectedEmployee"
+                        <button :disabled="!selectedEmployee" @click="addToTarget"
                             class="w-10 h-10 bg-white border border-[#efefef] rounded flex items-center justify-center text-[#4C4CDD]
                          enabled:hover:bg-[#efefef] enabled:hover:border-[#4C4CDD]  disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all active:scale-95">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
@@ -45,12 +44,14 @@
                     </div>
                 </div>
 
-                <div class="border border-black flex-4">
-                    결재선 목록
+                <div class="flex-4 shrink-0">
+                    <ApprovalLinePanel :lines="{
+                        approval: approvalLines,
+                        recipient: recipientLines,
+                        reference: referenceLines
+                    }" v-model:activeTab="activeRightTab" @remove="handleRemove" @move="handleMove" />
                 </div>
             </div>
-
-
 
 
             <!-- 푸터 -->
@@ -91,7 +92,13 @@ import OrganizationPanel from './OrganizationPanel.vue';
 import ApprovalLinePanel from './ApprovalLinePanel.vue';
 
 const approvalLineStore = useApprovalLineStore();
-const { isOpen, isDirty } = storeToRefs(approvalLineStore);
+const {
+    approvalLines,
+    referenceLines,
+    recipientLines,
+    isOpen,
+    isDirty
+} = storeToRefs(approvalLineStore);
 
 const isOrganizationTreeLoading = ref(false);              // 조직도 로딩 상태
 const isTemplateLoading = ref(false);                       // 템플릿 로딩 상태
@@ -99,19 +106,8 @@ const organizationTree = ref([]);                            // 조직도 데이
 const approvalLineTemplates = ref([]);                 // 결재선 템플릿 데이터
 
 const selectedEmployee = ref(null);                             // 선택된 직원
-const selectedApprovalLineTemplate = ref(null);                  // 선택된 결재선 템플릿
 
-const tabs = [
-    { id: 'approval', label: '결재자' },
-    { id: 'recipient', label: '수신자' },
-    { id: 'reference', label: '참조자' }
-];
-
-const approvalLines = ref({
-    approval: [],
-    recipient: [],
-    reference: []
-});
+const activeRightTab = ref('approval');
 
 onMounted(() => {
     // 조직도 조회
@@ -224,14 +220,44 @@ const onSelectEmployee = (employee) => {
 };
 
 const onSelectApprovalLineTemplate = (template) => {
-    if (confirm(`'${template.name}' 템플릿을 불러오시겠습니까?`)) {
-        //     const data = JSON.parse(JSON.stringify(template.data));
-        //     selectedLists.approval = data.approval || [];
-        //     selectedLists.recipient = data.recipient || [];
-        //     selectedLists.reference = data.reference || [];
+    if (confirm(`'${template.name}' 템플릿을 불러오시겠습니까? 기존 설정은 초기화됩니다.`)) {
+        approvalLineStore.setLines({
+            approval: template.data.approval,
+            recipient: template.data.recipient,
+            reference: template.data.reference,
+        });
 
-        //     // 불러온 후 조직도 탭으로 돌아가거나 유지
+        // 불러온 후 조직도 탭으로 돌아가거나 유지
     }
+};
+
+// 직원 추가
+const addToTarget = () => {
+    if (!selectedEmployee.value) return;
+
+    const targetList =
+        activeRightTab.value === 'approval'
+            ? approvalLines.value
+            : activeRightTab.value === 'recipient'
+                ? recipientLines.value
+                : referenceLines.value;
+
+    const employee = selectedEmployee.value;
+
+    if (targetList.some(item => item.id === employee.id)) {
+        alert("이미 목록에 추가된 사용자입니다.");
+        return;
+    }
+
+    if (targetList.length >= 10) {
+        alert("최대 10명까지만 지정 가능합니다.");
+        return;
+    }
+
+    targetList.push({
+        ...employee,
+        lineType: 'AT_APPR'
+    });
 };
 
 const closeModal = () => {
@@ -239,15 +265,36 @@ const closeModal = () => {
         if (!confirm("변경사항이 저장되지 않았습니다. 그래도 닫으시겠습니까?")) {
             return;
         }
+        approvalLineStore.reset();
     }
     approvalLineStore.close();
-}
+};
 
 const applyLines = () => {
     approvalLineStore.close();
 }
 
+const handleRemove = ({ tab, index }) => {
+    const list =
+        tab === 'approval'
+            ? approvalLines.value
+            : tab === 'recipient'
+                ? recipientLines.value
+                : referenceLines.value;
 
+    list.splice(index, 1);
+};
+
+// 5. 이동 핸들러
+const handleMove = ({ tab, index, direction }) => {
+    if (tab !== 'approval') return;
+
+    const list = approvalLines.value;
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+
+    [list[index], list[targetIndex]] = [list[targetIndex], list[index]];
+};
 
 </script>
 
