@@ -8,8 +8,8 @@
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div class="lg:col-span-3 space-y-8">
           <section class="bg-white p-6 rounded-xl border border-gray-200">
-            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-              <span class="w-1 h-5 bg-[#4C4CDD] rounded-full"></span> 주문 기본 정보
+            <h2 class="text-[18px] text-[#4C4CDD] font-bold mb-6 flex items-center gap-2">
+                주문 기본 정보
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -31,8 +31,8 @@
   
           <section class="bg-white p-6 rounded-xl border border-gray-200">
             <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-bold flex items-center gap-2">
-                <span class="w-1 h-5 bg-[#4C4CDD] rounded-full"></span> 주문 품목
+              <h2 class="text-[18px] text-[#4C4CDD] font-bold flex items-center gap-2 mb-4">
+                주문 품목
               </h2>
               <button @click="isHistoryModalOpen = true" class="text-[15px] border border-[#4C4CDD] text-[#4C4CDD] px-3 py-1.5 rounded-lg hover:bg-gray-50 font-semibold">최근 주문이력 조회</button>
             </div>
@@ -98,8 +98,8 @@
           </section>
   
           <section class="bg-white p-6 rounded-xl border border-gray-200">
-            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-              <span class="w-1 h-5 text-[#4C4CDD] rounded-full"></span> 납품/배송 정보
+            <h2 class="text-[18px] text-[#4C4CDD] font-bold mb-6 flex items-center gap-2">
+              납품/배송 정보
             </h2>
             <div class="space-y-4">
                 <div class="flex items-center gap-4">
@@ -131,7 +131,7 @@
           </section>
   
           <section class="bg-white p-6 rounded-xl border border-gray-200">
-            <h2 class="text-[15px] font-bold mb-4">특이사항</h2>
+            <h2 class="text-[18px] text-[#4C4CDD] font-bold mb-6">특이사항</h2>
             <textarea v-model="form.note" placeholder="추가 요청사항을 입력해주세요" class="w-full border border-gray-400 text-[13px] rounded-xl p-4 h-24 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
           </section>
         </div>
@@ -139,7 +139,7 @@
         <div class="lg:col-span-1">
           <div class="sticky top-8 space-y-4">
             <div class="bg-white p-6 rounded-2xl border border-gray-200">
-              <h3 class="text-lg font-bold mb-6 text-gray-800">주문 요약</h3>
+              <h3 class="text-[18px] text-[#4C4CDD] font-bold mb-6">주문 요약</h3>
               <div class="space-y-4 text-sm mb-8 border-b pb-6">
                 <div class="flex justify-between text-gray-500">
                   <span>총 품목 수</span>
