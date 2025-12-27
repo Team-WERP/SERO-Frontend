@@ -91,8 +91,8 @@
               </table>
             </div>
             <div class="flex gap-2">
-              <button @click="isItemModalOpen = true" class="bg-[#4C4CDD] text-white px-5 py-2 rounded-lg font-bold text-[15px] hover:bg-indigo-700">품목 추가</button>
-              <button class="border border-[#4C4CDD] text-[#4C4CDD] px-5 py-2 rounded-lg font-bold hover:bg-indigo-50">납기 가능 여부 조회</button>
+              <button @click="isItemModalOpen = true" class="bg-[#4C4CDD] text-white px-3 py-1.5 rounded-lg font-bold text-[15px] hover:bg-indigo-700">품목 추가</button>
+              <button class="border border-[#4C4CDD] text-[#4C4CDD] px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-50">납기 가능 여부 조회</button>
             </div>
           </section>
   
@@ -112,10 +112,17 @@
                             <option :value="null">직접 입력</option>
                         </select>
                 </div>
-              <div class="flex items-center gap-4">
-                <label class="w-32 text-[13px] font-bold text-gray-700">상세 주소 <span class="text-red-500">*</span></label>
-                <input v-model="form.address" type="text" class="flex-1 border border-gray-400 text-[13px] rounded-lg p-2.5 outline-none bg-gray-50" readonly />
-              </div>
+                <div class="flex items-center gap-4">
+                    <label class="w-32 text-[13px] font-bold text-gray-700">상세 주소 <span class="text-red-500">*</span></label>
+                    <input 
+                        v-model="form.address" 
+                        type="text" 
+                        class="flex-1 border border-gray-400 text-[13px] rounded-lg p-2.5 outline-none transition-colors"
+                        :class="selectedAddrId !== null ? 'bg-gray-50 text-gray-500' : 'bg-white focus:ring-2 focus:ring-indigo-500'"
+                        :readonly="selectedAddrId !== null" 
+                        placeholder="배송지 주소를 입력해주세요"
+                    />
+                </div>
               <div class="grid grid-cols-2 gap-4">
                 <div class="flex items-center gap-4">
                   <label class="w-32 text-[13px] font-bold text-gray-700">수령 담당자명 <span class="text-red-500">*</span></label>
@@ -233,9 +240,15 @@
   };
   
   const onAddressChange = () => {
+  if (selectedAddrId.value === null) {
+    form.value.address = '';
+    form.value.recipientName = '';
+    form.value.recipientContact = '';
+  } else {
     const addr = allAddresses.value.find(a => a.id === selectedAddrId.value);
     if (addr) updateFormAddress(addr);
-  };
+  }
+};
   
   const currentAddressName = computed(() => {
     return allAddresses.value.find(a => a.id === selectedAddrId.value)?.name;
