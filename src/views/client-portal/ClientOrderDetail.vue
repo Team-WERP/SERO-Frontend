@@ -8,54 +8,60 @@
           {{ getStatusLabel(order.status) }}
         </span>
       </div>
-      <span class="text-[13px] text-gray-500 ml-1">담당자: {{ order.managerName }}</span>
+      <p class="text-[13px] text-gray-500 mt-1">고객사 담당자: <span class="font-medium text-gray-800">{{ order.clientManagerName || '-' }}</span></p>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-      <div class="lg:col-span-3 space-y-8">
+      <div class="lg:col-span-3 space-y-6">
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <section class="bg-white p-6 rounded-xl border border-gray-200">
-            <h3 class="text-[18px] font-bold text-[#4C4CDD] mb-4">기본 주문 정보</h3>
-            <div class="space-y-3 text-[13px]">
-              <div class="flex justify-between"><span class="text-gray-500">주문번호</span><span class="font-medium">{{ order.soCode }}</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">PO번호</span><span class="font-medium">{{ order.poCode || '-' }}</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">주문일시</span><span>{{ order.orderedAt }}</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">납기 요청일</span><span class="font-medium">{{ order.shippedAt }}</span></div>
-              <div class="pt-2 border-t border-gray-100">
-                <p class="text-gray-500 mb-1">비고</p>
-                <p class="text-gray-800 italic">{{ order.note || '특이사항 없음' }}</p>
+        <section class="bg-white p-6 rounded-xl border border-gray-200 ">
+          <h3 class="text-[18px] font-bold text-[#4C4CDD] mb-6 flex items-center gap-2">
+            기본 주문 정보
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-[13px]">
+            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">주문번호</span><span class="font-medium">{{ order.soCode }}</span></div>
+            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">PO번호</span><span class="font-medium">{{ order.poCode || '-' }}</span></div>
+            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">주문일시</span><span>{{ order.orderedAt }}</span></div>
+            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">납기 요청일</span><span class="font-medium">{{ order.shippedAt }}</span></div>
+            <div class="md:col-span-2 pt-2">
+              <p class="text-gray-500 mb-2 font-medium">비고</p>
+              <div class="bg-gray-50 p-3 rounded-lg text-gray-800 border border-gray-100 min-h-[50px]">
+                {{ order.note || '특이사항 없음' }}
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section class="bg-white p-6 rounded-xl border border-gray-200">
-            <h3 class="text-[18px] font-bold text-[#4C4CDD] mb-4">주문서 / 납품서</h3>
-            <div class="space-y-3 text-[13px]">
-              <div>
-                <p class="text-gray-500 mb-1">주문서</p>
-                <a v-if="order.soUrl" :href="order.soUrl" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                  주문서 확인하기
+        <section class="bg-white p-6 rounded-xl border border-gray-200 ">
+          <h3 class="text-[18px] font-bold text-[#4C4CDD] mb-6 flex items-center gap-2">
+            주문서 및 납품서
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-[13px]">
+            <div class="p-4 bg-gray-50 rounded-lg">
+              <p class="text-gray-500 mb-3 font-bold">주문서</p>
+              <a v-if="order.soUrl" :href="order.soUrl" target="_blank" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-md text-blue-600 hover:bg-blue-50 transition-colors  font-medium">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                PDF 주문서 확인하기
+              </a>
+              <span v-else class="text-gray-400">등록된 주문서가 없습니다.</span>
+            </div>
+            <div class="p-4 bg-gray-50 rounded-lg">
+              <p class="text-gray-500 mb-3 font-bold">납품서</p>
+              <div v-if="order.doUrls && order.doUrls.length" class="flex flex-wrap gap-2">
+                <a v-for="(url, idx) in order.doUrls" :key="idx" :href="url" target="_blank" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-md text-blue-600 hover:bg-blue-50 transition-colors  font-medium">
+                  납품서_{{ idx + 1 }}.pdf
                 </a>
-                <span v-else class="text-gray-400">등록된 주문서 없음</span>
               </div>
-              <div class="pt-2 border-t border-gray-100">
-                <p class="text-gray-500 mb-1">납품서</p>
-                <div v-if="order.doUrls && order.doUrls.length" class="space-y-1">
-                  <a v-for="(url, idx) in order.doUrls" :key="idx" :href="url" target="_blank" class="text-blue-600 hover:underline block truncate">
-                    납품서_{{ idx + 1 }}.pdf
-                  </a>
-                </div>
-                <span v-else class="text-gray-400">등록된 납품서 없음</span>
-              </div>
+              <span v-else class="text-gray-400">등록된 납품서가 없습니다.</span>
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
 
-        <section class="bg-white rounded-xl border border-gray-200 overflow-hidden ">
-          <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-            <h3 class="text-lg font-bold text-[#4C4CDD]">주문 품목 정보</h3>
+        <section class="bg-white rounded-xl border border-gray-200  overflow-hidden">
+          <div class="p-6 border-b border-gray-100">
+            <h3 class="text-[18px] font-bold text-[#4C4CDD] flex items-center gap-2">
+              주문 품목 정보
+            </h3>
           </div>
           <table class="w-full text-[13px] text-center">
             <thead class="bg-gray-50 text-gray-500 font-bold border-b">
@@ -66,73 +72,79 @@
                 <th class="py-3 px-4">수량</th>
                 <th class="py-3 px-4">단위</th>
                 <th class="py-3 px-4">단가</th>
-                <th class="py-3 px-4">금액</th>
+                <th class="py-3 px-4 pr-8">금액</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-              <tr v-for="(item, idx) in order.items" :key="item.id" class="hover:bg-gray-50">
+              <tr v-for="(item, idx) in order.items" :key="item.id" class="hover:bg-gray-50 transition-colors">
                 <td class="py-4 text-gray-400">{{ idx + 1 }}</td>
                 <td class="py-4 font-medium text-gray-700">{{ item.itemCode }}</td>
-                <td class="py-4">
-                  <p class="font-semibold text-gray-900">{{ item.itemName }}</p>
-                </td>
-                <td class="py-4">
-                  <span >{{ formatNumber(item.quantity) }}</span>
-                </td>
-                 <td>{{ item.unit }}</td>
+                <td class="py-4 font-medium text-gray-900">{{ item.itemName }}</td>
+                <td class="py-4">{{ formatNumber(item.quantity) }}</td>
+                <td class="py-4">{{ item.unit }}</td>
                 <td class="py-4"> {{ formatNumber(item.unitPrice) }}</td>
-                <td class="py-4 font-medium">₩ {{ formatNumber(item.totalPrice) }}</td>
+                <td class="py-4">₩ {{ formatNumber(item.totalPrice) }}</td>
               </tr>
             </tbody>
-            <tfoot class="bg-gray-50/50 font-semibold border-t-1 border-gray-600">
+            <tfoot class="bg-gray-50 font-semibold border-t-2 border-gray-200">
               <tr>
                 <td colspan="3" class="py-4 text-right pr-6">합계</td>
                 <td class="py-4">{{ formatNumber(order.totalQuantity) }}</td>
-                <td class="py-4"></td>
-                <td class="py-4"></td>
-                <td class="py-4">₩ {{ formatNumber(order.totalPrice) }}</td>
+                <td colspan="2"></td>
+                <td class="py-4 font-boldpr-8">₩ {{ formatNumber(order.totalPrice) }}</td>
               </tr>
             </tfoot>
           </table>
         </section>
 
-        <section class="bg-white p-6 rounded-xl border border-gray-200 max-w-2xl">
+        <section class="bg-white p-6 rounded-xl border border-gray-200 ">
           <h3 class="text-[18px] font-bold text-[#4C4CDD] mb-6 flex items-center gap-2">
-           배송지 정보
+             배송지 정보
           </h3>
-          <div class="grid grid-cols-1 gap-4 text-[13px]">
-            <div class="flex border-b border-gray-50 pb-3"><span class="w-32 text-gray-500 font-medium">납품처</span><span>{{ order.shippingName }}</span></div>
-            <div class="flex border-b border-gray-50 pb-3"><span class="w-32 text-gray-500 font-medium">상세 주소</span><span>{{ order.address }}</span></div>
-            <div class="flex border-b border-gray-50 pb-3"><span class="w-32 text-gray-500 font-medium">수령인</span><span>{{ order.recipientName }}</span></div>
-            <div class="flex"><span class="w-32 text-gray-500 font-medium">연락처</span><span>{{ order.recipientContact }}</span></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-[13px]">
+            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">납품처</span><span>{{ order.shippingName }}</span></div>
+            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">수령인</span><span class="font-medium">{{ order.recipientName }}</span></div>
+            <div class="flex border-b border-gray-50 pb-2 md:col-span-2"><span class="w-32 text-gray-500">배송 주소</span><span class="flex-1">{{ order.address }}</span></div>
+            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">연락처</span><span>{{ order.recipientContact }}</span></div>
           </div>
         </section>
       </div>
 
-      <div class="lg:col-span-1">
-        <div class="sticky top-8">
-          <div class="bg-white p-6 rounded-2xl border border-gray-200">
+      <aside class="lg:col-span-1 space-y-6">
+        <div class="sticky top-8 space-y-6">
+          <div class="bg-white p-6 rounded-2xl border border-gray-200 ">
             <h3 class="text-[18px] font-bold mb-6 text-[#4C4CDD]">주문 요약</h3>
-            <div class="space-y-4 text-sm mb-8 border-b pb-6">
+            <div class="space-y-4 text-sm mb-6 border-b pb-6">
               <div class="flex justify-between text-gray-500">
                 <span>총 품목 종류</span>
-                <span class="text-gray-900 font-semibold">{{ order.totalItemCount }}</span>
+                <span class="text-gray-900 font-bold">{{ order.totalItemCount }}</span>
               </div>
               <div class="flex justify-between text-gray-500">
                 <span>총 주문 수량</span>
-                <span class="text-gray-900 font-semibold">{{ formatNumber(order.totalQuantity) }}</span>
+                <span class="text-gray-900 font-bold">{{ formatNumber(order.totalQuantity) }}</span>
               </div>
             </div>
-            
-            <div class="mb-2">
-              <div class="flex justify-between items-end font-semibold">
-                <span class="text-base text-gray-900">최종 결제 금액</span>
-                <span class="text-[15px] text-[#4C4CDD]">₩ {{ formatNumber(order.totalPrice) }}</span>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-900 font-semibold">결제 금액</span>
+              <span class="text-[15px] font-semibold text-[#4C4CDD]">₩ {{ formatNumber(order.totalPrice) }}</span>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-2xl border border-gray-200 ">
+            <h3 class="text-[18px] font-bold mb-6 text-[#4C4CDD]">주문 담당자 정보</h3>
+            <div class="space-y-4 text-[13px]">
+              <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                <span class="text-gray-500 font-medium">담당자</span>
+                <span class="text-gray-900 font-bold">{{ order.managerName || '-' }}</span>
+              </div>
+              <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                <span class="text-gray-500 font-medium">연락처</span>
+                <span class="text-gray-900 font-bold">{{ order.managerContact || '-' }}</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </aside>
     </div>
   </div>
 </template>
