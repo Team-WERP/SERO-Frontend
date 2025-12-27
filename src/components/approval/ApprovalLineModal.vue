@@ -55,7 +55,7 @@
 
 
             <!-- 푸터 -->
-            <div class="px-5 flex flex-col gap-1 border border-gray-300 shrink-0">
+            <div class="px-5 flex flex-col gap-1 border-t border-gray-300 shrink-0">
                 <!-- 기안자 정보 -->
 
                 <!-- 결재선 전체 요약 -->
