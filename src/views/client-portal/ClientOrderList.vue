@@ -132,9 +132,9 @@
   const router = useRouter();
   const orders = ref([]);
   const isLoading = ref(false);
-  const dateError = ref(false); // 1. dateError 상태 추가
+  const dateError = ref(false); 
 
-  // 초기 상태 정의
+  
   const initialFilter = {
     dateField: 'orderedAt',
     startDate: '', 
@@ -145,16 +145,13 @@
   
   const filter = reactive({ ...initialFilter });
 
-  // 2. 초기화 함수 수정
   const resetFilter = () => {
-    Object.assign(filter, initialFilter); // 필터 값 초기화
-    dateError.value = false; // 에러 상태 해제
-    fetchOrders(); // 재조회 실행
+    Object.assign(filter, initialFilter); 
+    dateError.value = false; 
+    fetchOrders();
   };
 
-  // 3. 검색 핸들러 추가 (날짜 유효성 검사)
   const handleSearch = () => {
-    // 시작일 또는 종료일 중 하나만 비어있는 경우
     if ((filter.startDate && !filter.endDate) || (!filter.startDate && filter.endDate)) {
       dateError.value = true;
       return;
@@ -167,7 +164,6 @@
     isLoading.value = true;
     try {
       const response = await getClientOrderList(filter);
-      // axios 설정에 따라 response.data를 참조해야 할 수 있음
       orders.value = response.data || response; 
     } catch (error) {
       console.error('주문 목록 로드 실패:', error);
@@ -176,7 +172,7 @@
     }
   };
 
-  // 나머지 함수들은 기존과 동일
+
   const getStatusLabel = (status) => {
     const map = { 'CLI_SO_RED': '접수대기', 'CLI_SO_ING': '진행중', 'CLI_SO_SHIPPING': '배송중', 'CLI_SO_DONE': '완료', 'CLI_SO_CANCEL': '취소' };
     return map[status] || status;
@@ -195,6 +191,6 @@
   };
   
   const formatNumber = (val) => new Intl.NumberFormat().format(val);
-  const goToDetail = (orderId) => router.push(`/clients/orders/${orderId}`);
+  const goToDetail = (orderId) => router.push(`/client-portal/orders/${orderId}`);
   onMounted(() => fetchOrders());
   </script>

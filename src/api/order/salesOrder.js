@@ -57,3 +57,8 @@ export const getClientOrderList = (filter) => {
   return api.get('/clients/orders', { params: filter })
     .then(res => res.data);
 };
+
+// 고객 주문 상세 조회
+export const getClientOrderDetail = (orderId) => {
+  return api.get(`/clients/orders/${orderId}`).then(res => res.data);
+};
