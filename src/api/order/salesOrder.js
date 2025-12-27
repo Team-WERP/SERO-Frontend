@@ -51,3 +51,9 @@ export const getOrderHistory = () => {
 export const getOrderCopyInfo = (orderId) => {
   return api.get(`/clients/orders/${orderId}/copy-info`).then(res => res.data);
 };
+
+// 고객 주문 목록 조회
+export const getClientOrderList = (filter) => {
+  return api.get('/clients/orders', { params: filter })
+    .then(res => res.data);
+};
