@@ -1,5 +1,5 @@
 <template>
-    <div class="p-[5px] bg-slate-50 min-h-screen">
+    <div class="p-[5px] min-h-screen">
         <header class="flex justify-between items-center mb-5 max-w-7xl mx-auto pt-5">
             <div class="flex items-center gap-3">
                 <h1 class="text-[28px] font-bold text-slate-800">기안서 작성</h1>
@@ -227,7 +227,7 @@
                                         <span class="text-xs text-blue-600 opacity-70">{{ formData.relatedDoc.soCode ||
                                             formData.relatedDoc.prCode ||
                                             formData.relatedDoc.giCode
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <p class="text-sm font-bold text-blue-800 leading-tight">{{
                                         formData.relatedDoc.clientName }}</p>
@@ -360,7 +360,7 @@
                         class="px-5 py-3 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors group">
                         <div class="flex justify-between items-start mb-1">
                             <span class="text-sm font-bold text-slate-700 group-hover:text-blue-700">{{ doc.clientName
-                                }}</span>
+                            }}</span>
                             <div class="flex gap-2">
                                 <span v-if="doc.hasPdf"
                                     class="text-[10px] bg-red-100 text-red-600 px-1 rounded font-bold">PDF</span>

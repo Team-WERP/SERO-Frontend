@@ -138,7 +138,7 @@
                                         <span class="dot"
                                             :class="{ 'dot-red': item.approvalStatus === 'AS_RJCT' }"></span>
                                         <span v-if="item.approvalStatus === 'AS_RJCT'">반려자: {{ item.rejecterName
-                                            }}</span>
+                                        }}</span>
                                         <span v-else>현 결재: {{ item.currentApproverName }}</span>
                                     </div>
                                     <div class="current-approver" v-else style="visibility: hidden;">&nbsp;</div>
@@ -235,9 +235,11 @@ const changeTab = (tabId) => {
 
 const openDraftModal = () => {
     router.push('/approval/create');
-}
+};
 
-const goToDetail = (id) => console.log('Go to detail', id);
+const goToDetail = (id) => {
+    router.push(`/approval/${id}`);
+};
 
 const fetchData = async () => {
     let statusParam = null;

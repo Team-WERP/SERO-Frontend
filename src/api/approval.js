@@ -8,6 +8,11 @@ export const submitApproval = async (formData) => {
     return res.data;
 };
 
+// 결재 상세 조회 API
+export const getApprovalDetail = (approvalId) => {
+    return api.get(`/approvals/${approvalId}`).then((res) => res.data);
+};
+
 // 결재선 템플릿 조회 API
 export const getApprovalTemplates = () =>
     api.get("/approval-templates", {}).then((res) => res.data);
