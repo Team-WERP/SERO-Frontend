@@ -3,6 +3,15 @@
         <!-- 헤더 -->
         <div class="page-header">
             <h1 class="logo">SERO DELIVERY</h1>
+            <div class="user-section">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <span>{{ userInitial }}</span>
+                    </div>
+                    <span class="user-name">{{ userName }}</span>
+                </div>
+                <button class="logout-btn" @click="handleLogout">로그아웃</button>
+            </div>
         </div>
 
         <!-- 배송 목록 -->
@@ -97,38 +106,99 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { getGoodsIssueList, startDelivery, completeDelivery } from '@/api/delivery'
+import { useUserStore } from '@/stores/user'
+
+const router = useRouter()
+const userStore = useUserStore()
 
 const deliveries = ref([])
 const loading = ref(false)
 const showMapModal = ref(false)
 const selectedDelivery = ref(null)
 
+// 로그인 확인 및 토큰에서 사용자 정보 로드
+const initializeUser = () => {
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
+        router.push('/delivery/login')
+        return
+    }
+
+    // 토큰이 있으면 userStore 초기화
+    if (!userStore.isAuthenticated) {
+        userStore.setFromToken(token)
+    }
+}
+
+// 사용자 정보
+const userName = computed(() => userStore.userName || '사용자')
+const userInitial = computed(() => {
+    const name = userStore.userName || '사용자'
+    return name.charAt(0).toUpperCase()
+})
+
+// 로그아웃
+const handleLogout = () => {
+    if (confirm('로그아웃 하시겠습니까?')) {
+        localStorage.removeItem('accessToken')
+        userStore.clear()
+        router.push('/delivery/login')
+    }
+}
+
 // 배송 목록 조회
 const loadDeliveries = async () => {
     loading.value = true
     try {
-        // 출고 완료 및 배송 중인 항목만 조회
-        const result = await getGoodsIssueList({
-            status: 'GI_ISSUED,GI_SHIP_ISSUED,GI_SHIP_ING,GI_SHIP_DONE'
-        })
+        console.log('=== 배송 목록 조회 시작 ===')
+
+        // 모든 출고지시 조회 (필터링 없음)
+        const result = await getGoodsIssueList({})
+
+        console.log('API 응답:', result)
+        console.log('응답 타입:', typeof result)
+        console.log('응답 개수:', result?.length)
+        console.log('응답이 배열인가?:', Array.isArray(result))
+
+        if (!result) {
+            console.error('API 응답이 null/undefined')
+            deliveries.value = []
+            return
+        }
+
+        if (!Array.isArray(result)) {
+            console.error('API 응답이 배열이 아님:', result)
+            deliveries.value = []
+            return
+        }
 
         // API 응답을 배송 관리에 맞게 변환
-        deliveries.value = result.map(item => ({
-            id: item.id,
-            giCode: item.giCode,
-            soCode: item.soCode,
-            doCode: item.doCode,
-            status: item.status,
-            deliveryLocation: item.itemName || '배송지',
-            address: item.warehouseName || '주소 정보 없음',
-            recipientName: item.managerName || '담당자 정보 없음',
-            recipientContact: '010-111-1111', // 실제로는 API에서 받아와야 함
-            shippedAt: item.shippedAt
-        }))
+        deliveries.value = result.map((item, index) => {
+            console.log(`항목 ${index + 1}:`, item)
+            return {
+                id: item.id,
+                giCode: item.giCode,
+                soCode: item.soCode,
+                doCode: item.doCode,
+                status: item.status,
+                deliveryLocation: item.itemName || '배송지',
+                address: item.warehouseName || '주소 정보 없음',
+                recipientName: item.managerName || '담당자 정보 없음',
+                recipientContact: '010-111-1111', // 실제로는 API에서 받아와야 함
+                shippedAt: item.shippedAt
+            }
+        })
+
+        console.log('변환된 배송 목록:', deliveries.value)
+        console.log('변환된 배송 개수:', deliveries.value.length)
+        console.log('=== 배송 목록 조회 완료 ===')
     } catch (error) {
         console.error('배송 목록 조회 실패:', error)
+        console.error('에러 상세:', error.response?.data)
+        console.error('에러 상태:', error.response?.status)
         alert('배송 목록을 불러오는데 실패했습니다.')
     } finally {
         loading.value = false
@@ -208,6 +278,7 @@ const getStatusBadgeClass = (status) => {
 
 // 초기 로드
 onMounted(() => {
+    initializeUser()
     loadDeliveries()
 })
 </script>
@@ -223,8 +294,10 @@ onMounted(() => {
 .page-header {
     background: #4C4CDD;
     padding: 20px;
-    text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .logo {
@@ -233,6 +306,55 @@ onMounted(() => {
     color: #ffffff;
     margin: 0;
     letter-spacing: 2px;
+}
+
+/* 사용자 섹션 */
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #4C4CDD;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.user-name {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.logout-btn {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* 배송 목록 */
@@ -530,6 +652,39 @@ onMounted(() => {
 }
 
 /* 반응형 */
+@media (max-width: 480px) {
+    .page-header {
+        padding: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .logo {
+        font-size: 20px;
+    }
+
+    .user-section {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    .user-name {
+        font-size: 13px;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .logout-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}
+
 @media (min-width: 768px) {
     .delivery-list {
         max-width: 800px;

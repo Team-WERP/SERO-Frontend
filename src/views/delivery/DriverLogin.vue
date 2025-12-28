@@ -46,8 +46,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/api/auth'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 
 const email = ref('')
 const password = ref('')
@@ -73,6 +75,9 @@ const handleLogin = async () => {
 
         if (accessToken) {
             localStorage.setItem('accessToken', accessToken)
+
+            // userStore 초기화
+            userStore.setFromToken(accessToken)
 
             // 배송 관리 페이지로 이동
             router.push('/delivery/management')

@@ -87,6 +87,14 @@ const router = createRouter({
                         noPadding: true
                     }
                 },
+                {
+                    path: "/delivery/login",
+                    component: DriverLogin,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
 
                 // ---------------------
                 // 고객포털

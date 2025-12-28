@@ -383,29 +383,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 3/4 이력 정보 -->
-            <div class="section">
-                <h3 class="card-title">3/4 이력 정보</h3>
-                <div class="history-box">
-                    <div v-if="deliveryHistories.length === 0" class="empty-history">
-                        <p>이력 데이터가 없습니다.</p>
-                    </div>
-                    <div v-else class="history-list">
-                        <div
-                            v-for="(history, index) in deliveryHistories"
-                            :key="index"
-                            class="history-item"
-                        >
-                            <div class="history-time">{{ formatDateTime(history.timestamp) }}</div>
-                            <div class="history-content">
-                                <div class="history-status">{{ history.status }}</div>
-                                <div class="history-detail">{{ history.detail }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- 하단 고정 버튼 -->
@@ -499,9 +476,6 @@ const showApprovalRequestButton = computed(() => {
 
 // 탭 상태
 const activeTab = ref('issue')
-
-// 배송 이력 데이터
-const deliveryHistories = ref([])
 
 // 배송 단계 계산 (타임라인용)
 const deliveryStep = computed(() => {
