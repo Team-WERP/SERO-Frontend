@@ -143,48 +143,25 @@ const canSubmit = computed(() => {
 })
 
 /**
- * UI용 “일일 생산량” 계산(참고 정보)
- * - 실제 최종 판단은 서버 validate 결과를 신뢰
- */
-const dailyQty = computed(() => {
-    if (!form.productionQuantity || days.value <= 0) return null
-    return Math.ceil(Number(form.productionQuantity) / days.value)
-})
-
-/**
  * debounced validate
  */
 let timer = null
 const runValidate = async () => {
-    // 기본 입력 체크
+
     if (!form.lineId || !form.startDate || !form.endDate || !form.productionQuantity) {
         validation.ok = false
         validation.message = '라인/기간/수량을 입력해주세요.'
         return
     }
+
     if (days.value === -1) {
         validation.ok = false
         validation.message = '시작일이 종료일보다 이후입니다.'
         return
     }
 
-    // UI 선검증(참고)
-    const capa = selectedLine.value?.dailyCapacity
-    const dq = dailyQty.value
-    if (capa != null && dq != null) {
-        // 메시지는 서버 검증 전에 먼저 업데이트(UX)
-        if (dq <= capa) {
-            validation.ok = true
-            validation.message = `일일 생산량 ${formatNumber(dq)}ea (Capa 이내)`
-        } else {
-            validation.ok = false
-            validation.message = `일일 생산량 ${formatNumber(dq)}ea (Capa 초과)`
-        }
-    }
-
-    // 서버 validate (정답)
     try {
-        await validatePlan({
+        const res = await validatePlan({
             prItemId: props.prItemId,
             productionLineId: Number(form.lineId),
             startDate: form.startDate,
@@ -192,18 +169,15 @@ const runValidate = async () => {
             productionQuantity: Number(form.productionQuantity)
         })
 
-        // 서버 통과 기준으로 ok 확정
-        validation.ok = true
-        const dq2 = dailyQty.value
-        validation.message = dq2 != null
-            ? `일일 생산량 ${formatNumber(dq2)}ea (Capa 이내)`
-            : '검증 통과'
+        validation.ok = res.valid
+        validation.message = res.message
+
     } catch (e) {
         validation.ok = false
         validation.message =
             e?.response?.data?.message ||
             e?.message ||
-            '검증에 실패했습니다.'
+            '검증 중 오류가 발생했습니다.'
     }
 }
 
