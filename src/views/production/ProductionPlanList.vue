@@ -39,8 +39,9 @@
                         <div class="gantt-label-column line-info">
                             <div class="line-name">{{ line.lineName }}</div>
                             <div class="line-meta">
-                                <span class="meta-v">{{ line.materialName || '미지정' }}</span>
-                                <span class="meta-capa">Max: {{ formatNumber(line.dailyCapacity) }} {{ line.unit
+                                <span class="meta-v">제품명: {{ line.materialName || '미지정' }}</span>
+                                <span class="meta-capa">일일 최대 생산량: {{ formatNumber(line.dailyCapacity) }} {{
+                                    line.unit
                                 }}</span>
                             </div>
                         </div>
@@ -64,7 +65,7 @@
                                         <div class="bar-content">
                                             <span class="bar-title">{{ plan.prCode }}</span>
                                             <span class="bar-qty">
-                                                {{ formatNumber(plan.productionQuantity) }} {{ plan.unit }}
+                                                총 {{ formatNumber(plan.productionQuantity) }} {{ plan.unit }}
                                             </span>
                                         </div>
                                     </div>
@@ -155,14 +156,20 @@ const tooltip = ref({
 
 const showTooltip = (e, plan) => {
     const rect = e.currentTarget.getBoundingClientRect()
+    const dailyQty = calcDailyQuantity(plan)
 
     tooltip.value = {
         visible: true,
         x: rect.left + rect.width / 2,
         y: rect.bottom + 8,
-        text: `${plan.startDate} ~ ${plan.endDate}`
+        text: `
+기간: ${plan.startDate} ~ ${plan.endDate} (${plan.durationDays}일)
+총 수량: ${formatNumber(plan.productionQuantity)} ${plan.unit}
+일일 예상 생산량: ${formatNumber(dailyQty)} ${plan.unit}
+        `.trim()
     }
 }
+
 
 const hideTooltip = () => {
     tooltip.value.visible = false
@@ -192,12 +199,44 @@ const plansByLine = computed(() => {
     }
 
     for (const key of Object.keys(map)) {
-        map[key].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
-        assignPlanLanes(map[key])
+        const list = map[key]
+
+        list.sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+
+        for (const plan of list) {
+            const s = new Date(plan.startDate)
+            const e = new Date(plan.endDate)
+            const days =
+                Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1
+
+            plan.durationDays = days > 0 ? days : 1
+            plan.dailyQuantity = Math.ceil(
+                plan.productionQuantity / plan.durationDays
+            )
+        }
+
+        assignPlanLanes(list)
     }
 
     return map
 })
+
+const calcDurationDays = (start, end) => {
+    const s = new Date(start)
+    const e = new Date(end)
+    s.setHours(0, 0, 0, 0)
+    e.setHours(0, 0, 0, 0)
+
+    return Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1
+}
+
+const calcDailyQuantity = (plan) => {
+    const days = calcDurationDays(plan.startDate, plan.endDate)
+    if (!days || days <= 0) return 0
+    return Math.ceil(plan.productionQuantity / days)
+}
+
+
 
 const dailySummaryMap = computed(() => {
     const map = {}
@@ -691,7 +730,7 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     font-size: 12px;
     padding: 6px 10px;
     border-radius: 6px;
-    white-space: nowrap;
+    white-space: pre-line;
     z-index: 99999;
     pointer-events: none;
 }
