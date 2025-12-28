@@ -93,9 +93,18 @@
         <div class="mb-8">
           <div class="flex justify-between items-center mb-3">
             <h3 class="text-lg font-bold text-[#4C4CDD]">주문 품목 정보</h3>
-            <button class="rounded-lg border border-[#4C4CDD] px-3 py-1 text-sm font-bold text-[#4C4CDD] hover:bg-[#F0F0FF]">
+            <button 
+              @click="openPrintModal"
+              class="rounded-lg border border-[#4C4CDD] px-3 py-1 text-sm font-bold text-[#4C4CDD] hover:bg-[#F0F0FF]"
+            >
               주문서 인쇄
             </button>
+
+            <OrderPrintModal 
+              v-if="isPrintModalOpen"
+              :order="order"
+              @close="isPrintModalOpen = false"
+            />
           </div>
           <div class="overflow-hidden rounded-xl border border-gray-200">
             <table class="w-full text-left text-sm">
@@ -400,6 +409,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import ProductionRequestModal from '@/components/order/ProductionRequestModal.vue';
 import DeliveryOrderModal from '@/components/order/DeliveryOrderModal.vue';
+import OrderPrintModal from '@/components/order/OrderPrintModal.vue';
 import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory } from '@/api/order/salesOrder';
 import { getEmployees } from '@/api/employee/employee';
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
@@ -427,6 +437,7 @@ const isModalOpen = ref(false);
 const isPRModalOpen = ref(false);
 const isHistoryModalOpen = ref(false);
 const isDOModalOpen = ref(false);
+const isPrintModalOpen = ref(false);
 
 const prInitialData = ref(null);
 const isPRUpdateMode = ref(false);
@@ -557,6 +568,10 @@ const handleDOSubmit = async (payload) => {
   } finally {
     isLoading.value = false;
   }
+};
+
+const openPrintModal = () => {
+  isPrintModalOpen.value = true;
 };
 
 const getLinkPath = (type, doc) => {
