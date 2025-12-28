@@ -168,7 +168,7 @@ const router = createRouter({
                 { path: "/approval/received", component: ApprovalReceived },
                 { path: "/approval/referenced", component: ApprovalReferenced },
                 {
-                    path: "/approval/create/:refCode",
+                    path: "/approval/create",
                     component: ApprovalCreate,
                 },
 

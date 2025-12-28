@@ -85,7 +85,7 @@
 <script setup>
 import { useApprovalLineStore } from '@/stores/approvalLine';
 import { storeToRefs } from 'pinia';
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { getEmployees } from '@/api/employee.js';
 import { getApprovalTemplates } from '@/api/approval.js';
 import OrganizationPanel from './OrganizationPanel.vue';
@@ -157,44 +157,31 @@ const fetchApprovalTemplates = async () => {
 
         approvalLineTemplates.value = data.map(tpl => {
             const approval = (tpl.approvalLines || []).map(line => ({
-                id: line.approvalTemplateLineId,
-                type: line.lineType,
+                id: line.approverId,
+                name: line.approverName,
+                deptName: line.approverDepartmentName,
+                lineType: line.lineType,
+                rank: line.approverRankCode,
+                position: line.approverPositionCode,
                 sequence: line.sequence,
-                note: line.note || '',
-                user: {
-                    id: line.approverId,
-                    name: line.approverName,
-                    deptName: line.approverDepartmentName,
-                    rank: line.approverRankCode,
-                    position: line.approverPositionCode
-                }
             }));
 
             const recipient = (tpl.recipientLines || []).map(line => ({
-                id: line.approvalTemplateLineId,
-                type: line.lineType,
-                sequence: line.sequence,
-                note: line.note || '',
-                user: {
-                    id: line.approverId,
-                    name: line.approverName,
-                    deptName: line.approverDepartmentName,
-                    rank: line.approverRankCode,
-                    position: line.approverPositionCode
-                }
+                id: line.approverId,
+                name: line.approverName,
+                deptName: line.approverDepartmentName,
+                lineType: line.lineType,
+                rank: line.approverRankCode,
+                position: line.approverPositionCode
             }));
 
             const reference = (tpl.referenceLines || []).map(line => ({
-                id: line.approvalTemplateLineId,
-                type: line.lineType,
-                sequence: line.sequence,
-                note: line.note || '',
-                user: {
-                    id: line.approverId,
-                    name: line.approverName,
-                    rank: line.approverRankCode,
-                    position: line.approverPositionCode
-                }
+                id: line.approverId,
+                name: line.approverName,
+                deptName: line.approverDepartmentName,
+                lineType: line.lineType,
+                rank: line.approverRankCode,
+                position: line.approverPositionCode
             }));
 
             return {
@@ -255,7 +242,11 @@ const addToTarget = () => {
     }
 
     targetList.push({
-        ...employee,
+        id: employee.id,
+        name: employee.name,
+        deptName: employee.deptName,
+        rank: employee.rank,
+        position: employee.position,
         lineType: 'AT_APPR',
         sequence: targetList.length + 1
     });

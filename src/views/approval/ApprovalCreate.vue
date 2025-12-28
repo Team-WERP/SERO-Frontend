@@ -53,7 +53,7 @@
 
 
             <div class="p-5 overflow-x-auto">
-                <div class="flex w-full px-2 min-w-[600px] items-center justify-center">
+                <!-- <div class="flex w-full px-2 min-w-[600px] items-center justify-center">
                     <template v-for="(item, idx) in approvalFlow" :key="idx">
                         <div class="flex flex-col items-center gap-2 shrink-0">
                             <div class="w-12 h-12 rounded-full border-4 border-white shadow-sm flex items-center justify-center text-sm font-bold"
@@ -74,6 +74,31 @@
 
                         <div v-if="idx < approvalFlow.length - 1"
                             class="flex-1 h-[2px] bg-slate-200 mt-6 mx-2 rounded min-w-[20px]" />
+                    </template>
+</div> -->
+
+                <div class="flex w-full px-2 min-w-[600px] items-start justify-center">
+
+                    <template v-for="(item, idx) in approvalFlow" :key="idx">
+                        <div class="flex flex-col items-center gap-2 shrink-0">
+                            <div class="w-12 h-12 rounded-full border-4 border-white shadow-sm flex items-center justify-center text-sm font-bold"
+                                :class="item.lineType === 'drafter'
+                                    ? 'bg-blue-100 text-[#4C4CDD] ring-2 ring-blue-100'
+                                    : 'bg-slate-100 text-slate-400'">
+                                <span v-if="item.lineType === 'drafter'">기안</span>
+                                <span v-else>{{ getApprovalType(item.lineType) }}</span>
+                            </div>
+
+                            <div class="text-center w-max">
+                                <p class="text-xs text-slate-500 mb-0.5">{{ item.deptName }}</p>
+                                <p class="text-sm font-bold text-slate-800">
+                                    {{ item.name }} {{ getPositionName(item.position) }} · {{ getRankName(item.rank) }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div v-if="idx < approvalFlow.length - 1"
+                            class="flex-1 h-[2px] bg-slate-200 rounded min-w-[20px] mt-[23px]" />
                     </template>
                 </div>
             </div>
@@ -264,7 +289,8 @@
 
                 <section class="bg-white rounded border border-slate-200 shadow-sm p-6">
                     <div class="mb-5">
-                        <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase">비고 / 특이사항</label>
+                        <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase"><span
+                                class="text-[#ff0000] font-bold">*</span> 기안 내용</label>
                         <textarea v-model="formData.content"
                             class="w-full h-24 px-3 py-2 bg-white border border-slate-300 rounded text-sm focus:outline-none focus:border-blue-500 resize-none"
                             placeholder="내용을 입력하세요."></textarea>
@@ -273,7 +299,7 @@
                     <div>
                         <div class="flex justify-between items-center mb-2">
                             <label class="block text-xs font-semibold text-slate-500 uppercase">첨부 파일</label>
-                            <span class="text-[10px] text-slate-400">PDF, JPG, PNG (Max 10MB)</span>
+                            <!-- <span class="text-[10px] text-slate-400">(Max 10MB)</span> -->
                         </div>
 
                         <div @dragover.prevent @drop.prevent="handleFileDrop"
@@ -292,6 +318,7 @@
                             <p class="text-sm text-slate-600 font-medium">
                                 <span class="text-blue-600">클릭하여 업로드</span> 하거나 파일을 드래그하세요
                             </p>
+                            <span class="text-[10px] text-slate-400">(Max 10MB)</span>
                         </div>
 
                         <div v-if="formData.files.length > 0" class="mt-3 space-y-2">
@@ -373,7 +400,7 @@ const {
 
 // 로그인한 사용자 정보 가져오기
 const loggedEmployeeInfo = {
-    name: "로그인한 사용자 이름",
+    name: "사용자 이름",
     deptName: "영업 1팀",
     position: "JP_STF",
     rank: "JR_TM"
@@ -518,26 +545,48 @@ const buildApprovalFormData = (formData, approvalFlow) => {
             ? formData.relatedDoc.prCode
             : formData.relatedDoc.giCode;
 
-    // 1. requestDTO
+    // 1. [결재자] 리스트 변환 (기안자 제외)
+    const approvalList = approvalLines.value.map(line => ({
+        approverId: line.id,
+        lineType: line.lineType, // AT_APPR (결재), AT_RVW (협조)
+        sequence: line.sequence  // 순서 포함
+    }));
+
+    // 2. [수신자] 리스트 변환
+    const recipientList = recipientLines.value.map(line => ({
+        approverId: line.id,
+        lineType: line.lineType, // AT_RCPT (수신) 등
+        sequence: null // 수신자는 순서 없음 (필요시 추가)
+    }));
+
+    // 3. [참조자] 리스트 변환
+    const referenceList = referenceLines.value.map(line => ({
+        approverId: line.id,
+        lineType: line.lineType, // AT_REF (참조) 등
+        sequence: null // 참조자는 순서 없음
+    }));
+
+    // 4. [통합] 세 리스트를 하나로 합치기
+    const allLines = [
+        ...approvalList,
+        ...recipientList,
+        ...referenceList
+    ];
+
+    // 5. requestDTO 생성
     const requestDTO = {
         title: formData.title,
         content: formData.content,
         refCode: docCode,
         approvalTargetType: docCode.slice(0, 2),
-        approvalLines: approvalFlow
-            .filter(line => line.lineType !== 'drafter')
-            .map(line => ({
-                approverId: line.approverId,
-                lineType: line.lineType,
-                sequence: ['AT_APPR', 'AT_RVW'].includes(line.lineType) ? line.sequence : null
-            }))
+        approvalLines: allLines
     };
 
-    // 2. FormData
+    // 6. FormData
     const formDataToSend = new FormData();
     formDataToSend.append('requestDTO', new Blob([JSON.stringify(requestDTO)], { type: 'application/json' }));
 
-    // 3. 파일 추가
+    // 7. 파일 추가
     if (formData.files?.length) {
         formData.files.forEach(file => formDataToSend.append('files', file));
     }
@@ -558,7 +607,7 @@ watch(
     approvalLines,
     (lines) => {
         approvalLine.value = lines.map(line => ({
-            approverId: line.id,
+            id: line.id,
             name: line.name,
             deptName: line.deptName,
             position: line.position,
@@ -574,7 +623,7 @@ watch(
     recipientLines,
     (lines) => {
         receivers.value = lines.map(line => ({
-            approverId: line.id,
+            id: line.id,
             name: line.name,
             deptName: line.deptName,
             rank: line.rank,
@@ -589,7 +638,7 @@ watch(
     referenceLines,
     (lines) => {
         referrers.value = lines.map(line => ({
-            approverId: line.id,
+            id: line.id,
             name: line.name,
             deptName: line.deptName,
             position: line.position,
