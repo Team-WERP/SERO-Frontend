@@ -39,8 +39,9 @@
                         <div class="gantt-label-column line-info">
                             <div class="line-name">{{ line.lineName }}</div>
                             <div class="line-meta">
-                                <span class="meta-v">{{ line.productName || '미지정' }}</span>
-                                <span class="meta-capa">Max: {{ formatNumber(line.dailyCapacity) }}</span>
+                                <span class="meta-v">{{ line.materialName || '미지정' }}</span>
+                                <span class="meta-capa">Max: {{ formatNumber(line.dailyCapacity) }} {{ line.unit
+                                }}</span>
                             </div>
                         </div>
 
@@ -58,10 +59,13 @@
                                 <div class="bars-layer">
                                     <div v-for="plan in plansByLine[line.lineId] || []" :key="plan.ppId"
                                         class="plan-bar" :class="plan.status" :style="barStyle(plan)"
-                                        @click="openPlan(plan)">
+                                        @click="openPlan(plan)" @mouseenter="showTooltip($event, plan)"
+                                        @mouseleave="hideTooltip">
                                         <div class="bar-content">
-                                            <span class="bar-title">{{ plan.itemName }}</span>
-                                            <span class="bar-qty">{{ formatNumber(plan.productionQuantity) }}</span>
+                                            <span class="bar-title">{{ plan.prCode }}</span>
+                                            <span class="bar-qty">
+                                                {{ formatNumber(plan.productionQuantity) }} {{ plan.unit }}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -106,6 +110,16 @@
         <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :month="month" @close="showPlanModal = false"
             @created="onCreated" />
     </div>
+
+    <Teleport to="body">
+        <div v-if="tooltip.visible" class="global-tooltip" :style="{
+            left: tooltip.x + 'px',
+            top: tooltip.y + 'px'
+        }">
+            {{ tooltip.text }}
+        </div>
+    </Teleport>
+
 </template>
 
 <script setup>
@@ -126,6 +140,29 @@ const ganttHeaderRef = ref(null)
 const BAR_HEIGHT = 36
 const BAR_GAP = 6
 const BAR_TOP_PADDING = 8
+
+const tooltip = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    text: ''
+})
+
+const showTooltip = (e, plan) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+
+    tooltip.value = {
+        visible: true,
+        x: rect.left + rect.width / 2,
+        y: rect.bottom + 8,
+        text: `${plan.startDate} ~ ${plan.endDate}`
+    }
+}
+
+const hideTooltip = () => {
+    tooltip.value.visible = false
+}
+
 
 // --- Computed ---
 const daysInMonth = computed(() => {
@@ -456,11 +493,6 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     position: relative;
 }
 
-/* 
-.grid-cell.weekend {
-    background: #fafafa;
-} */
-
 /* Load Indicators (Top Bar) */
 .grid-cell::before {
     content: '';
@@ -499,9 +531,9 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     pointer-events: auto;
     cursor: pointer;
     border-radius: 8px;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: #6366f1;
+    color: white;
+    z-index: 20;
 }
 
 .plan-bar:hover {
@@ -641,5 +673,29 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
 
 .gantt-row.alt {
     background: #fafafa;
+}
+
+.global-tooltip {
+    position: fixed;
+    transform: translateX(-50%);
+    background: #111827;
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    z-index: 99999;
+    pointer-events: none;
+}
+
+.global-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent #111827 transparent;
 }
 </style>
