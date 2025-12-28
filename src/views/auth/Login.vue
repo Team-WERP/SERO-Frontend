@@ -133,12 +133,10 @@ const handleLogin = async () => {
             password: password.value
         });
 
-        const { accessToken, grantType } = res.data;
+        const { accessToken } = res.data;
 
-        localStorage.setItem(
-            'accessToken',
-            grantType ? `${grantType} ${accessToken}` : accessToken
-        );
+        // 토큰만 저장 (Bearer는 axios.js에서 자동으로 추가됨)
+        localStorage.setItem('accessToken', accessToken);
 
         const userStore = useUserStore();
         userStore.setFromToken(accessToken);

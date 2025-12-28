@@ -19,6 +19,7 @@ import ClientNotices from "@/views/client-portal/ClientNotices.vue";
 import OrderDashboard from "@/views/order/OrderDashboard.vue";
 import OrderManagement from "@/views/order/OrderManagement.vue";
 import ClientManagement from "@/views/order/ClientManagement.vue";
+import OrderDetail from "@/views/order/OrderDetail.vue";
 
 // 생산
 import ProductionDashboard from "@/views/production/ProductionDashboard.vue";
@@ -33,6 +34,9 @@ import PRDetail from "@/views/production/PRDetail.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
+import GoodsIssueList from "@/views/warehouse/GoodsIssueList.vue";
+import GoodsIssueCreate from "@/views/warehouse/GoodsIssueCreate.vue";
+import GoodsIssueDetail from "@/views/warehouse/GoodsIssueDetail.vue";
 
 // 기준정보
 import ItemBomManagement from "@/views/master/ItemBomManagement.vue";
@@ -109,6 +113,7 @@ const router = createRouter({
                 { path: "/order/dashboard", component: OrderDashboard },
                 { path: "/order/management", component: OrderManagement },
                 { path: "/order/clients", component: ClientManagement },
+                { path: "/order/management/:orderId", component: OrderDetail },
 
                 // ---------------------
                 // 생산
@@ -145,10 +150,10 @@ const router = createRouter({
                 // 재고·물류
                 // ---------------------
                 { path: "/warehouse/stock", component: StockByWarehouse },
-                {
-                    path: "/warehouse/delivery-orders",
-                    component: DeliveryOrderList,
-                },
+                { path: "/warehouse/delivery-orders", component: DeliveryOrderList },
+                { path: "/warehouse/goods-issues", component: GoodsIssueList },
+                { path: "/warehouse/goods-issues/create/:doCode", name: "GoodsIssueCreate", component: GoodsIssueCreate },
+                { path: "/warehouse/goods-issues/:giCode", name: "GoodsIssueDetail", component: GoodsIssueDetail },
                 { path: "/warehouse/tracking", component: DeliveryTracking },
 
                 // ---------------------
