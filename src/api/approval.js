@@ -1,8 +1,16 @@
 import api from "./axios";
 
+// 결재 상신 API
+export const submitApproval = async (formData) => {
+    const res = await api.post("/approvals", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+};
+
 // 결재선 템플릿 조회 API
 export const getApprovalTemplates = () =>
-    api.get("/approval-templates", {}).then((r) => r.data);
+    api.get("/approval-templates", {}).then((res) => res.data);
 
 // 기안 문서함 조회 API
 export const getSubmittedApprovals = (params = {}) => {

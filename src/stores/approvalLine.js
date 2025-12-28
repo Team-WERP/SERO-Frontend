@@ -36,6 +36,21 @@ export const useApprovalLineStore = defineStore("approvalLine", {
             this.mode = "CREATE";
             this.originalSnapshot = null;
         },
+        // 스냅샷으로 되돌리기
+        revert() {
+            if (this.originalSnapshot) {
+                // 스냅샷에 저장된 데이터로 복원
+                this.approvalLines = JSON.parse(
+                    JSON.stringify(this.originalSnapshot.approvalLines)
+                );
+                this.referenceLines = JSON.parse(
+                    JSON.stringify(this.originalSnapshot.referenceLines)
+                );
+                this.recipientLines = JSON.parse(
+                    JSON.stringify(this.originalSnapshot.recipientLines)
+                );
+            }
+        },
         setLines(payload) {
             this.approvalLines = payload.approval || [];
             this.recipientLines = payload.recipient || [];

@@ -256,7 +256,8 @@ const addToTarget = () => {
 
     targetList.push({
         ...employee,
-        lineType: 'AT_APPR'
+        lineType: 'AT_APPR',
+        sequence: targetList.length + 1
     });
 };
 
@@ -265,7 +266,7 @@ const closeModal = () => {
         if (!confirm("변경사항이 저장되지 않았습니다. 그래도 닫으시겠습니까?")) {
             return;
         }
-        approvalLineStore.reset();
+        approvalLineStore.revert();
     }
     approvalLineStore.close();
 };
@@ -283,6 +284,10 @@ const handleRemove = ({ tab, index }) => {
                 : referenceLines.value;
 
     list.splice(index, 1);
+
+    if (tab === 'approval') {
+        setApprovalSequence();
+    }
 };
 
 // 5. 이동 핸들러
@@ -294,7 +299,15 @@ const handleMove = ({ tab, index, direction }) => {
     if (targetIndex < 0 || targetIndex >= list.length) return;
 
     [list[index], list[targetIndex]] = [list[targetIndex], list[index]];
+
+    setApprovalSequence();
 };
+
+const setApprovalSequence = () => {
+    approvalLines.value.forEach((line, index) => {
+        line.sequence = index + 1;
+    })
+}
 
 </script>
 
