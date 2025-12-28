@@ -50,7 +50,7 @@
 
                     <!-- 상태별 버튼 -->
                     <button
-                        v-if="delivery.status === 'GI_SHIP_ISSUED'"
+                        v-if="delivery.status === 'GI_ISSUED' || delivery.status === 'GI_SHIP_ISSUED'"
                         class="action-btn start-btn"
                         @click="handleStartDelivery(delivery)"
                     >
@@ -111,7 +111,7 @@ const loadDeliveries = async () => {
     try {
         // 출고 완료 및 배송 중인 항목만 조회
         const result = await getGoodsIssueList({
-            status: 'GI_SHIP_ISSUED,GI_SHIP_ING,GI_SHIP_DONE'
+            status: 'GI_ISSUED,GI_SHIP_ISSUED,GI_SHIP_ING,GI_SHIP_DONE'
         })
 
         // API 응답을 배송 관리에 맞게 변환
@@ -182,6 +182,7 @@ const closeMap = () => {
 // 상태 텍스트
 const getStatusText = (status) => {
     const statusMap = {
+        'GI_ISSUED': '배송대기',
         'GI_SHIP_ISSUED': '배송중',
         'GI_SHIP_ING': '배송중',
         'GI_SHIP_DONE': '배송완료'
@@ -193,6 +194,7 @@ const getStatusText = (status) => {
 const getCardClass = (status) => {
     if (status === 'GI_SHIP_DONE') return 'card-completed'
     if (status === 'GI_SHIP_ING') return 'card-shipping'
+    if (status === 'GI_ISSUED') return 'card-waiting'
     return 'card-issued'
 }
 
@@ -200,6 +202,7 @@ const getCardClass = (status) => {
 const getStatusBadgeClass = (status) => {
     if (status === 'GI_SHIP_DONE') return 'badge-completed'
     if (status === 'GI_SHIP_ING') return 'badge-shipping'
+    if (status === 'GI_ISSUED') return 'badge-waiting'
     return 'badge-issued'
 }
 
@@ -253,6 +256,10 @@ onMounted(() => {
     transform: scale(0.98);
 }
 
+.card-waiting {
+    border-left: 4px solid #8b5cf6;
+}
+
 .card-issued {
     border-left: 4px solid #fbbf24;
 }
@@ -278,6 +285,11 @@ onMounted(() => {
     border-radius: 12px;
     font-size: 12px;
     font-weight: 600;
+}
+
+.badge-waiting {
+    background: #ede9fe;
+    color: #5b21b6;
 }
 
 .badge-issued {

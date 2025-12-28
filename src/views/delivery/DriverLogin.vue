@@ -10,37 +10,25 @@
 
                 <form @submit.prevent="handleLogin" class="login-form">
                     <div class="form-group">
-                        <label class="form-label">사원번호 / 휴대폰번호</label>
                         <input
-                            v-model="employeeId"
-                            type="text"
+                            v-model="email"
+                            type="email"
                             class="form-input"
-                            placeholder="예) 01012345678"
+                            placeholder="이메일"
                         />
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">비밀번호</label>
                         <input
                             v-model="password"
                             type="password"
                             class="form-input"
-                            placeholder="비밀번호를 입력하세요"
+                            placeholder="비밀번호"
                         />
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input
-                            v-model="rememberMe"
-                            type="checkbox"
-                            id="remember"
-                            class="checkbox"
-                        />
-                        <label for="remember" class="checkbox-label">로그인 상태 유지</label>
                     </div>
 
                     <button type="submit" class="login-btn" :disabled="loading">
-                        {{ loading ? '로그인 중...' : '출근하기 (로그인)' }}
+                        {{ loading ? '로그인 중...' : '로그인' }}
                     </button>
                 </form>
 
@@ -61,38 +49,39 @@ import { login } from '@/api/auth'
 
 const router = useRouter()
 
-const employeeId = ref('')
+const email = ref('')
 const password = ref('')
-const rememberMe = ref(false)
 const loading = ref(false)
 
 const handleLogin = async () => {
-    if (!employeeId.value || !password.value) {
-        alert('사원번호와 비밀번호를 입력해주세요.')
+    if (!email.value || !password.value) {
+        alert('이메일과 비밀번호를 입력해주세요.')
         return
     }
 
     loading.value = true
     try {
-        const response = await login({
-            employeeId: employeeId.value,
+        const response = await login('hq', {
+            email: email.value,
             password: password.value
         })
 
-        // 로그인 성공 시 토큰 저장
-        if (response.accessToken) {
-            localStorage.setItem('accessToken', response.accessToken)
+        console.log('로그인 응답:', response)
 
-            if (rememberMe.value) {
-                localStorage.setItem('rememberMe', 'true')
-            }
+        // 로그인 성공 시 토큰 저장
+        const { accessToken } = response.data
+
+        if (accessToken) {
+            localStorage.setItem('accessToken', accessToken)
 
             // 배송 관리 페이지로 이동
             router.push('/delivery/management')
+        } else {
+            alert('로그인에 성공했지만 토큰을 받지 못했습니다.')
         }
     } catch (error) {
         console.error('로그인 실패:', error)
-        alert('로그인에 실패했습니다. 사원번호와 비밀번호를 확인해주세요.')
+        alert('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')
     } finally {
         loading.value = false
     }
@@ -153,15 +142,7 @@ const handleLogin = async () => {
 }
 
 .form-group {
-    margin-bottom: 20px;
-}
-
-.form-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 8px;
+    margin-bottom: 16px;
 }
 
 .form-input {
@@ -181,25 +162,6 @@ const handleLogin = async () => {
 
 .form-input::placeholder {
     color: #9ca3af;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 24px;
-}
-
-.checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-.checkbox-label {
-    font-size: 14px;
-    color: #6b7280;
-    cursor: pointer;
 }
 
 .login-btn {
