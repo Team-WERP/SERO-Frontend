@@ -106,7 +106,7 @@
             </div>
 
             <div class="unassigned-grid">
-                <div v-for="u in unassigned" :key="u.prItemId" class="ua-card" @click="openCreate(u.prItemId)">
+                <div v-for="u in unassigned" :key="u.prItemId" class="ua-card" @click="openCreate(u)">
                     <!-- 상단: PR + D-Day -->
                     <div class="ua-top">
                         <span class="ua-pr">{{ u.prCode }}</span>
@@ -151,8 +151,9 @@
 
         </div>
 
-        <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :month="month" @close="showPlanModal = false"
-            @created="onCreated" />
+        <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :defaultLineId="selectedLineId"
+            :month="month" @close="showPlanModal = false" @created="onCreated" />
+
         <PPDetailModal v-if="showDetailModal && selectedPpId !== null" :ppId="selectedPpId"
             @close="showDetailModal = false" />
     </div>
@@ -189,6 +190,7 @@ const BAR_GAP = 6
 const BAR_TOP_PADDING = 10
 const selectedPpId = ref(null)
 const showDetailModal = ref(false)
+const selectedLineId = ref(null)
 
 const tooltip = ref({
     visible: false,
@@ -363,7 +365,11 @@ const nextMonth = () => {
     month.value = toMonthValue(new Date(y, m, 1))
 }
 
-const openCreate = (id) => { selectedPrItemId.value = id; showPlanModal.value = true }
+const openCreate = (u) => {
+    selectedPrItemId.value = u.prItemId
+    selectedLineId.value = u.productionLineId
+    showPlanModal.value = true
+}
 const openPlan = (plan) => {
     selectedPpId.value = plan.ppId
     showDetailModal.value = true
