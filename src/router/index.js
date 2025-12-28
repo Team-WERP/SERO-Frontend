@@ -47,6 +47,7 @@ import ApprovalRequested from "@/views/approval/ApprovalRequested.vue";
 import ApprovalArchived from "@/views/approval/ApprovalArchived.vue";
 import ApprovalReferenced from "@/views/approval/ApprovalReferenced.vue";
 import ApprovalCreate from "@/views/approval/ApprovalCreate.vue";
+import ApprovalDetail from "@/views/approval/ApprovalDetail.vue";
 
 // 공지사항
 import NoticeList from "@/views/notices/NoticeList.vue";
@@ -170,6 +171,10 @@ const router = createRouter({
                 {
                     path: "/approval/create",
                     component: ApprovalCreate,
+                },
+                {
+                    path: "/approval/:approvalId",
+                    component: ApprovalDetail,
                 },
 
                 // ---------------------
