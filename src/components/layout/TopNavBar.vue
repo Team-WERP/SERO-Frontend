@@ -21,6 +21,7 @@
 
             <!-- 우측 유저 -->
             <div class="top-nav__right">
+                <NotificationBell />
                 <UserProfile />
             </div>
         </div>
@@ -48,6 +49,7 @@ import { useResponsive } from '@/composables/useResponsive'
 import AppLogo from '@/components/common/AppLogo.vue'
 import UserProfile from '@/components/common/UserProfile.vue'
 import MobileMenuDrawer from '@/components/layout/MobileMenuDrawer.vue'
+import NotificationBell from '@/components/notification/NotificationBell.vue'
 
 const { isMobile } = useResponsive()
 const open = ref(false)
@@ -143,6 +145,7 @@ const change = (key) => {
     margin-left: auto;
     display: flex;
     align-items: center;
+    gap: 16px;
 }
 
 /* Drawer */
