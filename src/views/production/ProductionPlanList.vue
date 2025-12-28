@@ -109,10 +109,12 @@
 
         <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :month="month" @close="showPlanModal = false"
             @created="onCreated" />
+        <PPDetailModal v-if="showDetailModal && selectedPpId !== null" :ppId="selectedPpId"
+            @close="showDetailModal = false" />
     </div>
 
     <Teleport to="body">
-        <div v-if="tooltip.visible" class="global-tooltip" :style="{
+        <div v-show="tooltip.visible" class="global-tooltip" :style="{
             left: tooltip.x + 'px',
             top: tooltip.y + 'px'
         }">
@@ -125,6 +127,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import PlanCreateModal from '@/components/production/PlanCreateModal.vue'
+import PPDetailModal from '@/components/production/PPDetailModal.vue'
 import { getProductionLines, getMonthlyPlans, getUnassignedTargets, getDailyLineSummary } from '@/api/production/productionPlan'
 
 // --- Constants & Refs ---
@@ -140,6 +143,8 @@ const ganttHeaderRef = ref(null)
 const BAR_HEIGHT = 36
 const BAR_GAP = 6
 const BAR_TOP_PADDING = 8
+const selectedPpId = ref(null)
+const showDetailModal = ref(false)
 
 const tooltip = ref({
     visible: false,
@@ -275,7 +280,10 @@ const nextMonth = () => {
 const openMonthPicker = () => { /* Logic to show hidden month input */ }
 
 const openCreate = (id) => { selectedPrItemId.value = id; showPlanModal.value = true }
-const openPlan = (plan) => { console.log('Plan Detail:', plan) }
+const openPlan = (plan) => {
+    selectedPpId.value = plan.ppId
+    showDetailModal.value = true
+}
 
 function assignPlanLanes(plans) {
     const lanes = []

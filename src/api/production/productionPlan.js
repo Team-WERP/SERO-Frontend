@@ -52,3 +52,6 @@ export const getDailyLineSummary = (month, factoryId) =>
     api.get('/production-plans/daily-line-summary', {
         params: { month, factoryId }
     }).then(r => r.data)
+
+export const getProductionPlanDetail = (ppId) =>
+    api.get(`/production-plans/${ppId}`).then(res => res.data)
