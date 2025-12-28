@@ -49,7 +49,7 @@
                                 <span class="meta-v">제품명: {{ line.materialName || '미지정' }}</span>
                                 <span class="meta-capa">일일 최대 생산량: {{ formatNumber(line.dailyCapacity) }} {{
                                     line.unit
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
 
@@ -155,7 +155,7 @@ const dailySummary = ref([])
 const showPlanModal = ref(false)
 const selectedPrItemId = ref(null)
 const ganttHeaderRef = ref(null)
-const BAR_HEIGHT = 36
+const BAR_HEIGHT = 40
 const BAR_GAP = 6
 const BAR_TOP_PADDING = 10
 const selectedPpId = ref(null)
@@ -419,7 +419,6 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     background: white;
     border-radius: 16px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
 
@@ -432,6 +431,10 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     display: flex;
     background: #f8fafc;
     border-bottom: 2px solid #e2e8f0;
+}
+
+.day-num {
+    font-size: 14px;
 }
 
 .gantt-label-column {
@@ -456,6 +459,7 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
 .grid-cell {
     width: 0;
     flex: 1 0 0;
+    padding-bottom: 5px;
     min-width: 30px;
     border-right: 1px solid #f1f5f9;
 }
@@ -514,11 +518,11 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
 .line-name {
     font-weight: 700;
     color: #1e293b;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .line-meta {
-    font-size: 11px;
+    font-size: 13px;
     color: #94a3b8;
     display: flex;
     flex-direction: column;
@@ -613,7 +617,7 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
 }
 
 .bar-title {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
@@ -621,13 +625,13 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
 }
 
 .bar-qty {
-    font-size: 10px;
+    font-size: 11px;
     opacity: 0.9;
 }
 
 /* Unassigned Cards */
 .unassigned-panel {
-    margin-top: 24px;
+    margin-top: 12px;
     padding: 20px;
 }
 
@@ -641,6 +645,12 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.sub-desc {
+    font-size: 15px;
+    color: #6b7280;
+    margin-top: 4px;
 }
 
 .count-badge {
@@ -682,24 +692,24 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     color: #6366f1;
     padding: 2px 8px;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
 }
 
 .ua-date {
-    font-size: 11px;
+    font-size: 12px;
     color: #94a3b8;
 }
 
 .ua-item-name {
     font-weight: 700;
-    font-size: 15px;
+    font-size: 17px;
     margin-bottom: 12px;
     color: #1e293b;
 }
 
 .ua-details {
-    font-size: 13px;
+    font-size: 14px;
     color: #64748b;
 }
 
@@ -724,11 +734,9 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
 
 .global-tooltip {
     position: fixed;
-    /* transform 제거 (JS에서 계산) */
     background: rgba(17, 24, 39, 0.95);
-    /* 약간의 투명도 */
     color: #fff;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     padding: 10px 14px;
     border-radius: 8px;
@@ -736,26 +744,15 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     z-index: 99999;
     pointer-events: none;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-
-    /* 핵심: 너비 설정 */
     width: max-content;
     max-width: 300px;
-    /* 너무 길어지면 줄바꿈 허용 */
 }
 
 .global-tooltip::before {
     display: none;
-    /* content: '';
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 6px;
-    border-style: solid;
-    border-color: transparent transparent #111827 transparent; */
 }
 
-/* ===== 날짜 컨트롤 (작업지시 생성 페이지 스타일 계승) ===== */
+/* ===== 날짜 컨트롤 ===== */
 .pp-controls {
     display: flex;
     justify-content: flex-end;
@@ -834,7 +831,7 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
+    font-size: 13px;
     color: #64748b;
     font-weight: 500;
 }
