@@ -202,9 +202,28 @@
           </div>
 
           <div class="flex gap-2 justify-end mb-5">
-            <button class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">생산 설정</button>
-            <button class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">납품 설정</button>
+            <template v-if="order.status === 'ORD_APPR_DONE'">
+              <button 
+                @click="openPRModal"
+                class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]"
+              >
+                생산 설정
+              </button>
+              <button 
+                class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]"
+              >
+                납품 설정
+              </button>
+            </template>
           </div>
+
+          <ProductionRequestModal 
+            v-if="isPRModalOpen"
+            :soId="Number(route.params.orderId)"
+            :items="order.items"
+            @close="isPRModalOpen = false"
+            @submit="handlePRDraftSubmit"
+          />
 
           <div class="space-y-8">
             <section v-for="section in docSections" :key="section.title">
@@ -366,10 +385,11 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import ProductionRequestModal from '@/components/order/ProductionRequestModal.vue';
 import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory } from '@/api/order/salesOrder';
 import { getEmployees } from '@/api/employee/employee';
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
-import { getPRListByOrderId } from '@/api/production/productionRequest';
+import { getPRListByOrderId, createPRDraft } from '@/api/production/productionRequest';
 import { getDOListByOrderId } from '@/api/shipping/deliveryOrder';
 import { getGIListByOrderId } from '@/api/shipping/goodsIssue';
 
@@ -377,15 +397,16 @@ const route = useRoute();
 const activeTab = ref('ORDER');
 const order = ref(null);
 const itemHistory = ref(null);
-const isModalOpen = ref(false);
 const deptEmployees = ref([]);
 
-const isHistoryModalOpen = ref(false);
 const selectedItemName = ref('');
 const historyDetails = ref([]);
 
 const isLoading = ref(false);
 
+const isModalOpen = ref(false);
+const isPRModalOpen = ref(false);
+const isHistoryModalOpen = ref(false);
 
 const steps = ['접수/검토', '주문 결재', '생산/출고', '배송 완료'];
 
@@ -449,6 +470,25 @@ const openHistoryModal = async (itemId, itemName) => {
       console.error('이력 상세 조회 중 오류 발생:', err);
       alert('이력 정보를 불러오는 중 오류가 발생했습니다.');
     }
+  }
+};
+
+const openPRModal = () => {
+  isPRModalOpen.value = true;
+};
+
+const handlePRDraftSubmit = async (payload) => {
+  try {
+    const result = await createPRDraft(payload); 
+    alert('생산 요청이 임시저장되었습니다.');
+    isPRModalOpen.value = false;
+
+    if (activeTab.value === 'PRODUCTION') await fetchAllDocuments();
+  } catch (err) {
+    console.error('임시저장 실패:', err);
+    alert('임시저장에 실패했습니다.');
+  } finally {
+    isLoading.value = false;
   }
 };
 

@@ -33,6 +33,14 @@ export const getPRDraftDetail = (prId) => {
 }
 
 /** 
+ * 임시저장 등록
+ */
+export const createPRDraft = (data) => {
+    return api.post('/production-requests/draft', data)
+    .then(res => res.data)
+}
+
+/** 
  * 임시저장 수정 
  */
 export const updatePRDraft = (prId, data) =>
