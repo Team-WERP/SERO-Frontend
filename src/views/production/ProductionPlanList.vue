@@ -49,7 +49,7 @@
                                 <span class="meta-v">제품명: {{ line.materialName || '미지정' }}</span>
                                 <span class="meta-capa">일일 최대 생산량: {{ formatNumber(line.dailyCapacity) }} {{
                                     line.unit
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
 
@@ -88,6 +88,7 @@
             </div>
             <div class="load-info-area">
                 <div class="load-legend">
+                    <span class="lg-item">라인 부하율 :</span>
                     <span class="lg-item"><i class="dot mid"></i> 보통 (50~80%)</span>
                     <span class="lg-item"><i class="dot warn"></i> 주의 (80~100%)</span>
                     <span class="lg-item"><i class="dot over"></i> 초과 (100% 초과)</span>
@@ -106,20 +107,48 @@
 
             <div class="unassigned-grid">
                 <div v-for="u in unassigned" :key="u.prItemId" class="ua-card" @click="openCreate(u.prItemId)">
-                    <div class="ua-card-header">
-                        <span class="ua-badge">{{ u.productionLineName }}</span>
-                        <span class="ua-date">납기: {{ u.dueAt?.slice(5, 10) }}</span>
+                    <!-- 상단: PR + D-Day -->
+                    <div class="ua-top">
+                        <span class="ua-pr">{{ u.prCode }}</span>
+                        <span class="ua-dday" :class="ddayClass(u.dueAt)">
+                            D-{{ calcDday(u.dueAt) }}
+                        </span>
                     </div>
-                    <div class="ua-item-name">{{ u.itemName }}</div>
+
+                    <!-- 제품명 -->
+                    <div class="ua-item-name">
+                        {{ u.itemName }}
+                    </div>
+
+                    <!-- 상세 정보 -->
                     <div class="ua-details">
-                        <div class="ua-row"><span>규격</span><strong>{{ u.spec }}</strong></div>
-                        <div class="ua-row"><span>요청</span><strong>{{ formatNumber(u.requestedQuantity) }}ea</strong>
+                        <div class="ua-row">
+                            <span>규격</span>
+                            <strong>{{ u.spec }}</strong>
+                        </div>
+
+                        <div class="ua-row">
+                            <span>요청 수량</span>
+                            <strong>{{ formatNumber(u.requestedQuantity) }} ea</strong>
+                        </div>
+
+                        <div class="ua-row">
+                            <span>납기일</span>
+                            <strong>{{ formatDate(u.dueAt) }}</strong>
+                        </div>
+
+                        <div class="ua-row">
+                            <span>생산 라인</span>
+                            <strong class="line">{{ u.productionLineName }}</strong>
                         </div>
                     </div>
-                    <div class="ua-action">일정 편성하기 →</div>
                 </div>
-                <div v-if="unassigned.length === 0" class="empty-inline">미편성 목록이 비어있습니다.</div>
+
+                <div v-if="unassigned.length === 0" class="empty-inline">
+                    미편성 목록이 비어있습니다.
+                </div>
             </div>
+
         </div>
 
         <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :month="month" @close="showPlanModal = false"
@@ -384,6 +413,33 @@ function toMonthValue(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 const formatNumber = (v) => v?.toLocaleString() || '0'
+
+const calcDday = (dueAt) => {
+    if (!dueAt) return '-'
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const due = new Date(dueAt)
+    due.setHours(0, 0, 0, 0)
+
+    return Math.max(
+        0,
+        Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+    )
+}
+
+const ddayClass = (dueAt) => {
+    const d = calcDday(dueAt)
+    if (d <= 3) return 'danger'
+    if (d <= 7) return 'warn'
+    return 'safe'
+}
+
+const formatDate = (d) => {
+    if (!d) return '-'
+    return d.slice(0, 10) // YYYY-MM-DD
+}
+
 </script>
 
 <style scoped>
@@ -661,70 +717,115 @@ const formatNumber = (v) => v?.toLocaleString() || '0'
     border-radius: 12px;
 }
 
+/* ===== Unassigned Cards ===== */
+
 .unassigned-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
 }
 
+/* 카드 */
 .ua-card {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px 18px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .ua-card:hover {
-    border-color: #6366f1;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    border-color: #4c4cdd;
+    box-shadow: 0 8px 18px rgba(76, 76, 221, 0.12);
+    transform: translateY(-2px);
 }
 
-.ua-card-header {
+/* 상단 영역 */
+.ua-top {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
-.ua-badge {
-    background: #eef2ff;
-    color: #6366f1;
-    padding: 2px 8px;
-    border-radius: 6px;
+/* PR 코드 */
+.ua-pr {
+    font-size: 13px;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: 0.2px;
+}
+
+/* D-Day */
+.ua-dday {
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 999px;
 }
 
-.ua-date {
-    font-size: 12px;
-    color: #94a3b8;
+/* D-Day 색상 */
+.ua-dday.safe {
+    background: #ecfdf5;
+    color: #047857;
 }
 
+.ua-dday.warn {
+    background: #fff7ed;
+    color: #b45309;
+}
+
+.ua-dday.danger {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+/* 제품명 */
 .ua-item-name {
-    font-weight: 700;
     font-size: 17px;
-    margin-bottom: 12px;
+    font-weight: 800;
     color: #1e293b;
+    margin-bottom: 14px;
 }
 
+/* 상세 정보 */
 .ua-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     font-size: 14px;
-    color: #64748b;
+    color: #475569;
 }
 
 .ua-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 4px;
+    gap: 12px;
 }
 
-.ua-action {
-    margin-top: 12px;
-    text-align: right;
-    color: #6366f1;
+.ua-row span {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.ua-row strong {
     font-weight: 700;
-    font-size: 13px;
+    color: #111827;
+}
+
+.ua-row strong.line {
+    color: #4c4cdd;
+}
+
+/* Empty */
+.empty-inline {
+    padding: 24px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
 }
 
 
