@@ -121,7 +121,7 @@ const submitDraft = () => {
   console.log(props);
   const payload = {
     soId: props.soId,
-    dueAt: dueAt.value.replace('T', ' ') + ':00', // DTO 형식에 맞춰 변환
+    dueAt: dueAt.value.replace('T', ' '), 
     reason: reason.value,
     items: draftItems.value.map(i => ({
       soItemId: i.soItemId,

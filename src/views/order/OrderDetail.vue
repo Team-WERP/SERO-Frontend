@@ -210,6 +210,7 @@
                 생산 설정
               </button>
               <button 
+                @click="openDOModal"
                 class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]"
               >
                 납품 설정
@@ -225,6 +226,14 @@
             @submit="handlePRDraftSubmit"
           />
 
+          <DeliveryOrderModal
+            v-if="isDOModalOpen"
+            :soId="Number(route.params.orderId)"
+            :items="order.items"
+            :historyItems="itemHistory?.items"
+            @close="isDOModalOpen = false"
+            @submit="handleDOSubmit"
+          />
           <div class="space-y-8">
             <section v-for="section in docSections" :key="section.title">
               <h3 class="mb-3 text-lg font-bold text-[#4C4CDD]">{{ section.title }}</h3>
@@ -386,11 +395,12 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import ProductionRequestModal from '@/components/order/ProductionRequestModal.vue';
+import DeliveryOrderModal from '@/components/order/\bDeliveryOrderModal.vue';
 import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory } from '@/api/order/salesOrder';
 import { getEmployees } from '@/api/employee/employee';
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 import { getPRListByOrderId, createPRDraft } from '@/api/production/productionRequest';
-import { getDOListByOrderId } from '@/api/shipping/deliveryOrder';
+import { getDOListByOrderId, createDO } from '@/api/shipping/deliveryOrder';
 import { getGIListByOrderId } from '@/api/shipping/goodsIssue';
 
 const route = useRoute();
@@ -407,6 +417,7 @@ const isLoading = ref(false);
 const isModalOpen = ref(false);
 const isPRModalOpen = ref(false);
 const isHistoryModalOpen = ref(false);
+const isDOModalOpen = ref(false);
 
 const steps = ['접수/검토', '주문 결재', '생산/출고', '배송 완료'];
 
@@ -492,17 +503,36 @@ const handlePRDraftSubmit = async (payload) => {
   }
 };
 
-// !! 납품 & 출고 지시 부분 주소 수정 필요 
+const openDOModal = () => {
+  isDOModalOpen.value = true;
+};
+
+const handleDOSubmit = async (payload) => {
+  try {
+    isLoading.value = true;
+    await createDO(payload);
+    
+    alert('납품서가 생성되었습니다.');
+    isDOModalOpen.value = false;
+    if (activeTab.value === 'PRODUCTION') await fetchAllDocuments();
+  } catch (err) {
+    console.error('납품 요청 실패:', err);
+    alert('납품 요청이 실패했습니다.');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 const getLinkPath = (type, doc) => {
   if (!doc) return '#';
   
   switch (type) {
     case 'PRODUCTION':
-      return `/production/requests/${doc.prId}`;
+      return `/production/requests`;
     case 'DELIVERY': 
-      return `/warehouse/delivery-orders/${doc.doCode}`;
+      return `/warehouse/delivery-orders`;
     case 'ISSUE':     
-      return `/warehouse/delivery-orders/goods-issues/${doc.id}`; 
+      return `/warehouse/goods-issues`;  // /출고지시번호
     default:
       return '#';
   }
