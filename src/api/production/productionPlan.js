@@ -46,3 +46,9 @@ export const getDailyPlanPreview = (date /* YYYY-MM-DD */) =>
     api.get('/production-plans/daily-preview', {
         params: { date }
     }).then(r => r.data)
+
+// 라인 × 일자 생산 부하 요약
+export const getDailyLineSummary = (month, factoryId) =>
+    api.get('/production-plans/daily-line-summary', {
+        params: { month, factoryId }
+    }).then(r => r.data)

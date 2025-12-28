@@ -337,17 +337,16 @@ const currentStepIndex = computed(() => {
     }
 
     if (status === 'PR_APPR_DONE') {
-        switch (progress) {
-            case 'PLANNING':
-            case 'PLANNED':
-                return 1
-            case 'PRODUCING':
-                return 2
-            case 'COMPLETED':
-                return 3
-            default:
-                return 0
+        if (!progress) return 1
+
+        const map = {
+            PLANNING: 1,
+            PLANNED: 1,
+            PRODUCING: 2,
+            COMPLETED: 3
         }
+
+        return map[progress] ?? 1
     }
 
     return -1

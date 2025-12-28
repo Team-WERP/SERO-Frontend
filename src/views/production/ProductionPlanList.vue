@@ -49,7 +49,7 @@
                             </div>
                             <div class="meta-row">
                                 <span class="meta-k">Max:</span>
-                                <span class="meta-v">{{ formatNumber(line.dailyCapa) }}ea/일</span>
+                                <span class="meta-v">{{ formatNumber(line.dailyCapacity) }}ea/일</span>
                             </div>
                         </div>
                     </div>
@@ -59,7 +59,11 @@
                     <div v-for="line in lines" :key="`${line.lineId}-${month}`" class="grid-row"
                         :style="{ width: gridWidthPx + 'px' }">
                         <!-- vertical grid -->
-                        <div v-for="d in daysInMonth" :key="d" class="grid-cell" :class="{ today: isToday(d) }" />
+                        <div v-for="d in daysInMonth" :key="d" class="grid-cell" :class="[
+                            { today: isToday(d) },
+                            getLoadClass(line.lineId, d)
+                        ]" />
+
 
                         <!-- plan bars -->
                         <div class="bars-layer">
@@ -136,11 +140,13 @@ import PlanCreateModal from '@/components/production/PlanCreateModal.vue'
 import {
     getProductionLines,
     getMonthlyPlans,
-    getUnassignedTargets
+    getUnassignedTargets,
+    getDailyLineSummary
 } from '@/api/production/productionPlan'
 
 const DAY_WIDTH = 34 // screenshot 느낌(촘촘) 유지
 const ROW_HEIGHT = 56
+const dailySummary = ref([])
 
 const month = ref(toMonthValue(new Date())) // 'YYYY-MM'
 const lines = ref([])
@@ -271,16 +277,40 @@ const reloadAll = async () => {
     lines.value = await getProductionLines(2)
     plans.value = await getMonthlyPlans(month.value)
     unassigned.value = await getUnassignedTargets()
+    dailySummary.value = await getDailyLineSummary(month.value, 2)
+    console.log('dailySummary sample', dailySummary.value?.[0])
+
 }
 watch(month, async () => {
     await reloadAll()
 })
 
+const dailySummaryMap = computed(() => {
+    const map = {}
+    for (const s of dailySummary.value) {
+        map[s.productionLineId] = s
+    }
+    return map
+})
+
+const getLoadClass = (lineId, day) => {
+    const summary = dailySummaryMap.value[lineId]
+    if (!summary) return ''
+
+    const planned = summary.dailyPlannedQtyMap[day] || 0
+    const capa = summary.dailyCapacity || 0
+    if (capa === 0) return ''
+
+    const rate = planned / capa
+
+    if (rate >= 1) return 'over'
+    if (rate >= 0.8) return 'warn'
+    if (rate >= 0.5) return 'mid'
+    return 'low'
+}
+
 onMounted(reloadAll)
 
-/**
- * utils
- */
 function toMonthValue(d) {
     const y = d.getFullYear()
     const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -679,5 +709,25 @@ const formatNumber = (v) => (v != null ? Number(v).toLocaleString() : '-')
     position: absolute;
     opacity: 0;
     pointer-events: none;
+}
+
+.grid-cell.low {
+    background: rgba(16, 185, 129, 0.08);
+    /* 여유 */
+}
+
+.grid-cell.mid {
+    background: rgba(59, 130, 246, 0.10);
+    /* 보통 */
+}
+
+.grid-cell.warn {
+    background: rgba(245, 158, 11, 0.18);
+    /* 주의 */
+}
+
+.grid-cell.over {
+    background: rgba(239, 68, 68, 0.25);
+    /* 과부하 */
 }
 </style>
