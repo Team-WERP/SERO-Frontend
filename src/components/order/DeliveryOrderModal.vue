@@ -54,7 +54,7 @@
           <div class="space-y-4">
             <div class="flex items-center">
               <label class="w-24 text-sm font-bold text-gray-700">요청 부서</label>
-              <span class="text-sm font-medium text-gray-900">물류팀(WMS)</span>
+              <span class="text-sm font-medium text-gray-900">물류팀</span>
             </div>
             <div class="flex items-center">
               <label class="w-24 text-sm font-bold text-gray-700">납기일시</label>

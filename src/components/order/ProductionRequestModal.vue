@@ -7,7 +7,9 @@
           생산 요청
         </h2>
         <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
       </div>
 
@@ -53,7 +55,7 @@
         <div class="grid grid-cols-1 gap-4">
           <div class="flex items-center">
             <label class="w-24 text-sm font-bold text-gray-700">요청 부서</label>
-            <span class="text-sm">생산팀(MES)</span>
+            <span class="text-sm font-medium">생산팀</span>
           </div>
           <div class="flex items-center">
             <label class="w-24 text-sm font-bold text-gray-700">생산마감일시</label>
@@ -93,35 +95,58 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const props = defineProps({
   soId: Number,
-  items: Array
+  items: Array,
+  initialData: Object,
+  isUpdate: Boolean
 });
 
 const emit = defineEmits(['close', 'submit']);
 
 const dueAt = ref('');
 const reason = ref('');
+const draftItems = ref([]);
 
-// 초기 데이터 매핑: 생산필요수량을 기본 생산요청값으로 설정
-const draftItems = ref(props.items.map(item => ({
-  soItemId: item.id,
-  itemCode: item.itemCode,
-  itemName: item.itemName,
-  availableStock: item.availableStock,
-  quantity: item.quantity,
-  productionRequest: item.productionRequest,
-  requestQty: item.productionRequest // 가변 입력값
-})));
-
+onMounted(() => {
+  if (props.isUpdate && props.initialData) {
+    dueAt.value = props.initialData.dueAt ? props.initialData.dueAt.replace(' ', 'T').slice(0, 16) : '';
+    reason.value = props.initialData.reason || '';
+  
+    if (props.initialData.items && props.initialData.items.length > 0) {
+      draftItems.value = props.initialData.items.map(item => ({
+        soItemId: item.soItemId,      
+        itemCode: item.itemCode,       
+        itemName: item.itemName,        
+        availableStock: item.availableStock, 
+        quantity: item.orderQuantity,     
+        productionRequest: item.requiredQuantity, 
+        requestQty: item.requestedQuantity 
+      }));
+    }
+  } else {
+   
+    draftItems.value = props.items.map(item => ({
+      soItemId: item.id,
+      itemCode: item.itemCode,
+      itemName: item.itemName,
+      availableStock: item.availableStock,
+      quantity: item.quantity,
+      productionRequest: item.productionRequest,
+      requestQty: item.productionRequest 
+    }));
+  }
+});
 const submitDraft = () => {
-  if (!dueAt.value) return alert('생산 마감일시를 선택해주세요.');
-  console.log(props);
+  if (!dueAt.value) {
+    alert('생산 마감일시를 선택해주세요.');
+    return;
+  }
+  
   const payload = {
-    soId: props.soId,
-    dueAt: dueAt.value.replace('T', ' '), 
+    dueAt: dueAt.value.replace('T', ' '),
     reason: reason.value,
     items: draftItems.value.map(i => ({
       soItemId: i.soItemId,

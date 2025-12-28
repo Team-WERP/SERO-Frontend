@@ -222,6 +222,8 @@
             v-if="isPRModalOpen"
             :soId="Number(route.params.orderId)"
             :items="order.items"
+            :isUpdate="isPRUpdateMode"
+            :initialData="prInitialData"
             @close="isPRModalOpen = false"
             @submit="handlePRDraftSubmit"
           />
@@ -295,7 +297,9 @@
                         <div class="flex justify-center flex-row items-center gap-1.5">
                           <button
                             v-if="section.title === '생산 요청 문서' && doc.status === 'PR_TMP'"
-                            class="rounded border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
+                            @click="openEditPRModal(doc.prId)"
+                            class="rounded border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap"
+                          >
                             수정
                           </button>
                           <router-link
@@ -395,11 +399,16 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import ProductionRequestModal from '@/components/order/ProductionRequestModal.vue';
-import DeliveryOrderModal from '@/components/order/\bDeliveryOrderModal.vue';
+import DeliveryOrderModal from '@/components/order/DeliveryOrderModal.vue';
 import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory } from '@/api/order/salesOrder';
 import { getEmployees } from '@/api/employee/employee';
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
-import { getPRListByOrderId, createPRDraft } from '@/api/production/productionRequest';
+import { 
+  getPRListByOrderId, 
+  createPRDraft, 
+  getPRDraftDetail, 
+  updatePRDraft 
+} from '@/api/production/productionRequest';
 import { getDOListByOrderId, createDO } from '@/api/shipping/deliveryOrder';
 import { getGIListByOrderId } from '@/api/shipping/goodsIssue';
 
@@ -418,6 +427,10 @@ const isModalOpen = ref(false);
 const isPRModalOpen = ref(false);
 const isHistoryModalOpen = ref(false);
 const isDOModalOpen = ref(false);
+
+const prInitialData = ref(null);
+const isPRUpdateMode = ref(false);
+const currentPrId = ref(null);
 
 const steps = ['접수/검토', '주문 결재', '생산/출고', '배송 완료'];
 
@@ -488,20 +501,43 @@ const openPRModal = () => {
   isPRModalOpen.value = true;
 };
 
-const handlePRDraftSubmit = async (payload) => {
+const openEditPRModal = async (prId) => {
   try {
-    const result = await createPRDraft(payload); 
-    alert('생산 요청이 임시저장되었습니다.');
-    isPRModalOpen.value = false;
-
-    if (activeTab.value === 'PRODUCTION') await fetchAllDocuments();
+    isLoading.value = true;
+    const data = await getPRDraftDetail(prId);
+    prInitialData.value = data;
+    currentPrId.value = prId;
+    isPRUpdateMode.value = true;
+    isPRModalOpen.value = true;
   } catch (err) {
-    console.error('임시저장 실패:', err);
-    alert('임시저장에 실패했습니다.');
+    console.error('상세 정보 로드 실패:', err);
+    alert('데이터를 불러오지 못했습니다.');
   } finally {
     isLoading.value = false;
   }
 };
+
+const handlePRDraftSubmit = async (payload) => {
+  try {
+    isLoading.value = true;
+    if (isPRUpdateMode.value) {
+      await updatePRDraft(currentPrId.value, payload);
+      alert('생산 요청이 수정되었습니다.');
+    } else {
+      await createPRDraft({ ...payload, soId: Number(route.params.orderId) });
+      alert('생산 요청이 임시저장되었습니다.');
+    }
+    
+    isPRModalOpen.value = false;
+    await fetchAllDocuments(); 
+  } catch (err) {
+    console.error('저장 실패:', err);
+    alert('처리에 실패했습니다.');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 
 const openDOModal = () => {
   isDOModalOpen.value = true;
@@ -565,6 +601,14 @@ watch(activeTab, async (newTab) => {
     ]);
   } finally {
     isLoading.value = false;
+  }
+});
+
+watch(isPRModalOpen, (val) => {
+  if (!val) {
+    isPRUpdateMode.value = false;
+    prInitialData.value = null;
+    currentPrId.value = null;
   }
 });
 
