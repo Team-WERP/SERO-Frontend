@@ -419,6 +419,14 @@
             :goods-issue="giDetail"
             @close="closeGIPreview"
         />
+
+        <!-- 담당자 배정 모달 -->
+        <ManagerAssignmentModal
+            v-if="isManagerModalOpen"
+            :departmentData="deptEmployees"
+            @close="isManagerModalOpen = false"
+            @confirm="onConfirmAssignment"
+        />
     </div>
 </template>
 
@@ -428,8 +436,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getGIDetail, assignGIManager, completeGI } from '@/api/shipping/goodsIssue'
 import { getDODetail } from '@/api/shipping/deliveryOrder'
+import { getEmployees } from '@/api/employee/employee'
 import DeliveryOrderPreviewModal from '@/components/modals/DeliveryOrderPreviewModal.vue'
 import GoodsIssuePreviewModal from '@/components/modals/GoodsIssuePreviewModal.vue'
+import ManagerAssignmentModal from '@/views/order/ManagerAssignmentModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -510,6 +520,12 @@ const isDeliveryOrderModalOpen = ref(false)
 
 // 출고지시서 미리보기 모달 상태
 const isGoodsIssueModalOpen = ref(false)
+
+// 담당자 배정 모달 상태
+const isManagerModalOpen = ref(false)
+
+// 직원 목록 데이터
+const deptEmployees = ref([])
 
 // 납품서 데이터 (실제 API에서 가져온 데이터)
 const deliveryOrderData = ref({
@@ -724,14 +740,36 @@ const fetchGIDetail = async () => {
     }
 }
 
-// 담당자 배정
-const assignManager = async () => {
-    if (!confirm('담당자로 배정하시겠습니까?')) return
-
+// 직원 목록 조회 (물류부만 필터링)
+const fetchEmployees = async () => {
     try {
-        await assignGIManager(giDetail.value.giCode)
-        alert('담당자로 배정되었습니다.')
-        fetchGIDetail() // 새로고침
+        const response = await getEmployees()
+        // 물류부(DEPT_WHS) 소속 직원만 필터링
+        deptEmployees.value = response
+            .filter(dept => dept.deptCode === 'DEPT_WHS')
+            .map(dept => ({
+                ...dept,
+                teams: dept.teams || []
+            }))
+    } catch (error) {
+        console.error('직원 목록 조회 실패:', error)
+        alert('직원 목록을 불러오는데 실패했습니다.')
+    }
+}
+
+// 담당자 배정 모달 열기
+const assignManager = async () => {
+    await fetchEmployees()
+    isManagerModalOpen.value = true
+}
+
+// 담당자 배정 확정
+const onConfirmAssignment = async (employee) => {
+    try {
+        await assignGIManager(giDetail.value.giCode, employee.id)
+        alert(`담당자가 ${employee.name}(으)로 배정되었습니다.`)
+        isManagerModalOpen.value = false
+        await fetchGIDetail()
     } catch (error) {
         console.error('담당자 배정 실패:', error)
         alert(error.response?.data?.message || '담당자 배정에 실패했습니다.')
