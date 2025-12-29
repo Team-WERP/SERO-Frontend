@@ -47,8 +47,8 @@
                     <tr>
                         <th>품목</th>
                         <th>생산계획</th>
-                        <th>잔여 수량</th>
-                        <th>작업 계획 수량</th>
+                        <th>오늘 계획 수량</th>
+                        <th>작업지시 수량</th>
                     </tr>
                 </thead>
 
@@ -60,13 +60,14 @@
                         </td>
                         <td>{{ row.ppCode }}</td>
                         <td>
-                            {{ formatQuantity(row.remainingQuantity) }}
+                            {{ formatQuantity(row.dailyPlannedQuantity) }}
                             <span class="unit">{{ row.baseUnit }}</span>
                         </td>
                         <td>
-                            {{ formatQuantity(row.recommendedQuantity) }}
+                            {{ formatQuantity(row.woPlannedQuantity) }}
                             <span class="unit">{{ row.baseUnit }}</span>
                         </td>
+
 
                     </tr>
 
@@ -106,17 +107,20 @@
                         <thead>
                             <tr>
                                 <th>생산계획</th>
-                                <th>권장 수량</th>
-                                <th>작업지시 수량</th>
+                                <th>오늘 계획 수량</th>
+                                <th>실제 작업지시 수량</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="pp in selectedGroup.items" :key="pp.ppId">
                                 <td>{{ pp.ppCode }}</td>
-                                <td>{{ formatQuantity(pp.recommendedQuantity) }} {{ pp.baseUnit }}</td>
                                 <td>
-                                    <input type="number" class="qty-input" v-model.number="pp.workQuantity" :min="0"
-                                        :max="pp.remainingQuantity" @input="recalculateTotal" /> {{ pp.baseUnit }}
+                                    {{ formatQuantity(pp.dailyPlannedQuantity) }} {{ pp.baseUnit }}
+                                </td>
+                                <td>
+                                    <input type="number" class="qty-input" v-model.number="pp.workQuantity" min="0"
+                                        @input="recalculateTotal" />
+                                    {{ pp.baseUnit }}
                                 </td>
                             </tr>
                         </tbody>
@@ -135,7 +139,9 @@
 
                     <div>
                         <span class="label">총 작업지시 수량</span>
-                        <span class="value" :class="{ danger: createQuantity > selectedGroup.dailyCapacity }">
+                        <span class="value" :class="{
+                            danger: createQuantity + selectedGroup.totalWoPlanned > selectedGroup.dailyCapacity
+                        }">
                             {{ formatQuantity(createQuantity) }}
                         </span>
                     </div>
@@ -218,19 +224,16 @@ const lineGroups = computed(() => {
                 dailyCapacity: row.dailyCapacity,
                 hasWorkOrder: false,
                 items: [],
-                totalRemaining: 0,
-                totalRecommended: 0
+                totalWoPlanned: 0
             }
         }
 
         map[row.lineId].items.push(row)
+        map[row.lineId].totalWoPlanned += row.woPlannedQuantity
 
         if (row.hasWorkOrder) {
             map[row.lineId].hasWorkOrder = true
         }
-
-        map[row.lineId].totalRemaining += row.remainingQuantity
-        map[row.lineId].totalRecommended += row.recommendedQuantity
     })
 
     return Object.values(map)
