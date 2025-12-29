@@ -216,8 +216,8 @@
                 <div class="section-header">
                     <h2 class="section-title">출고 지시 결재 진행 상황</h2>
                     <router-link
-                        v-if="giDetail.approvalCode"
-                        :to="`/approvals/${giDetail.approvalCode}`"
+                        v-if="giDetail.approvalId"
+                        :to="`/approval/${giDetail.approvalId}`"
                         class="view-approval-link"
                     >
                         결재 바로가기 →
@@ -225,7 +225,7 @@
                 </div>
 
                 <!-- 결재가 없는 경우 -->
-                <div v-if="!giDetail.approvalCode" class="approval-status">
+                <div v-if="!giDetail.approvalId" class="approval-status">
                     <div class="empty-state">
                         <img src="@/assets/새로이새로미.png" alt="결재 없음" class="empty-icon" />
                         <p class="empty-message">진행 중인 결재가 없습니다.</p>
@@ -440,23 +440,33 @@
             @close="isManagerModalOpen = false"
             @confirm="onConfirmAssignment"
         />
+
+        <!-- 결재선 지정 모달 -->
+        <ApprovalLineModal v-if="approvalLineStore.isOpen" @apply="submitApproval" />
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getGIDetail, assignGIManager, completeGI } from '@/api/shipping/goodsIssue'
 import { getDODetail } from '@/api/shipping/deliveryOrder'
 import { getEmployees } from '@/api/employee/employee'
+import { submitApproval as submitApprovalAPI } from '@/api/approval'
+import { useApprovalLineStore } from '@/stores/approvalLine'
+import { storeToRefs } from 'pinia'
 import DeliveryOrderPreviewModal from '@/components/modals/DeliveryOrderPreviewModal.vue'
 import GoodsIssuePreviewModal from '@/components/modals/GoodsIssuePreviewModal.vue'
 import ManagerAssignmentModal from '@/views/order/ManagerAssignmentModal.vue'
+import ApprovalLineModal from '@/components/approval/ApprovalLineModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const approvalLineStore = useApprovalLineStore()
+
+const { approvalLines, recipientLines, referenceLines } = storeToRefs(approvalLineStore)
 
 // 권한 체크
 const canAssignManager = computed(() => {
@@ -485,12 +495,12 @@ const showAssignManagerButton = computed(() => {
 const showApprovalRequestButton = computed(() => {
     const result = giDetail.value.managerName &&
            giDetail.value.status === 'GI_RVW' &&
-           !giDetail.value.approvalCode
+           !giDetail.value.approvalId
 
     console.log('showApprovalRequestButton:', {
         managerName: giDetail.value.managerName,
         status: giDetail.value.status,
-        approvalCode: giDetail.value.approvalCode,
+        approvalId: giDetail.value.approvalId,
         result: result
     })
 
@@ -632,6 +642,7 @@ const giDetail = ref({
     warehouseName: '',
     note: '',
     approvalCode: '',
+    approvalId: null,
     items: [],
     approvalLines: []
 })
@@ -659,19 +670,6 @@ const sortedApprovalLines = computed(() => {
     return [...giDetail.value.approvalLines].sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
 })
 
-// 결재 진행 상태 확인
-const hasApprovedLine = computed(() => {
-    return sortedApprovalLines.value.some(line => line.status === 'ALS_APPR')
-})
-
-const hasReviewingLine = computed(() => {
-    return sortedApprovalLines.value.some(line => line.status === 'ALS_RVW')
-})
-
-const allApproved = computed(() => {
-    if (sortedApprovalLines.value.length === 0) return false
-    return sortedApprovalLines.value.every(line => line.status === 'ALS_APPR')
-})
 
 // 결재 구분 라벨
 const getLineTypeLabel = (lineType) => {
@@ -743,7 +741,7 @@ const fetchGIDetail = async () => {
             doCode: giDetail.value.doCode,
             status: giDetail.value.status,
             managerName: giDetail.value.managerName,
-            approvalCode: giDetail.value.approvalCode,
+            approvalId: giDetail.value.approvalId,
             canAssignManager: canAssignManager.value,
             buttonShouldShow: canAssignManager.value && !giDetail.value.managerName && giDetail.value.status === 'GI_RVW'
         })
@@ -798,14 +796,78 @@ const onConfirmAssignment = async (employee) => {
 
 // 결재 요청
 const requestApproval = () => {
-    // TODO: 결재 요청 모달 구현 필요
-    // 현재는 임시로 알림만 표시
-    alert('결재 요청 기능은 준비 중입니다.\n결재선 선택 모달을 구현해야 합니다.')
+    // 결재선 모달 열기
+    approvalLineStore.reset() // 초기화
+    approvalLineStore.open('CREATE')
+}
+
+// 결재 상신
+const submitApproval = async () => {
+    // 결재선 검증
+    if (approvalLines.value.length === 0) {
+        alert('결재선에 최소 1명의 결재자를 지정해야 합니다.')
+        return
+    }
+
+    try {
+        // 결재선 데이터 변환
+        const approvalList = approvalLines.value.map(line => ({
+            approverId: line.id,
+            lineType: line.lineType,
+            sequence: line.sequence
+        }))
+
+        const recipientList = recipientLines.value.map(line => ({
+            approverId: line.id,
+            lineType: line.lineType,
+            sequence: null
+        }))
+
+        const referenceList = referenceLines.value.map(line => ({
+            approverId: line.id,
+            lineType: line.lineType,
+            sequence: null
+        }))
+
+        const allLines = [...approvalList, ...recipientList, ...referenceList]
+
+        // RequestDTO 생성
+        const requestDTO = {
+            title: `출고지시 승인 요청 - ${giDetail.value.giCode}`,
+            content: `출고지시번호: ${giDetail.value.giCode}\n고객사: ${giDetail.value.clientName}\n창고: ${giDetail.value.warehouseName}`,
+            refCode: giDetail.value.giCode,
+            approvalTargetType: 'GI',
+            approvalLines: allLines
+        }
+
+        // FormData 생성
+        const formData = new FormData()
+        formData.append('requestDTO', new Blob([JSON.stringify(requestDTO)], { type: 'application/json' }))
+
+        // 결재 상신
+        await submitApprovalAPI(formData)
+        alert('결재가 상신되었습니다.')
+
+        // 결재선 모달 닫기 및 초기화
+        approvalLineStore.close()
+        approvalLineStore.reset()
+
+        // 출고지시 상세 재조회 (상태 업데이트)
+        await fetchGIDetail()
+
+    } catch (error) {
+        console.error('결재 상신 실패:', error)
+        alert(error.response?.data?.message || '결재 상신에 실패했습니다.')
+    }
 }
 
 // 주문 상세 페이지로 이동
-const goToOrder = () => {
+const goToOrder = async () => {
     if (giDetail.value.soId) {
+        isLoading.value = true
+        // DOM 업데이트를 기다린 후 페이지 전환
+        await nextTick()
+        await new Promise(resolve => setTimeout(resolve, 200))
         router.push(`/order/management/${giDetail.value.soId}`)
     }
 }

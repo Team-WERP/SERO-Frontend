@@ -542,7 +542,7 @@ const submitApproval = async () => {
 
     try {
         const res = await submitApprovalAPI(formDataToSend);
-        const approvalId = res.data.approvalId;
+        const approvalId = res.approvalId;
 
         alert('결재 상신이 완료되었습니다.');
 

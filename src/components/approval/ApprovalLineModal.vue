@@ -262,7 +262,10 @@ const closeModal = () => {
     approvalLineStore.close();
 };
 
+const emit = defineEmits(['apply'])
+
 const applyLines = () => {
+    emit('apply')
     approvalLineStore.close();
 }
 
