@@ -132,9 +132,8 @@ const endDate = ref('')
 // 상태 필터
 const selectedStatus = ref('')
 const statusFilters = [
-    { value: 'DO_BEFORE_GI', label: '출고 전' },
-    { value: 'DO_SHIPPED', label: '출고 완료' },
-    { value: 'DO_DELIVERED', label: '배송 완료' }
+    { value: 'DO_BEFORE_GI', label: '출고지시 전' },
+    { value: 'DO_AFTER_GI', label: '출고지시 완료' }
 ]
 
 // 검색
@@ -225,9 +224,8 @@ const closePreviewModal = () => {
 // 상태 라벨
 const getStatusLabel = (status) => {
     const statusMap = {
-        'DO_BEFORE_GI': '출고 전',
-        'DO_SHIPPED': '출고 완료',
-        'DO_DELIVERED': '배송 완료'
+        'DO_BEFORE_GI': '출고지시 전',
+        'DO_AFTER_GI': '출고지시 완료'
     }
     return statusMap[status] || status
 }
@@ -236,8 +234,7 @@ const getStatusLabel = (status) => {
 const getStatusClass = (status) => {
     const classMap = {
         'DO_BEFORE_GI': 'pending',
-        'DO_SHIPPED': 'in-progress',
-        'DO_DELIVERED': '완료'
+        'DO_AFTER_GI': 'completed'
     }
     return classMap[status] || 'pending'
 }
