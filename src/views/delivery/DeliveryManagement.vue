@@ -29,7 +29,10 @@
                 </div>
 
                 <div class="card-body">
-                    <h3 class="delivery-location">{{ delivery.deliveryLocation }}</h3>
+                    <div class="delivery-header">
+                        <h3 class="delivery-location">{{ delivery.deliveryLocation }}</h3>
+                        <span class="gi-code">{{ delivery.giCode }}</span>
+                    </div>
                     <div class="delivery-details">
                         <div class="detail-item">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon">
@@ -37,10 +40,19 @@
                             </svg>
                             <span>{{ delivery.address }}</span>
                         </div>
+                        <div v-if="delivery.deliveryNote" class="detail-item note-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                            </svg>
+                            <span class="note-text">{{ delivery.deliveryNote }}</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="card-footer">
+                    <div class="client-info">
+                        <span class="client-name">{{ delivery.clientName }}</span>
+                    </div>
                     <div class="contact-info">
                         <span class="contact-label">수령인: {{ delivery.recipientName }}</span>
                         <div class="contact-actions">
@@ -175,8 +187,12 @@ const loadDeliveries = async () => {
             return
         }
 
+        // 배송 관련 상태만 필터링 (GI_ISSUED, GI_SHIP_ISSUED, GI_SHIP_ING, GI_SHIP_DONE)
+        const deliveryStatuses = ['GI_ISSUED', 'GI_SHIP_ISSUED', 'GI_SHIP_ING', 'GI_SHIP_DONE']
+        const filteredResult = result.filter(item => deliveryStatuses.includes(item.status))
+
         // API 응답을 배송 관리에 맞게 변환
-        deliveries.value = result.map((item, index) => {
+        deliveries.value = filteredResult.map((item, index) => {
             console.log(`항목 ${index + 1}:`, item)
             return {
                 id: item.id,
@@ -185,9 +201,11 @@ const loadDeliveries = async () => {
                 doCode: item.doCode,
                 status: item.status,
                 deliveryLocation: item.itemName || '배송지',
-                address: item.warehouseName || '주소 정보 없음',
-                recipientName: item.managerName || '담당자 정보 없음',
-                recipientContact: '010-111-1111', // 실제로는 API에서 받아와야 함
+                address: item.clientAddress || '주소 정보 없음',
+                clientName: item.clientName || '고객사 정보 없음',
+                recipientName: item.recipientName || '담당자 정보 없음',
+                recipientContact: item.recipientContact || '010-0000-0000',
+                deliveryNote: item.deliveryNote,
                 shippedAt: item.shippedAt
             }
         })
@@ -433,11 +451,27 @@ onMounted(() => {
     padding: 16px;
 }
 
+.delivery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
 .delivery-location {
     font-size: 18px;
     font-weight: 700;
     color: #111827;
-    margin: 0 0 12px 0;
+    margin: 0;
+}
+
+.gi-code {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 .delivery-details {
@@ -460,12 +494,35 @@ onMounted(() => {
     flex-shrink: 0;
 }
 
+.note-item {
+    background: #fef3c7;
+    padding: 8px;
+    border-radius: 6px;
+    border-left: 3px solid #f59e0b;
+}
+
+.note-text {
+    color: #92400e;
+    font-weight: 500;
+}
+
 .card-footer {
     padding: 16px;
     border-top: 1px solid #e5e7eb;
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.client-info {
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.client-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #4C4CDD;
 }
 
 .contact-info {
