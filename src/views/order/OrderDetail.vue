@@ -494,7 +494,7 @@ const fetchApprovalSummary = async () => {
 
 const goToCreateApproval = () => {
   const routeData = router.resolve({
-    path: '/approvals/create',
+    path: '/approval/create',
     query: { 
       refDocType: 'so', 
       refDocId: route.params.orderId 
