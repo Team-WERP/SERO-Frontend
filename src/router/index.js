@@ -9,6 +9,7 @@ import Login from "@/views/auth/Login.vue";
 import ClientDashboard from "@/views/client-portal/ClientDashboard.vue";
 import ClientOrderCreate from "@/views/client-portal/ClientOrderCreate.vue";
 import ClientOrderList from "@/views/client-portal/ClientOrderList.vue";
+import ClientOrderDetail from "@/views/client-portal/ClientOrderDetail.vue";
 import ClientOrderDelivery from "@/views/client-portal/ClientOrderDelivery.vue";
 import ClientItemList from "@/views/client-portal/ClientItemList.vue";
 import ClientAddress from "@/views/client-portal/ClientAddress.vue";
@@ -34,6 +35,8 @@ import PRDetail from "@/views/production/PRDetail.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
+import DeliveryManagement from "@/views/delivery/DeliveryManagement.vue";
+import DriverLogin from "@/views/delivery/DriverLogin.vue";
 import GoodsIssueList from "@/views/warehouse/GoodsIssueList.vue";
 import GoodsIssueCreate from "@/views/warehouse/GoodsIssueCreate.vue";
 import GoodsIssueDetail from "@/views/warehouse/GoodsIssueDetail.vue";
@@ -77,6 +80,22 @@ const router = createRouter({
                         noPadding: true
                     }
                 },
+                {
+                    path: "/driver/login",
+                    component: DriverLogin,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
+                {
+                    path: "/delivery/login",
+                    component: DriverLogin,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
 
                 // ---------------------
                 // 고객포털
@@ -84,6 +103,7 @@ const router = createRouter({
                 { path: "/client-portal/dashboard", component: ClientDashboard },
                 { path: "/client-portal/order-create", component: ClientOrderCreate },
                 { path: "/client-portal/orders", component: ClientOrderList },
+                { path: "/client-portal/orders/:orderId", component: ClientOrderDetail },
                 { path: "/client-portal/order-delivery", component: ClientOrderDelivery },
                 { path: "/client-portal/items", component: ClientItemList },
                 { path: "/client-portal/address", component: ClientAddress },
@@ -120,6 +140,14 @@ const router = createRouter({
                 { path: "/warehouse/goods-issues/create/:doCode", name: "GoodsIssueCreate", component: GoodsIssueCreate },
                 { path: "/warehouse/goods-issues/:giCode", name: "GoodsIssueDetail", component: GoodsIssueDetail },
                 { path: "/warehouse/tracking", component: DeliveryTracking },
+                {
+                    path: "/delivery/management",
+                    component: DeliveryManagement,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
 
                 // ---------------------
                 // 기준정보
