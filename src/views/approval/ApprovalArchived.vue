@@ -1,17 +1,12 @@
 <template>
-    <div class="submitted-approval-page">
-        <div class="breadcrumb">전자결재 > 기안 문서함</div>
+    <div class="processed-approval-page">
+        <div class="breadcrumb">전자결재 > 결재 문서함</div>
         <div class="page-header">
             <div>
-                <h1 class="page-title">기안 문서함</h1>
+                <h1 class="page-title">결재 문서함</h1>
                 <p class="page-description">
-                    기안한 결재 문서를 조회하고 진행 상태를 확인할 수 있습니다.
+                    본인이 결재 처리(승인 또는 반려)를 완료한 결재 목록을 조회합니다.
                 </p>
-            </div>
-            <div>
-                <button class="create-btn" @click="openDraftModal">
-                    + 결재 상신
-                </button>
             </div>
         </div>
 
@@ -33,6 +28,7 @@
                         <input type="date" v-model="searchFilter.endDate">
                     </div>
                 </div>
+
                 <div class="filter-item">
                     <label>문서 구분</label>
                     <select v-model="searchFilter.refDocType">
@@ -42,38 +38,42 @@
                         <option value="GI">출고 지시서</option>
                     </select>
                 </div>
+
                 <div class="filter-item keyword">
                     <label>검색</label>
                     <input type="text" v-model="searchFilter.keyword" placeholder="제목, 기안자, 결재코드 검색"
                         @keyup.enter="fetchData">
                 </div>
+
                 <button class="search-btn" @click="fetchData">검색</button>
             </div>
         </div>
 
         <div class="items-section">
-            <p class="mb-4">
-                총 <strong class="text-[#4C4CDD]">{{ pageInfo.totalElements }}</strong>건
-            </p>
+            <div class="section-header">
+                <p class="mb-4">
+                    총 <strong class="text-[#4C4CDD]">{{ pageInfo.totalElements }}</strong>건
+                </p>
+            </div>
 
             <div class="table-responsive">
                 <table class="items-table">
                     <thead>
                         <tr>
-                            <th class="text-center" style="width: 20px; min-width: 20px;">No</th>
+                            <th class="text-center" style="width: 50px; min-width: 50px;">No</th>
                             <th class="text-center" style="width: 130px; min-width: 130px;">결재 번호</th>
-                            <th class="text-center" style="width: 110px; min-width: 110px;">문서 구분</th>
+                            <th class="text-center" style="width: 100px; min-width: 100px;">문서 구분</th>
                             <th style="min-width: 250px;">제목</th>
                             <th class="text-center" style="width: 60px; min-width: 60px;">첨부</th>
                             <th class="text-center" style="width: 100px; min-width: 100px;">결재 상태</th>
                             <th class="text-center" style="width: 180px; min-width: 180px;">진행 상황</th>
                             <th class="text-center" style="width: 110px; min-width: 110px;">기안일</th>
-                            <th class="text-center" style="width: 120px; min-width: 120px;">완료일</th>
+                            <th class="text-center" style="width: 110px; min-width: 110px;">완료일</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="approvals.length === 0">
-                            <td colspan="9" class="text-center empty-message">검색된 결과가 없습니다.</td>
+                            <td colspan="9" class="text-center empty-message">처리한 결재 내역이 없습니다.</td>
                         </tr>
                         <tr v-for="(item, index) in approvals" :key="item.approvalId">
                             <td class="text-center">
@@ -110,11 +110,9 @@
                                             <template v-if="item.approvalStatus === 'AS_APPR'">
                                                 최종 승인
                                             </template>
-
                                             <template v-else-if="item.approvalStatus === 'AS_RJCT'">
                                                 반려 <b>{{ item.currentApprovedCount }}</b> / {{ item.totalLine }}
                                             </template>
-
                                             <template v-else>
                                                 승인 <b>{{ item.currentApprovedCount }}</b> / {{ item.totalLine }}
                                             </template>
@@ -146,18 +144,34 @@
                             </td>
 
                             <td class="text-center">{{ formatDate(item.draftedAt) }}</td>
+
                             <td class="text-center">{{ formatDate(item.completedAt) }}</td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div class="pagination" v-if="pageInfo.totalPages > 0">
+                <button class="page-btn prev-btn" :disabled="pageInfo.number === 0"
+                    @click="changePage(pageInfo.number - 1)">
+                    &lt;
+                </button>
+                <button v-for="page in visiblePages" :key="page" class="page-btn"
+                    :class="{ active: pageInfo.number === (page - 1) }" @click="changePage(page - 1)">
+                    {{ page }}
+                </button>
+                <button class="page-btn next-btn" :disabled="pageInfo.number >= pageInfo.totalPages - 1"
+                    @click="changePage(pageInfo.number + 1)">
+                    &gt;
+                </button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { getSubmittedApprovals } from '@/api/approval';
+import { ref, computed, onMounted } from 'vue';
+import { getProcessedApprovals } from '@/api/approval.js';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
@@ -176,6 +190,7 @@ const searchFilter = ref({
     startDate: '2025-12-01',
     endDate: '2025-12-31',
     refDocType: '',
+    approvalType: ''
 });
 
 const pageInfo = ref({
@@ -187,7 +202,7 @@ const pageInfo = ref({
 
 const approvals = ref([]);
 
-// === 로직 함수 ===
+// === 매핑 함수 ===
 const getRefDocTypeName = (code) => {
     const map = { 'SO': '주문 요청서', 'PR': '생산 요청서', 'GI': '출고 지시서' };
     return map[code] || code;
@@ -210,38 +225,52 @@ const formatDate = (dateStr) => {
     return dateStr.substring(0, 10);
 };
 
-// ★★★ [수정됨] Bar 너비 계산 ★★★
+// Bar 너비 계산
 const getProgressWidth = (item) => {
-    // 승인(AS_APPR)만 100% 채움
     if (item.approvalStatus === 'AS_APPR') return 100;
-
-    // 반려(AS_RJCT)도 이제 멈춘 지점만큼만 너비를 가짐 (ex: 50% 지점에서 빨간색)
     if (item.totalLine === 0) return 0;
     return (item.currentApprovedCount / item.totalLine) * 100;
 };
-
-// Bar 색상 클래스
+// Bar 색상
 const getProgressBarClass = (status) => {
     if (status === 'AS_APPR') return 'bar-success';
     if (status === 'AS_RJCT') return 'bar-danger';
     return 'bar-active';
 };
 
+// 탭 변경
 const changeTab = (tabId) => {
     currentTab.value = tabId;
     pageInfo.value.number = 0;
     fetchData();
 };
 
-const openDraftModal = () => {
-    router.push('/approval/create');
-};
-
 const goToDetail = (id) => {
     router.push(`/approval/${id}`);
+}
+
+// 페이징 계산
+const visiblePages = computed(() => {
+    const currentPage = pageInfo.value.number + 1;
+    const total = pageInfo.value.totalPages;
+    const pageCount = 5;
+    let start = Math.floor((currentPage - 1) / pageCount) * pageCount + 1;
+    let end = start + pageCount - 1;
+    if (end > total) end = total;
+    const pages = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+});
+
+const changePage = (page) => {
+    if (page < 0 || page >= pageInfo.value.totalPages) return;
+    pageInfo.value.number = page;
+    fetchData();
 };
 
+// === API 호출 ===
 const fetchData = async () => {
+    // 탭에 따른 상태값 매핑
     let statusParam = null;
     if (currentTab.value === 'ing') statusParam = 'AS_ING';
     else if (currentTab.value === 'appr') statusParam = 'AS_APPR';
@@ -252,20 +281,21 @@ const fetchData = async () => {
         startDate: searchFilter.value.startDate,
         endDate: searchFilter.value.endDate,
         refDocType: searchFilter.value.refDocType || null,
-        status: statusParam
+        approvalStatus: statusParam, // 탭 값 적용
+        approvalType: searchFilter.value.approvalType || null,
+        page: pageInfo.value.number,
+        size: pageInfo.value.size
     };
 
     try {
-        const response = await getSubmittedApprovals(params);
+        const response = await getProcessedApprovals(params);
         if (response) {
             approvals.value = response.approvals || [];
             pageInfo.value.totalElements = response.totalElements || 0;
             pageInfo.value.totalPages = response.totalPages || 0;
-            pageInfo.value.size = response.size || 10;
-            pageInfo.value.number = response.number || 0;
         }
     } catch (error) {
-        console.error(error);
+        console.error('결재 문서함 조회 실패:', error);
         approvals.value = [];
     }
 };
@@ -276,8 +306,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* ===== 페이지 전체 레이아웃 ===== */
-.submitted-approval-page {
+/* ===== 레이아웃 ===== */
+.processed-approval-page {
     padding: 5px;
     width: 100%;
 }
@@ -465,6 +495,12 @@ onMounted(() => {
     text-align: left;
 }
 
+.items-table th.text-center {
+    text-align: center;
+}
+
+/* 헤더 가운데 정렬 */
+
 .items-table td {
     padding: 12px 16px;
     border-bottom: 1px solid #e5e7eb;
@@ -484,7 +520,7 @@ onMounted(() => {
 .link {
     color: #4C4CDD;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .link:hover {
@@ -545,7 +581,7 @@ onMounted(() => {
     color: #5b21b6;
 }
 
-/* ===== 진행 상황 Bar (수정됨) ===== */
+/* 진행 Bar */
 .progress-cell {
     display: flex;
     flex-direction: column;
@@ -623,26 +659,61 @@ onMounted(() => {
     background-color: #ef4444;
 }
 
-/* 반려 시 빨간점 */
-
-.create-btn {
-    background: #4C4CDD;
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.create-btn:hover {
-    background: #3d3dbb;
-}
-
 .empty-message {
     padding: 60px 0;
     color: #9ca3af;
     font-size: 14px;
+}
+
+/* 페이지네이션 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
+
+.page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 6px;
+    border: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-btn:hover:not(:disabled) {
+    border-color: #4C4CDD;
+    color: #4C4CDD;
+    background-color: #eff6ff;
+}
+
+.page-btn.active {
+    background-color: #4C4CDD;
+    color: #ffffff;
+    border-color: #4C4CDD;
+}
+
+.page-btn:disabled {
+    background-color: #f9fafb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    border-color: #e5e7eb;
+}
+
+.prev-btn,
+.next-btn {
+    font-family: monospace;
+    font-weight: 700;
 }
 </style>

@@ -50,6 +50,11 @@ import EmployeeList from "@/views/master/EmployeeList.vue";
 import ApprovalDashboard from "@/views/approval/ApprovalDashboard.vue";
 import ApprovalSubmitted from "@/views/approval/ApprovalSubmitted.vue";
 import ApprovalReceived from "@/views/approval/ApprovalReceived.vue";
+import ApprovalRequested from "@/views/approval/ApprovalRequested.vue";
+import ApprovalArchived from "@/views/approval/ApprovalArchived.vue";
+import ApprovalReferenced from "@/views/approval/ApprovalReferenced.vue";
+import ApprovalCreate from "@/views/approval/ApprovalCreate.vue";
+import ApprovalDetail from "@/views/approval/ApprovalDetail.vue";
 
 // 공지사항
 import NoticeList from "@/views/notices/NoticeList.vue";
@@ -77,8 +82,8 @@ const router = createRouter({
                     component: Login,
                     meta: {
                         hideLayout: true,
-                        noPadding: true
-                    }
+                        noPadding: true,
+                    },
                 },
                 {
                     path: "/driver/login",
@@ -100,14 +105,23 @@ const router = createRouter({
                 // ---------------------
                 // 고객포털
                 // ---------------------
-                { path: "/client-portal/dashboard", component: ClientDashboard },
-                { path: "/client-portal/order-create", component: ClientOrderCreate },
+                {
+                    path: "/client-portal/dashboard",
+                    component: ClientDashboard,
+                },
+                {
+                    path: "/client-portal/order-create",
+                    component: ClientOrderCreate,
+                },
                 { path: "/client-portal/orders", component: ClientOrderList },
                 { path: "/client-portal/orders/:orderId", component: ClientOrderDetail },
                 { path: "/client-portal/order-delivery", component: ClientOrderDelivery },
                 { path: "/client-portal/items", component: ClientItemList },
                 { path: "/client-portal/address", component: ClientAddress },
-                { path: "/client-portal/company", component: ClientCompanyInfo },
+                {
+                    path: "/client-portal/company",
+                    component: ClientCompanyInfo,
+                },
                 { path: "/client-portal/notices", component: ClientNotices },
 
                 // ---------------------
@@ -121,14 +135,32 @@ const router = createRouter({
                 // ---------------------
                 // 생산
                 // ---------------------
-                { path: "/production/dashboard", component: ProductionDashboard },
-                { path: "/production/requests", component: ProductionRequestList },
+                {
+                    path: "/production/dashboard",
+                    component: ProductionDashboard,
+                },
+                {
+                    path: "/production/requests",
+                    component: ProductionRequestList,
+                },
                 { path: "/production/plans", component: ProductionPlanList },
                 { path: "/production/work-orders", component: WorkOrderList },
-                { path: "/production/work-results/input", component: WorkResultInput },
-                { path: "/production/work-results/management", component: WorkResultList },
-                { path: "/production/process-flow", component: ProcessFlowManagement },
-                { path: "/production/requests/drafts/:prId", component: PRDraftDetailView },
+                {
+                    path: "/production/work-results/input",
+                    component: WorkResultInput,
+                },
+                {
+                    path: "/production/work-results/management",
+                    component: WorkResultList,
+                },
+                {
+                    path: "/production/process-flow",
+                    component: ProcessFlowManagement,
+                },
+                {
+                    path: "/production/requests/drafts/:prId",
+                    component: PRDraftDetailView,
+                },
                 { path: "/production/requests/:prId", component: PRDetail },
 
                 // ---------------------
@@ -162,7 +194,18 @@ const router = createRouter({
                 // ---------------------
                 { path: "/approval/dashboard", component: ApprovalDashboard },
                 { path: "/approval/submitted", component: ApprovalSubmitted },
+                { path: "/approval/requested", component: ApprovalRequested },
+                { path: "/approval/archived", component: ApprovalArchived },
                 { path: "/approval/received", component: ApprovalReceived },
+                { path: "/approval/referenced", component: ApprovalReferenced },
+                {
+                    path: "/approval/create",
+                    component: ApprovalCreate,
+                },
+                {
+                    path: "/approval/:approvalId",
+                    component: ApprovalDetail,
+                },
 
                 // ---------------------
                 // 공지사항
@@ -173,11 +216,14 @@ const router = createRouter({
                 // 시스템 관리
                 // ---------------------
                 { path: "/system/common-code", component: SystemCommonCode },
-                { path: "/system/employees", component: SystemEmployeeManagement },
-                { path: "/system/roles", component: RoleManagement }
-            ]
-        }
-    ]
+                {
+                    path: "/system/employees",
+                    component: SystemEmployeeManagement,
+                },
+                { path: "/system/roles", component: RoleManagement },
+            ],
+        },
+    ],
 });
 
 export default router;
