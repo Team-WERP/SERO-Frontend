@@ -84,7 +84,9 @@
                     <td colspan="4" class="px-4 py-3 text-right text-gray-700">총 합계</td>
                     <td class="px-4 py-3"> {{ totalQuantity }} </td>
                     <td colspan="2" class="px-4 py-3"></td>
-                    <td class="px-4 py-3 text-right"> ₩ {{ formatNumber(totalAmount) }}</td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                      <span class="mr-1">₩</span>{{ formatNumber(totalAmount) }}
+                    </td>
                     <td class="px-4 py-3"></td>
                   </tr>
                 </tfoot>
@@ -341,9 +343,11 @@
     };
   
     try {
-      await createClientOrder(orderPayload);
+      const data = await createClientOrder(orderPayload);
+      const orderData = data;
+      console.log(orderData);
       alert('주문이 성공적으로 등록되었습니다.');
-      router.push('/order/list');
+      router.push(`/client-portal/orders/${orderData.orderId}`);
     } catch (error) {
       console.error('주문 등록 실패:', error);
       alert('주문 등록 중 오류가 발생했습니다.');
