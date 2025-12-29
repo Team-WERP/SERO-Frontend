@@ -48,7 +48,7 @@
                         <th>품목</th>
                         <th>생산계획</th>
                         <th>잔여 수량</th>
-                        <th>권장 수량</th>
+                        <th>작업 계획 수량</th>
                     </tr>
                 </thead>
 
@@ -59,8 +59,15 @@
                             <div class="item-code">{{ row.materialCode }}</div>
                         </td>
                         <td>{{ row.ppCode }}</td>
-                        <td>{{ formatQuantity(row.remainingQuantity) }}</td>
-                        <td>{{ formatQuantity(row.recommendedQuantity) }}</td>
+                        <td>
+                            {{ formatQuantity(row.remainingQuantity) }}
+                            <span class="unit">{{ row.baseUnit }}</span>
+                        </td>
+                        <td>
+                            {{ formatQuantity(row.recommendedQuantity) }}
+                            <span class="unit">{{ row.baseUnit }}</span>
+                        </td>
+
                     </tr>
 
                     <tr class="line-total-row">
@@ -83,38 +90,68 @@
                     {{ selectedGroup.lineName }}
                 </div>
 
+                <!-- 작업일자 -->
                 <div class="modal-info">
                     <div>
                         <span class="label">작업일자</span>
                         <span class="value">{{ selectedDate }}</span>
                     </div>
-                    <div>
-                        <span class="label">생산계획</span>
-                        <ul class="pp-list">
-                            <li v-for="pp in selectedGroup.items" :key="pp.ppId">
-                                {{ pp.ppCode }}
-                            </li>
-                        </ul>
-
-                    </div>
                 </div>
+
+                <!-- 생산계획별 수량 -->
+                <div class="pp-quantity-section">
+                    <span class="label">생산계획별 작업 수량</span>
+
+                    <table class="pp-quantity-table">
+                        <thead>
+                            <tr>
+                                <th>생산계획</th>
+                                <th>권장 수량</th>
+                                <th>작업지시 수량</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="pp in selectedGroup.items" :key="pp.ppId">
+                                <td>{{ pp.ppCode }}</td>
+                                <td>{{ formatQuantity(pp.recommendedQuantity) }} {{ pp.baseUnit }}</td>
+                                <td>
+                                    <input type="number" class="qty-input" v-model.number="pp.workQuantity" :min="0"
+                                        :max="pp.remainingQuantity" @input="recalculateTotal" /> {{ pp.baseUnit }}
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+
 
                 <div class="modal-metrics">
                     <div>
-                        <span class="label">총 권장 수량</span>
-                        <span class="value highlight">
-                            {{ formatQuantity(recommendedQuantity) }}
+                        <span class="label">라인 일일 CAPA</span>
+                        <span class="value">
+                            {{ formatQuantity(selectedGroup.dailyCapacity) }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="label">총 작업지시 수량</span>
+                        <span class="value" :class="{ danger: createQuantity > selectedGroup.dailyCapacity }">
+                            {{ formatQuantity(createQuantity) }}
                         </span>
                     </div>
                 </div>
+
 
                 <div class="modal-actions">
                     <button class="btn" @click="showModal = false">
                         취소
                     </button>
-                    <button class="btn primary" :disabled="createQuantity <= 0" @click="createWorkOrder">
+                    <button class="btn primary"
+                        :disabled="createQuantity <= 0 || createQuantity > selectedGroup.dailyCapacity"
+                        @click="createWorkOrder">
                         작업지시 생성
                     </button>
+
                 </div>
             </div>
         </div>
@@ -178,7 +215,7 @@ const lineGroups = computed(() => {
             map[row.lineId] = {
                 lineId: row.lineId,
                 lineName: row.lineName,
-                // 초기값은 false로 설정하거나 첫 번째 row의 값을 참조
+                dailyCapacity: row.dailyCapacity,
                 hasWorkOrder: false,
                 items: [],
                 totalRemaining: 0,
@@ -205,11 +242,16 @@ const fetchDailyPreview = async () => {
 }
 
 const openCreateModal = (group) => {
-    selectedGroup.value = group
+    selectedGroup.value = {
+        ...group,
+        items: group.items.map(pp => ({
+            ...pp,
+            workQuantity: pp.recommendedQuantity // 기본값
+        }))
+    }
 
-    // 권장 수량 = 라인 내 PP들의 recommendedQuantity 합
-    recommendedQuantity.value = group.items.reduce(
-        (sum, r) => sum + r.recommendedQuantity,
+    recommendedQuantity.value = selectedGroup.value.items.reduce(
+        (sum, r) => sum + r.workQuantity,
         0
     )
 
@@ -217,15 +259,16 @@ const openCreateModal = (group) => {
     showModal.value = true
 }
 
+
 const createWorkOrder = async () => {
     if (!selectedGroup.value) return
 
     await createWorkOrderApi({
         lineId: selectedGroup.value.lineId,
         workDate: selectedDate.value,
-        items: selectedGroup.value.items.map(row => ({
-            ppId: row.ppId,
-            quantity: row.recommendedQuantity
+        items: selectedGroup.value.items.map(pp => ({
+            ppId: pp.ppId,
+            quantity: pp.workQuantity
         }))
     })
 
@@ -252,6 +295,16 @@ const handlePrint = () => {
     window.print();
     showPrintModal.value = false
 };
+
+const recalculateTotal = () => {
+    const total = selectedGroup.value.items.reduce(
+        (sum, pp) => sum + (pp.workQuantity || 0),
+        0
+    )
+
+    createQuantity.value = total
+}
+
 
 </script>
 
@@ -401,7 +454,8 @@ const handlePrint = () => {
 .modal {
     background: #ffffff;
     padding: 24px;
-    width: 320px;
+    width: 520px;
+    max-width: 90vw;
     border-radius: 8px;
 }
 
@@ -442,6 +496,7 @@ const handlePrint = () => {
 .modal-metrics .label {
     font-size: 12px;
     color: #6b7280;
+    margin-right: 10px;
 }
 
 .modal-info .value,
@@ -477,6 +532,42 @@ const handlePrint = () => {
     margin-top: 4px;
     font-size: 12px;
     color: #9ca3af;
+}
+
+.pp-quantity-section {
+    margin-bottom: 16px;
+}
+
+.pp-quantity-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pp-quantity-table th,
+.pp-quantity-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.pp-quantity-table th {
+    background: #f9fafb;
+    font-weight: 600;
+}
+
+.qty-input {
+    width: 70px;
+    padding: 4px 6px;
+    font-size: 13px;
+    text-align: right;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+
+.value.danger {
+    color: #dc2626;
+    font-weight: 700;
 }
 
 .date-controls {
