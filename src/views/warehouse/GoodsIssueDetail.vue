@@ -191,6 +191,9 @@
                     <div class="button-group">
                         <button class="btn-secondary" @click="openDeliveryOrderPreview">납품서 인쇄</button>
                         <button class="btn-secondary" @click="openGIPreview">출고지시서 인쇄</button>
+                        <button v-if="giDetail.giUrl" class="btn-download" @click="downloadGIPdf">
+                            📥 출고지시서 PDF 다운로드
+                        </button>
                     </div>
                 </div>
                 <div class="notes-box">
@@ -578,6 +581,13 @@ const openGIPreview = () => {
 
 const closeGIPreview = () => {
     isGoodsIssueModalOpen.value = false
+}
+
+// PDF 다운로드 핸들러
+const downloadGIPdf = () => {
+    if (giDetail.value.giUrl) {
+        window.open(giDetail.value.giUrl, '_blank')
+    }
 }
 
 // 출고지시 상세 데이터
@@ -1385,6 +1395,22 @@ onMounted(() => {
 .btn-secondary:hover {
     background: #f9fafb;
     border-color: #9ca3af;
+}
+
+.btn-download {
+    padding: 8px 16px;
+    background: #10b981;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-download:hover {
+    background: #059669;
 }
 
 .export-btn {

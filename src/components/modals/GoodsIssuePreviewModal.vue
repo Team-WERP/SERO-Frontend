@@ -126,6 +126,10 @@
             <!-- 모달 푸터 -->
             <div class="modal-footer">
                 <button class="btn-secondary" @click="closeModal">닫기</button>
+                <button v-if="goodsIssue.giUrl" class="btn-download" @click="downloadPdf">
+                    <i class="icon-download">📥</i>
+                    PDF 다운로드
+                </button>
                 <button class="btn-primary" @click="printGoodsIssue">인쇄</button>
             </div>
         </div>
@@ -190,6 +194,13 @@ const formatDate = (dateTime) => {
 // 모달 닫기
 const closeModal = () => {
     emit('close')
+}
+
+// PDF 다운로드 기능
+const downloadPdf = () => {
+    if (props.goodsIssue.giUrl) {
+        window.open(props.goodsIssue.giUrl, '_blank')
+    }
 }
 
 // 출고지시서 인쇄
@@ -704,5 +715,29 @@ h3 {
 
 .btn-primary:hover {
     background: #3d3dbb;
+}
+
+.btn-download {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    background: #10b981;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-download:hover {
+    background: #059669;
+}
+
+.icon-download {
+    font-style: normal;
+    font-size: 16px;
 }
 </style>
