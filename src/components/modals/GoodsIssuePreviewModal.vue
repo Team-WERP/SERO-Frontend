@@ -14,18 +14,20 @@
                 <div class="gi-header">
                     <h1>출고지시서</h1>
                     <table class="header-info">
-                        <tr>
-                            <th>문서번호</th>
-                            <td>{{ goodsIssue.giCode }}</td>
-                        </tr>
-                        <tr>
-                            <th>출고예정일자</th>
-                            <td>{{ formatDate(goodsIssue.scheduledAt) }}</td>
-                        </tr>
-                        <tr>
-                            <th>참조문서</th>
-                            <td>{{ goodsIssue.doCode }}</td>
-                        </tr>
+                        <tbody>
+                            <tr>
+                                <th>문서번호</th>
+                                <td>{{ goodsIssue.giCode }}</td>
+                            </tr>
+                            <tr>
+                                <th>출고예정일자</th>
+                                <td>{{ formatDate(goodsIssue.scheduledAt) }}</td>
+                            </tr>
+                            <tr>
+                                <th>참조문서</th>
+                                <td>{{ goodsIssue.doCode }}</td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
 
@@ -36,32 +38,36 @@
                     <div class="from-section">
                         <h3>출고 정보 (From)</h3>
                         <table class="detail-table">
-                            <tr>
-                                <th>출고 창고</th>
-                                <td>{{ goodsIssue.warehouseName }}</td>
-                            </tr>
-                            <tr>
-                                <th>담당자</th>
-                                <td>{{ goodsIssue.managerName || '미배정' }}</td>
-                            </tr>
+                            <tbody>
+                                <tr>
+                                    <th>출고 창고</th>
+                                    <td>{{ goodsIssue.warehouseName }}</td>
+                                </tr>
+                                <tr>
+                                    <th>담당자</th>
+                                    <td>{{ goodsIssue.managerName || '미배정' }}</td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
 
                     <div class="to-section">
                         <h3>배송 정보 (To)</h3>
                         <table class="detail-table">
-                            <tr>
-                                <th>납품처</th>
-                                <td>{{ goodsIssue.companyName }}</td>
-                            </tr>
-                            <tr>
-                                <th>도착지 주소</th>
-                                <td>{{ goodsIssue.address }}</td>
-                            </tr>
-                            <tr>
-                                <th>연락처</th>
-                                <td>{{ goodsIssue.recipientContact }}</td>
-                            </tr>
+                            <tbody>
+                                <tr>
+                                    <th>납품처</th>
+                                    <td>{{ goodsIssue.companyName }}</td>
+                                </tr>
+                                <tr>
+                                    <th>도착지 주소</th>
+                                    <td>{{ goodsIssue.address }}</td>
+                                </tr>
+                                <tr>
+                                    <th>연락처</th>
+                                    <td>{{ goodsIssue.recipientContact }}</td>
+                                </tr>
+                            </tbody>
                         </table>
                         <div class="recipient-info">
                             <span class="label">수령인 이름</span>
