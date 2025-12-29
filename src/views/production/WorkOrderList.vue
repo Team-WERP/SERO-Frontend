@@ -74,7 +74,7 @@
                 <h3 class="modal-title">작업지시 생성</h3>
 
                 <div class="modal-sub">
-                    {{ selectedRow.lineName }} · {{ selectedRow.materialName }}
+                    {{ selectedGroup.lineName }}
                 </div>
 
                 <div class="modal-info">
@@ -84,32 +84,22 @@
                     </div>
                     <div>
                         <span class="label">생산계획</span>
-                        <span class="value">{{ selectedRow.ppCode }}</span>
+                        <ul class="pp-list">
+                            <li v-for="pp in selectedGroup.items" :key="pp.ppId">
+                                {{ pp.ppCode }}
+                            </li>
+                        </ul>
+
                     </div>
                 </div>
 
                 <div class="modal-metrics">
                     <div>
-                        <span class="label">권장 수량</span>
+                        <span class="label">총 권장 수량</span>
                         <span class="value highlight">
                             {{ formatQuantity(recommendedQuantity) }}
                         </span>
                     </div>
-                    <div>
-                        <span class="label">잔여 수량</span>
-                        <span class="value">
-                            {{ formatQuantity(selectedRow.remainingQuantity) }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="modal-input">
-                    <label>생성 수량</label>
-                    <input type="number" v-model.number="createQuantity" :max="selectedRow.remainingQuantity"
-                        :min="1" />
-                    <small class="hint">
-                        권장 수량 기준으로 자동 설정되며, 필요 시 조정할 수 있습니다.
-                    </small>
                 </div>
 
                 <div class="modal-actions">
@@ -134,7 +124,6 @@ const selectedDate = ref(new Date().toISOString().slice(0, 10))
 const plans = ref([])
 
 const showModal = ref(false)
-const selectedRow = ref(null)
 const createQuantity = ref(0)
 const recommendedQuantity = ref(0)
 const selectedGroup = ref(null)
@@ -197,19 +186,21 @@ const openCreateModal = (group) => {
 }
 
 const createWorkOrder = async () => {
-    for (const row of selectedGroup.value.items) {
-        if (row.remainingQuantity <= 0) continue
+    if (!selectedGroup.value) return
 
-        await createWorkOrderApi({
+    await createWorkOrderApi({
+        lineId: selectedGroup.value.lineId,
+        workDate: selectedDate.value,
+        items: selectedGroup.value.items.map(row => ({
             ppId: row.ppId,
-            workDate: selectedDate.value,
             quantity: row.recommendedQuantity
-        })
-    }
+        }))
+    })
 
     showModal.value = false
-    fetchDailyPreview()
+    await fetchDailyPreview()
 }
+
 
 
 const formatQuantity = (v) =>
