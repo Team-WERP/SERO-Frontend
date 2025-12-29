@@ -39,10 +39,11 @@ export const createGI = (data) => {
 /**
  * 출고지시 담당자 배정 (물류팀)
  * @param {string} giCode
+ * @param {number} empId - 담당자 직원 ID
  * @returns {Promise<Object>}
  */
-export const assignGIManager = (giCode) => {
-    return api.patch(`/goods-issues/${giCode}/assign-manager`)
+export const assignGIManager = (giCode, empId) => {
+    return api.patch(`/goods-issues/${giCode}/assign-manager`, { empId })
         .then(res => res.data);
 };
 
