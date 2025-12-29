@@ -48,6 +48,7 @@ export const useUserStore = defineStore("user", {
                 email: payload.sub,
                 id: payload.id,
                 position: payload.pos
+                // name: payload.name || payload.username || payload.sub
             };
 
             this.authorities = payload.auth

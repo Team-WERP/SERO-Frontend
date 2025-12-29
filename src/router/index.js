@@ -35,6 +35,8 @@ import PRDetail from "@/views/production/PRDetail.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
+import DeliveryManagement from "@/views/delivery/DeliveryManagement.vue";
+import DriverLogin from "@/views/delivery/DriverLogin.vue";
 import GoodsIssueList from "@/views/warehouse/GoodsIssueList.vue";
 import GoodsIssueCreate from "@/views/warehouse/GoodsIssueCreate.vue";
 import GoodsIssueDetail from "@/views/warehouse/GoodsIssueDetail.vue";
@@ -73,6 +75,22 @@ const router = createRouter({
                 {
                     path: "/login",
                     component: Login,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
+                {
+                    path: "/driver/login",
+                    component: DriverLogin,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
+                {
+                    path: "/delivery/login",
+                    component: DriverLogin,
                     meta: {
                         hideLayout: true,
                         noPadding: true
@@ -122,6 +140,14 @@ const router = createRouter({
                 { path: "/warehouse/goods-issues/create/:doCode", name: "GoodsIssueCreate", component: GoodsIssueCreate },
                 { path: "/warehouse/goods-issues/:giCode", name: "GoodsIssueDetail", component: GoodsIssueDetail },
                 { path: "/warehouse/tracking", component: DeliveryTracking },
+                {
+                    path: "/delivery/management",
+                    component: DeliveryManagement,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
 
                 // ---------------------
                 // 기준정보
