@@ -414,6 +414,9 @@ const statusLabel = computed(() => ({
     PR_APPR_PEND: '결재중',
     PR_APPR_DONE: '결재승인',
     PR_APPR_RJCT: '결재반려',
+    PR_PLANNED: '계획수립',
+    PR_PRODUCING: '생산중',
+    PR_DONE: '생산완료',
     PR_CANCEL: '취소'
 }[header.value.status] || header.value.status))
 
