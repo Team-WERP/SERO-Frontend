@@ -13,7 +13,7 @@
 
             <!-- 데스크탑 상단 메뉴 -->
             <nav v-if="!isMobile" class="top-nav__menu">
-                <button v-for="item in navItems" :key="item.key" class="top-nav__item"
+                <button v-for="item in filteredNavItems" :key="item.key" class="top-nav__item"
                     :class="{ 'top-nav__item--active': isActive(item.key) }" @click="change(item.key)">
                     {{ item.label }}
                 </button>
@@ -40,10 +40,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMenuStore } from '@/stores/menu'
 import { useResponsive } from '@/composables/useResponsive'
+import { useUserStore } from '@/stores/user'
 
 import AppLogo from '@/components/common/AppLogo.vue'
 import UserProfile from '@/components/common/UserProfile.vue'
@@ -53,17 +54,18 @@ const { isMobile } = useResponsive()
 const open = ref(false)
 
 const menuStore = useMenuStore()
+const userStore = useUserStore()
 const router = useRouter()
 
 const navItems = [
-    { key: 'clientPortal', label: '고객포털' },
-    { key: 'order', label: '주문' },
-    { key: 'production', label: '생산' },
-    { key: 'warehouse', label: '재고·물류' },
-    { key: 'master', label: '기준정보' },
-    { key: 'approval', label: '전자결재' },
+    { key: 'clientPortal', label: '고객포털', roles: ['AC_CLI', 'AC_SYS'] },
+    { key: 'order', label: '주문', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
+    { key: 'production', label: '생산', roles: ['AC_SAL', 'AC_PRO', 'AC_SYS'] },
+    { key: 'warehouse', label: '재고·물류', roles: ['AC_SAL', 'AC_WHS', 'AC_SYS'] },
+    { key: 'master', label: '기준정보', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
+    { key: 'approval', label: '전자결재', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
     { key: 'notices', label: '공지사항' },
-    { key: 'system', label: '관리자' }
+    { key: 'system', label: '관리자', roles: ['AC_SYS'] },
 ]
 
 const defaultPath = {
@@ -83,6 +85,39 @@ const change = (key) => {
     menuStore.setActiveModule(key)
     router.push(defaultPath[key])
 }
+
+const filteredNavItems = computed(() => {
+    return navItems.filter(item =>
+        (!item.roles ||
+            item.roles.some(role => userStore.authorities.includes(role)))
+        && hasAccessibleMenu(item.key)
+    )
+})
+
+const hasAccessibleMenu = (moduleKey) => {
+    return menuStore.menus[moduleKey]?.some(menu =>
+        !menu.role ||
+        menu.role.some(role => userStore.authorities.includes(role))
+    )
+}
+
+watch(
+    () => userStore.authorities,
+    (authorities) => {
+        if (!authorities || authorities.length === 0) return
+
+        if (menuStore.activeModule) return
+
+        const items = filteredNavItems.value
+        if (items.length === 0) return
+
+        const first = items[0]
+
+        menuStore.setActiveModule(first.key)
+        router.replace(defaultPath[first.key])
+    },
+    { immediate: true }
+)
 </script>
 
 <style scoped>

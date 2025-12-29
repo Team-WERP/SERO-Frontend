@@ -6,19 +6,15 @@ export const useUserStore = defineStore("user", {
         user: null,
         clientId: null,
         isAuthenticated: false,
-        authorities: []
+        authorities: [],
     }),
 
     getters: {
         isLoggedIn: (state) => state.isAuthenticated,
 
-        hasAuthority: (state) => (auth) =>
-            state.authorities.includes(auth),
+        hasAuthority: (state) => (auth) => state.authorities.includes(auth),
 
-        userName: (state) =>
-            state.user?.name ||
-            state.user?.email ||
-            "",
+        userName: (state) => state.user?.name || state.user?.email || "",
 
         userRoleLabel: (state) => {
             if (state.authorities.includes("AC_SYS")) return "시스템 관리자";
@@ -43,7 +39,7 @@ export const useUserStore = defineStore("user", {
             if (state.user?.rank.includes("JR_TL")) return "팀장";
             if (state.user?.rank.includes("JR_TM")) return "팀원";
 
-            return state.user?.rank
+            return state.user?.rank;
         },
 
         userDepartment: (state) => {
@@ -56,7 +52,7 @@ export const useUserStore = defineStore("user", {
             if (state.user?.department.includes("DEPT_PRO_2")) return "생산2팀";
             if (state.user?.department.includes("DEPT_WHS_1")) return "물류1팀";
             if (state.user?.department.includes("DEPT_WHS_2")) return "물류2팀";
-        }
+        },
     },
 
     actions: {
@@ -69,13 +65,11 @@ export const useUserStore = defineStore("user", {
                 id: payload.id,
                 position: payload.pos,
                 rank: payload.rank,
-                department: payload.dept
+                department: payload.dept,
                 // name: payload.name || payload.username || payload.sub
             };
 
-            this.authorities = payload.auth
-                ? payload.auth.split(",")
-                : [];
+            this.authorities = payload.auth ? payload.auth.split(",") : [];
 
             this.isAuthenticated = true;
         },
@@ -88,7 +82,7 @@ export const useUserStore = defineStore("user", {
             this.isAuthenticated = false;
 
             localStorage.removeItem("accessToken");
-            localStorage.removeItem("name")
-        }
-    }
+            localStorage.removeItem("name");
+        },
+    },
 });

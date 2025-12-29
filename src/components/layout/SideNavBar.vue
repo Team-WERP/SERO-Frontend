@@ -18,12 +18,22 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMenuStore } from '@/stores/menu'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const menuStore = useMenuStore()
+const userStore = useUserStore()
 
 const sideMenu = computed(() => {
-    return menuStore.menus[menuStore.activeModule] || []
+    const menus = menuStore.menus[menuStore.activeModule] || []
+
+    return menus.filter(menu => {
+        if (!menu.role) return true
+
+        return menu.role.some(role =>
+            userStore.authorities.includes(role)
+        )
+    })
 })
 
 const isActive = (path) => {

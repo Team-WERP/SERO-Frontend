@@ -227,8 +227,6 @@ const fetchData = async () => {
         size: pageInfo.value.size
     };
 
-    console.log('수신 문서함 조회 params:', params);
-
     try {
         const response = await getReceivedApprovals(params);
         if (response) {
