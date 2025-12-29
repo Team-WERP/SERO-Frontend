@@ -133,10 +133,11 @@ const handleLogin = async () => {
             password: password.value
         });
 
-        const { accessToken } = res.data;
+        const { accessToken, name } = res.data;
 
         // 토큰만 저장 (Bearer는 axios.js에서 자동으로 추가됨)
         localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('name', name);
 
         const userStore = useUserStore();
         userStore.setFromToken(accessToken);
@@ -178,9 +179,10 @@ const devLogin = async (type) => {
 
         const res = await login(type, data);
 
-        const { accessToken } = res.data;
+        const { accessToken, name } = res.data;
 
         localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('name', name);
 
         const userStore = useUserStore();
         userStore.setFromToken(accessToken);

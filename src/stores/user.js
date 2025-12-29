@@ -27,6 +27,15 @@ export const useUserStore = defineStore("user", {
             if (state.authorities.includes("AC_WHS")) return "물류팀";
             if (state.authorities.includes("AC_CLI")) return "고객사";
             return "사용자";
+        },
+
+        userPosition: (state) => {
+            if (state.user?.position.includes("JP_CEO")) return "사장";
+            if (state.user?.position.includes("JP_DIR")) return "이사";
+            if (state.user?.position.includes("JP_MGR")) return "부장";
+            if (state.user?.position.includes("JP_SM")) return "과장";
+            if (state.user?.position.includes("JP_AM")) return "대리";
+            if (state.user?.position.includes("JP_STF")) return "직원";
         }
     },
 
@@ -37,7 +46,9 @@ export const useUserStore = defineStore("user", {
 
             this.user = {
                 email: payload.sub,
-                name: payload.name || payload.username || payload.sub
+                id: payload.id,
+                position: payload.pos
+                // name: payload.name || payload.username || payload.sub
             };
 
             this.authorities = payload.auth
@@ -55,6 +66,7 @@ export const useUserStore = defineStore("user", {
             this.isAuthenticated = false;
 
             localStorage.removeItem("accessToken");
+            localStorage.removeItem("name")
         }
     }
 });

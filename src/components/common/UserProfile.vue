@@ -6,7 +6,7 @@
 
         <div class="user-profile__info">
             <div class="user-profile__name">{{ userName }}</div>
-            <div class="user-profile__role">{{ userRole }}</div>
+            <div class="user-profile__role">{{ userRole }} · {{ userPosition }}</div>
         </div>
 
         <button @click="handleLogout" class="ml-4 px-3 py-1 text-[14px] bg-[#4C4CDD] text-white rounded cursor-pointer">
@@ -24,11 +24,12 @@ import { useUserStore } from "@/stores/user";
 const userStore = useUserStore();
 const router = useRouter();
 
-const userName = computed(() => userStore.userName);
+const userName = localStorage.getItem("name");
 const userRole = computed(() => userStore.userRoleLabel);
+const userPosition = computed(() => userStore.userPosition);
 
 const userInitial = computed(() =>
-    userName.value ? userName.value.charAt(0) : ""
+    userName ? userName.charAt(0) : ""
 );
 
 const handleLogout = async () => {
