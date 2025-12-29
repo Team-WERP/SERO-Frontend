@@ -7,8 +7,8 @@
                     <h2 class="font-bold">결재 처리</h2>
                 </div>
                 <button @click="$emit('close')"
-                    class="text-gray-500 rounded cursor-pointer bg-[#efefef] p-1 flex items-center justify-center hover:shadow-sm">
-                    <svg fill="#4C4CDD" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                    class="text-gray-500 rounded cursor-pointer p-1 flex items-center justify-center">
+                    <svg fill="#808080" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24">
                         <path
                             d="M23.954 21.03l-9.184-9.095 9.092-9.174-2.832-2.807-9.09 9.179-9.176-9.088-2.81 2.81 9.186 9.105-9.095 9.184 2.81 2.81 9.112-9.192 9.18 9.1z" />
                     </svg>
@@ -57,12 +57,7 @@
                 </div>
             </div>
 
-            <div class="h-12.5 px-6 bg-white border-t border-gray-200 flex justify-between items-center">
-                <button @click="$emit('close')"
-                    class="cursor-pointer h-8 px-5 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 text-[14px] font-medium transition-colors">
-                    닫기
-                </button>
-
+            <div class="h-12.5 px-6 bg-white border-t border-gray-200 flex justify-end items-center">
                 <div class="flex items-center gap-3">
                     <button @click="onReject"
                         class="cursor-pointer h-8 px-5 rounded bg-white border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-[14px] font-bold transition-all shadow-sm flex items-center gap-1.5">
