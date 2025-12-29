@@ -1,5 +1,18 @@
 <template>
     <div class="gi-detail-page">
+        <!-- 로딩 스피너 -->
+        <div
+            v-if="isLoading"
+            class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+        >
+            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+                </path>
+            </svg>
+        </div>
+
         <!-- 상단 헤더 -->
         <div class="page-header">
             <div class="breadcrumb">
@@ -527,6 +540,9 @@ const isManagerModalOpen = ref(false)
 // 직원 목록 데이터
 const deptEmployees = ref([])
 
+// 로딩 상태
+const isLoading = ref(true)
+
 // 납품서 데이터 (실제 API에서 가져온 데이터)
 const deliveryOrderData = ref({
     doCode: '',
@@ -716,6 +732,7 @@ const formatDateTime = (dateTime) => {
 // 출고지시 상세 조회
 const fetchGIDetail = async () => {
     try {
+        isLoading.value = true
         const giCode = route.params.giCode
         const response = await getGIDetail(giCode)
         giDetail.value = response
@@ -738,6 +755,8 @@ const fetchGIDetail = async () => {
         } else if (error.response?.status !== 401) {
             alert('출고지시 상세를 불러오는데 실패했습니다.')
         }
+    } finally {
+        isLoading.value = false
     }
 }
 
@@ -849,6 +868,7 @@ onMounted(() => {
 <style scoped>
 /* ===== 페이지 전체 ===== */
 .gi-detail-page {
+    position: relative;
     padding: 20px;
     max-width: 1400px;
     margin: 0 auto;
