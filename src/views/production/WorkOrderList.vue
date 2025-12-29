@@ -30,10 +30,16 @@
             <div class="line-header">
                 <div class="line-title">{{ group.lineName }}</div>
 
-                <button class="btn primary" :disabled="group.hasWorkOrder || isNotToday"
-                    @click="openCreateModal(group)">
-                    작업지시 생성
-                </button>
+                <div class="action-buttons" style="display: flex; gap: 8px;">
+                    <button class="btn" @click="onPrint(group)">
+                        작업지시서 인쇄
+                    </button>
+
+                    <button class="btn primary" :disabled="group.hasWorkOrder || isNotToday"
+                        @click="openCreateModal(group)">
+                        작업지시 생성
+                    </button>
+                </div>
             </div>
 
             <table class="items-table">
@@ -113,12 +119,32 @@
             </div>
         </div>
     </div>
+
+    <div v-if="showPrintModal" class="print-modal-backdrop">
+        <div class="print-modal">
+            <div class="print-modal-header">
+                <span>작업지시서 미리보기</span>
+                <button class="close-btn" @click="showPrintModal = false">✕</button>
+            </div>
+            <div class="print-modal-body">
+                <div class="print-area">
+                    <WODocument :group="printData" :workDate="selectedDate" />
+                </div>
+            </div>
+            <div class="print-modal-footer">
+                <button class="btn primary" @click="handlePrint">
+                    출력하기
+                </button>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { getDailyPlanPreview } from '@/api/production/productionPlan.js'
 import { createWorkOrder as createWorkOrderApi } from '@/api/production/workOrder.js'
+import WODocument from '@/components/production/WODocument.vue'
 
 const selectedDate = ref(new Date().toISOString().slice(0, 10))
 const plans = ref([])
@@ -152,7 +178,8 @@ const lineGroups = computed(() => {
             map[row.lineId] = {
                 lineId: row.lineId,
                 lineName: row.lineName,
-                hasWorkOrder: row.todayWorkQuantity > 0,
+                // 초기값은 false로 설정하거나 첫 번째 row의 값을 참조
+                hasWorkOrder: false,
                 items: [],
                 totalRemaining: 0,
                 totalRecommended: 0
@@ -160,6 +187,11 @@ const lineGroups = computed(() => {
         }
 
         map[row.lineId].items.push(row)
+
+        if (row.hasWorkOrder) {
+            map[row.lineId].hasWorkOrder = true
+        }
+
         map[row.lineId].totalRemaining += row.remainingQuantity
         map[row.lineId].totalRecommended += row.recommendedQuantity
     })
@@ -207,6 +239,20 @@ const formatQuantity = (v) =>
     v != null ? v.toLocaleString() : '-'
 
 onMounted(fetchDailyPreview)
+
+const showPrintModal = ref(false)
+const printData = ref(null)
+
+const onPrint = (group) => {
+    printData.value = group
+    showPrintModal.value = true
+}
+
+const handlePrint = () => {
+    window.print();
+    showPrintModal.value = false
+};
+
 </script>
 
 
@@ -335,7 +381,7 @@ onMounted(fetchDailyPreview)
     border-color: #4C4CDD;
 }
 
-.btn.disabled {
+.btn.primary:disabled {
     background: #f3f4f6;
     color: #9ca3af;
     cursor: not-allowed;
@@ -514,5 +560,87 @@ onMounted(fetchDailyPreview)
 
 .line-total-row td {
     text-align: center;
+}
+
+.print-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.print-modal {
+    background: #fff;
+    width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.print-modal-body {
+    overflow: auto;
+    padding: 16px;
+}
+
+.print-modal-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+}
+
+.print-modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #ddd;
+    border-bottom: none;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+@media print {
+
+    body * {
+        visibility: hidden;
+    }
+
+    .print-modal-backdrop,
+    .print-modal-backdrop *,
+    .print-area,
+    .print-area * {
+        visibility: visible;
+    }
+
+    .print-modal-backdrop {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+    }
+
+    .print-modal {
+        box-shadow: none;
+        width: 100%;
+    }
+
+    .print-modal-header,
+    .print-modal-footer {
+        display: none !important;
+    }
+
+    .print-modal-body {
+        padding: 0 !important;
+        background: white !important;
+    }
 }
 </style>
