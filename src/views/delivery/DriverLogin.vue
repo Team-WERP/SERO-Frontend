@@ -3,7 +3,7 @@
         <div class="login-container">
             <div class="login-card">
                 <div class="logo-section">
-                    <h1 class="logo">SERO</h1>
+                    <img src="@/assets/logo.png" alt="SERO Logo" class="logo-image" />
                     <h2 class="subtitle">SERO 배송 파트너</h2>
                     <p class="description">오늘도 안전한 배송 부탁드립니다!</p>
                 </div>
@@ -120,13 +120,11 @@ const handleLogin = async () => {
     margin-bottom: 32px;
 }
 
-.logo {
-    font-size: 48px;
-    font-weight: 700;
-    color: #4C4CDD;
-    margin: 0 0 8px 0;
-    font-style: italic;
-    letter-spacing: 2px;
+.logo-image {
+    width: 120px;
+    height: auto;
+    margin: 0 auto 16px;
+    display: block;
 }
 
 .subtitle {
@@ -223,8 +221,8 @@ const handleLogin = async () => {
         padding: 32px 24px;
     }
 
-    .logo {
-        font-size: 40px;
+    .logo-image {
+        width: 100px;
     }
 
     .subtitle {
