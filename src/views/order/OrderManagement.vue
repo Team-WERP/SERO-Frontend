@@ -107,7 +107,7 @@
 
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div class="p-4 border-b border-gray-100 flex items-center bg-gray-50/50 text-sm text-gray-600 font-medium">
-        조회 결과: <span class="text-indigo-600 font-bold mx-1">{{ orders[0].orderCount }}</span>건
+        조회 결과: <span class="text-indigo-600 font-bold mx-1">{{ orders[0]?.orderCount }}</span>건
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
