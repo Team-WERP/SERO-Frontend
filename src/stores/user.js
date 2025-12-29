@@ -36,7 +36,8 @@ export const useUserStore = defineStore("user", {
             const payload = jwtDecode(token);
 
             this.user = {
-                email: payload.sub
+                email: payload.sub,
+                name: payload.name || payload.username || payload.sub
             };
 
             this.authorities = payload.auth
