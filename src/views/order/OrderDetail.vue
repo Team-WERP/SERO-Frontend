@@ -377,11 +377,32 @@
         </div>
       </div>
 
-      <div v-if="order.status === 'ORD_RED' && activeTab === 'ORDER'" class="flex justify-end mt-5">
-        <button @click="openAssignmentModal" class="rounded-lg px-3 py-2 text-sm font-bold text-[#fff] bg-[#4C4CDD] hover:bg-[#3b3bbb]">
-          담당자 배정
-        </button>
-      </div>
+      <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+  
+        <div class="flex justify-end mt-8">
+          <button 
+            v-if="order && ['ORD_RVW', 'ORD_APPR_RJCT'].includes(order.status)"
+            @click="isCancelModalOpen = true"
+            class="px-6 py-2.5 rounded-lg border border-red-200 bg-red-50 text-sm font-bold text-red-600 hover:bg-red-100"
+          >
+            주문 취소
+          </button>
+        </div>
+
+        <CancelOrderModal 
+          v-if="isCancelModalOpen"
+          :is-submitting="isCancelling"
+          @close="isCancelModalOpen = false"
+          @confirm="handleCancelConfirm"
+        />
+      <button 
+        v-if="order && order.status === 'ORD_RED'"
+        @click="openAssignmentModal" 
+        class="px-6 py-2 text-sm font-bold rounded-lg bg-[#4C4CDD] text-white hover:bg-[#3b3bbb] shadow-md transition-all active:scale-95"
+      >
+        담당자 배정
+      </button>
+    </div>
       
       <ManagerAssignmentModal v-if="isModalOpen" :departmentData="deptEmployees" @close="isModalOpen = false" @confirm="onConfirmAssignment" />
     </div>
@@ -433,8 +454,9 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute,useRouter } from 'vue-router';
 import ProductionRequestModal from '@/components/order/ProductionRequestModal.vue';
 import DeliveryOrderModal from '@/components/order/DeliveryOrderModal.vue';
+import CancelOrderModal from './CancelOrderModal.vue';
 import OrderPrintModal from '@/components/order/OrderPrintModal.vue';
-import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory } from '@/api/order/salesOrder';
+import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory, cancelOrder } from '@/api/order/salesOrder';
 import { getEmployees } from '@/api/employee/employee';
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 import { 
@@ -465,11 +487,14 @@ const isPRModalOpen = ref(false);
 const isHistoryModalOpen = ref(false);
 const isDOModalOpen = ref(false);
 const isPrintModalOpen = ref(false);
+const isCancelModalOpen = ref(false);
 
 const prInitialData = ref(null);
 const isPRUpdateMode = ref(false);
 const currentPrId = ref(null);
 const approvalData = ref(null); 
+const isCancelling = ref(false);
+
 
 const steps = ['접수/검토', '주문 결재', '생산/출고', '배송 완료'];
 
@@ -753,7 +778,7 @@ const getOrderStatusBadgeClass = (s) => {
 const getOrderStatusLabel = (s) => {
     const map = { 
         'ORD_RED': '접수대기', 'ORD_RVW': '주문검토', 'ORD_APPR_PEND': '주문결재중', 
-        'ORD_APPR_DONE': '결재승인', 'ORD_PRO': '생산중', 'ORD_SHIP_READY': '배송중', 'ORD_SHIPPING': '출고중', 
+        'ORD_APPR_DONE': '결재승인', 'ORD_APPR_RJCT': '결재반려','ORD_PRO': '생산중', 'ORD_SHIP_READY': '배송중', 'ORD_SHIPPING': '출고중', 
         'ORD_DONE': '배송완료', 'ORD_CANCEL': '주문취소' 
     };
     return map[s] || s;
@@ -861,7 +886,22 @@ const docSections = ref([
   }
 ]);
 
+const handleCancelConfirm = async (cancelData) => {
+  isCancelling.value = true;
+  try {
+    await cancelOrder(route.params.orderId, cancelData);
+    
+    alert('주문이 성공적으로 취소되었습니다.');
+    isCancelModalOpen.value = false; 
 
+    if (typeof fetchDetail === 'function') await fetchDetail();
+  } catch (error) {
+    console.error('취소 실패:', error);
+    alert('주문 취소 처리 중 오류가 발생했습니다.');
+  } finally {
+    isCancelling.value = false;
+  }
+};
 
 onMounted(() => {
   fetchDetail();

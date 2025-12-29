@@ -33,6 +33,12 @@ export const getItemHistory = (orderId, itemId) => {
       .then(res => res.data);
 };
 
+// 주문 취소
+export const cancelOrder = (orderId, cancelData) => {
+  return api.put(`/orders/${orderId}/cancel`, cancelData)
+    .then(res => res.data);
+};
+
 
 // ====================== 고객사 =============================
 

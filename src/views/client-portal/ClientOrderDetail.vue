@@ -13,6 +13,9 @@
         <span :class="getStatusClass(order.status)" class="px-3 py-1 rounded-full text-[13px] font-bold">
           {{ getStatusLabel(order.status) }}
         </span>
+        <span class="px-3 py-1 rounded-full text-[15px] text-red-500 font-semibold">
+          취소사유 : {{ order.rejectionReason }}
+        </span>
       </div>
       <p class="text-[13px] text-gray-500 mt-1">고객사 담당자: <span class="font-medium text-gray-800">{{ order.clientManagerName || '-' }}</span></p>
     </header>
