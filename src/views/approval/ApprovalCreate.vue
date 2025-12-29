@@ -215,22 +215,31 @@
                                 class="w-full bg-blue-50 border border-blue-200 rounded-lg p-4 flex justify-between items-center animate-fade-in-down">
                                 <div class="flex flex-col">
                                     <div class="flex items-center gap-2 mb-1">
-                                        <span v-if="formData.relatedDoc.soCode"
+                                        <span v-if="formData.relatedDoc.docType === 'SO'"
                                             class="inline-block px-1.5 py-0.5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded border border-blue-200">{{
                                                 getRefDocType(formData.relatedDoc.soCode) }}</span>
-                                        <span v-else-if="formData.relatedDoc.prCode"
+                                        <span v-else-if="formData.relatedDoc.docType === 'PR'"
                                             class="inline-block px-1.5 py-0.5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded border border-blue-200">{{
                                                 getRefDocType(formData.relatedDoc.prCode) }}</span>
                                         <span v-else
                                             class="inline-block px-1.5 py-0.5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded border border-blue-200">{{
-                                                getRefDocType(formData.relatedDoc.giCode) }}ㅇ</span>
-                                        <span class="text-xs text-blue-600 opacity-70">{{ formData.relatedDoc.soCode ||
-                                            formData.relatedDoc.prCode ||
-                                            formData.relatedDoc.giCode
-                                        }}</span>
+                                                getRefDocType(formData.relatedDoc.giCode) }}</span>
+
+                                        <span class="text-xs text-blue-600 opacity-70">생성일: {{
+                                            formData.relatedDoc.orderedAt
+                                            ||
+                                            formData.relatedDoc.createdAt || formData.relatedDoc.requestedAt }}</span>
+
                                     </div>
+
+                                    <p v-if="formData.relatedDoc.docType === 'SO'"
+                                        class="text-sm font-bold text-blue-800 leading-tight">{{
+                                            formData.relatedDoc.soCode }}</p>
+                                    <p v-if="formData.relatedDoc.docType === 'PR'"
+                                        class="text-sm font-bold text-blue-800 leading-tight">{{
+                                            formData.relatedDoc.prCode }}</p>
                                     <p class="text-sm font-bold text-blue-800 leading-tight">{{
-                                        formData.relatedDoc.clientName }}</p>
+                                        formData.relatedDoc.giCode }}</p>
                                 </div>
 
                                 <div class="flex items-center gap-2">
@@ -382,19 +391,26 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch, computed } from 'vue';
+import { reactive, ref, watch, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
 import ApprovalLineModal from '@/components/approval/ApprovalLineModal.vue';
 import { useApprovalLineStore } from '@/stores/approvalLine';
+import { useUserStore } from '@/stores/user';
 import { EMPLOYEE_RANK, EMPLOYEE_POSITION, APPROVAL_TYPE, DOC_TYPE_LABEL } from '@/constants/approval.js';
 import { submitApproval as submitApprovalAPI } from '@/api/approval.js';
-
-const approvalLineStore = useApprovalLineStore();
-approvalLineStore.reset();
+import { getSODetail } from '@/api/order/salesOrder.js';
+import { getPRDetail } from '@/api/production/productionRequest.js';
+import { getGIDetail } from '@/api/shipping/goodsIssue.js';
 
 const route = useRoute();
 const router = useRouter();
+const approvalLineStore = useApprovalLineStore();
+const userStore = useUserStore();
+
+const approvalLine = ref([]);
+const receivers = ref([]);
+const referrers = ref([]);
 
 const {
     approvalLines,
@@ -402,13 +418,27 @@ const {
     referenceLines
 } = storeToRefs(approvalLineStore);
 
-// 로그인한 사용자 정보 가져오기
-const loggedEmployeeInfo = {
-    name: "사용자 이름",
-    deptName: "영업 1팀",
-    position: "JP_STF",
-    rank: "JR_TM"
-};
+const {
+    user
+} = storeToRefs(userStore);
+
+const userName = localStorage.getItem("name");
+const userDepartment = computed(() => userStore.userDepartment);
+
+const isModalOpen = ref(false);
+const isPreviewOpen = ref(false);
+
+const nowDate = new Date().toISOString().slice(0, 10);
+
+const formData = reactive({
+    title: '',
+    content: '',
+    relatedDoc: null,
+    items: [],
+    files: []
+});
+
+approvalLineStore.reset();  // 새로고침하면 approvalLineStore 초기화
 
 const openApprovalModal = () => {
     // 1. 현재 작성 중인 결재선 데이터를 스토어에 세팅
@@ -432,27 +462,6 @@ const openApprovalModal = () => {
     // 2. 그 다음 모달 열기 (이 시점의 데이터를 스냅샷으로 뜸)
     approvalLineStore.open();
 };
-
-const isModalOpen = ref(false);
-const isPreviewOpen = ref(false);
-
-const nowDate = new Date().toISOString().slice(0, 10);
-
-const formData = reactive({
-    title: '',
-    content: '',
-    relatedDoc: null,
-    items: [],
-    files: []
-});
-
-const dummyPdfUrl = "https://sero-erp-storage.s3.ap-northeast-2.amazonaws.com/sero/documents/28bfcc5f-ddc5-4990-89e1-43ba7e68ead1.pdf";
-
-const dummyDocuments = [
-    { id: 41, clientName: '에스엘(주)', soCode: 'SO-20251228-001', recipientName: '강지륜', orderedAt: '2025-12-28 16:41', shippedAt: '2026-02-10 16:00', hasPdf: true, url: dummyPdfUrl },
-    { id: 2, clientName: '현대 모비스', prCode: 'PR-2025-0102', recipientName: '이팀장', orderedAt: '2025-12-28 16:41', shippedAt: '2026-02-10 16:00', hasPdf: false, url: null },
-    { id: 3, clientName: '기아', giCode: 'GI-2025-0001', recipientName: '박이사', orderedAt: '2025-12-28 16:41', shippedAt: '2026-02-10 16:00', hasPdf: true, url: dummyPdfUrl },
-];
 
 const selectDocument = (doc) => {
     formData.relatedDoc = doc;
@@ -490,7 +499,7 @@ const canSubmit = computed(() => {
 // 문서 제목 체크
 const validateTitle = () => {
     if (!formData.title) {
-        alert('문서 제목을 입력해야 합니다.'); // ERP 느낌: 정식 안내 문구
+        alert('문서 제목을 입력해야 합니다.');
         return false;
     }
     return true;
@@ -499,7 +508,7 @@ const validateTitle = () => {
 // 관련 문서 체크
 const validateRelatedDoc = () => {
     if (!formData.relatedDoc?.id) {
-        alert('관련 문서를 선택해야 합니다.'); // ERP 느낌: 정식 안내 문구
+        alert('관련 문서를 선택해야 합니다.');
         return false;
     }
     return true;
@@ -517,7 +526,7 @@ const validateApprovalFlow = () => {
 // 문서 내용 체크
 const validateContent = () => {
     if (!formData.content) {
-        alert('문서 내용을 입력해야 합니다.'); // ERP 느낌: 정식 안내 문구
+        alert('문서 내용을 입력해야 합니다.');
         return false;
     }
     return true;
@@ -533,22 +542,18 @@ const submitApproval = async () => {
 
     try {
         const res = await submitApprovalAPI(formDataToSend);
-
-        console.log('결재 상신 완료', res.data);
-
         const approvalId = res.data.approvalId;
 
         alert('결재 상신이 완료되었습니다.');
 
         router.push(`/approval/${approvalId}`);
-
     } catch (err) {
         console.error(err);
         alert('결재 상신에 실패했습니다.');
     }
 };
 
-const buildApprovalFormData = (formData, approvalFlow) => {
+const buildApprovalFormData = (formData) => {
     const docCode = formData.relatedDoc.soCode
         ? formData.relatedDoc.soCode
         : formData.relatedDoc.prCode
@@ -603,15 +608,6 @@ const buildApprovalFormData = (formData, approvalFlow) => {
 
     return formDataToSend;
 };
-
-// [기존 approvalLine 유지]
-const approvalLine = ref([]);
-
-// 수신자
-const receivers = ref([]);
-
-// 참조자
-const referrers = ref([]);
 
 watch(
     approvalLines,
@@ -686,11 +682,11 @@ const approvalFlow = computed(() => {
     return [
         {
             lineType: 'drafter',
-            name: loggedEmployeeInfo.name,
+            name: userName,
             status: 'approved',
-            rank: loggedEmployeeInfo.rank,
-            deptName: loggedEmployeeInfo.deptName,
-            position: loggedEmployeeInfo.position
+            rank: user.value.rank,
+            deptName: userDepartment.value,
+            position: user.value.position
         },
         ...approvalLine.value
     ]
@@ -705,4 +701,120 @@ const getRefDocType = (refDocCode) => {
     return '';
 };
 
+onMounted(async () => {
+    const { refDocType, refDocId } = route.query;
+
+    if (!refDocType || !refDocId) return;
+
+    let res;
+
+    if (refDocType === "SO" || refDocType.toUpperCase() === "SO") {
+        res = await getSODetail(refDocId);
+    } else if (refDocType === "PR" || refDocType.toUpperCase() === "PR") {
+        res = await getPRDetail(refDocId);
+    } else if (refDocType === "GI" || refDocType.toUpperCase() === "GI") {
+        res = await getGIDetail(refDocId);
+    }
+
+    if (!res) return;
+
+    formData.relatedDoc = mapRefDoc(refDocType.toUpperCase(), res);
+});
+
+const dummyPdfUrl = "https://sero-erp-storage.s3.ap-northeast-2.amazonaws.com/sero/documents/28bfcc5f-ddc5-4990-89e1-43ba7e68ead1.pdf";
+
+const dummyDocuments = [
+    { id: 41, clientName: '에스엘(주)', soCode: 'SO-20251228-001', recipientName: '강지륜', orderedAt: '2025-12-28 16:41', shippedAt: '2026-02-10 16:00', hasPdf: true, url: dummyPdfUrl },
+    { id: 2, clientName: '현대 모비스', prCode: 'PR-2025-0102', recipientName: '이팀장', orderedAt: '2025-12-28 16:41', shippedAt: '2026-02-10 16:00', hasPdf: false, url: null },
+    { id: 3, clientName: '기아', giCode: 'GI-2025-0001', recipientName: '박이사', orderedAt: '2025-12-28 16:41', shippedAt: '2026-02-10 16:00', hasPdf: true, url: dummyPdfUrl },
+];
+
+const mapRefDoc = (type, res) => {
+    switch (type) {
+        case 'SO': {
+            const so = res;
+
+            return {
+                id: so.orderId,
+                docType: 'SO',
+                soCode: so.orderCode,
+                prCode: null,
+                giCode: null,
+                clientName: so.clientName,
+                title: so.orderCode,
+                url: so.orderUrl,
+                items: so.items,
+                shippedAt: so.shippedAt,
+                orderedAt: so.orderedAt,
+                totalQuantity: so.totalQuantity,
+                managerName: so.managerName,
+                note: so.note,
+                clientManagerName: so.clientManagerName,
+                clientManagerContact: so.clientManagerContact,
+                creditLimit: so.creditLimit,
+                availablePrice: so.availablePrice,
+                totalPrice: so.totalPrice,
+                remainingAmount: so.remainingAmount
+            };
+        }
+
+        case 'PR': {
+            const pr = res;
+
+            return {
+                id: pr.header.prId,
+                docType: 'PR',
+                soCode: pr.header.soCode,
+                prCode: pr.header.prCode,
+                giCode: null,
+                clientName: pr.header.managerName,
+                title: pr.header.prCode,
+                url: null,
+                items: pr.items,
+                requestedAt: pr.header.requestedAt,
+                dueAt: pr.header.dueAt,
+                drafterName: pr.header.drafterName,
+                managerName: pr.header.managerName,
+                totalQuantity: pr.header.totalQuantity
+            };
+        }
+
+        case 'GI': {
+            const gi = res;
+
+            return {
+                id: gi.giId,
+                docType: 'GI',
+                soCode: gi.soCode,
+                giCode: gi.giCode,
+                prCode: null,
+                giCode: gi.giCode,
+                clientName: gi.clientName,
+                title: gi.giCode,
+                url: gi.documentUrl || null,
+                items: gi.items,
+                createdAt: gi.createdAt,
+                scheduledAt: gi.scheduledAt,
+                companyName: gi.companyName,
+                address: gi.address,
+                recipientName: gi.recipientName,
+                recipientContact: gi.recipientContact,
+                soId: gi.soId,
+                doId: gi.doId,
+                doCode: gi.doCode,
+                clientId: gi.clientId,
+                clientName: gi.clientName,
+                shippedAt: gi.shippedAt,
+                warehouseId: gi.warehouseId,
+                warehouseName: gi.warehouseName,
+                note: gi.note,
+                managerId: gi.managerId,
+                managerName: gi.managerId
+            };
+        }
+
+        default:
+            return null;
+    }
+};
 </script>
