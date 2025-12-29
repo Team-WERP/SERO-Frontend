@@ -236,7 +236,7 @@
               <img src="@/assets/새로이새로미.png" alt="No Approval" class="mb-4 h-24 w-auto opacity-40" />
               <p class="text-gray-400 font-medium mb-6">진행 중인 결재 건이 없습니다.</p>
               <button 
-                v-if="order.status === 'ORD_RVW'"
+                v-if="order.status === 'ORD_RVW' && order.managerId === userStore.user?.id"
                 @click="goToCreateApproval"
                 class="rounded-lg bg-[#4C4CDD] px-8 py-2.5 text-sm font-bold text-white hover:bg-[#3b3bbb] shadow-md transition-all active:scale-95"
               >
@@ -381,7 +381,7 @@
   
         <div class="flex justify-end mt-8">
           <button 
-            v-if="order && ['ORD_RVW', 'ORD_APPR_RJCT'].includes(order.status)"
+            v-if="order && ['ORD_RVW', 'ORD_APPR_RJCT'].includes(order.status) && order.managerId === userStore.user?.id"
             @click="isCancelModalOpen = true"
             class="px-6 py-2.5 rounded-lg border border-red-200 bg-red-50 text-sm font-bold text-red-600 hover:bg-red-100"
           >
@@ -468,7 +468,9 @@ import {
 import { getDOListByOrderId, createDO } from '@/api/shipping/deliveryOrder';
 import { getGIListByOrderId } from '@/api/shipping/goodsIssue';
 import { getApprovalSummary } from '@/api/approval/approval';
+import { useUserStore } from '@/stores/user';
 
+const userStore = useUserStore();
 const route = useRoute();
 const router = useRouter();
 const activeTab = ref('ORDER');
