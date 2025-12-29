@@ -194,13 +194,20 @@ const loadDeliveries = async () => {
         // API 응답을 배송 관리에 맞게 변환
         deliveries.value = filteredResult.map((item, index) => {
             console.log(`항목 ${index + 1}:`, item)
+
+            // 품목명 포맷: "대표품목" 또는 "대표품목 외 N건"
+            let locationText = item.itemName || '배송지'
+            if (item.itemCount > 1) {
+                locationText += ` 외 ${item.itemCount - 1}건`
+            }
+
             return {
                 id: item.id,
                 giCode: item.giCode,
                 soCode: item.soCode,
                 doCode: item.doCode,
                 status: item.status,
-                deliveryLocation: item.itemName || '배송지',
+                deliveryLocation: locationText,
                 address: item.clientAddress || '주소 정보 없음',
                 clientName: item.clientName || '고객사 정보 없음',
                 recipientName: item.recipientName || '담당자 정보 없음',
