@@ -57,17 +57,17 @@
                 본사 직원(시스템 관리자)로 로그인
             </button>
 
-            <button @click="devHqLogin('sal')"
+            <button @click="devLogin('sal')"
                 class="mt-4 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
                 본사 직원(영업팀)로 로그인
             </button>
 
-            <button @click="devHqLogin('pro')"
+            <button @click="devLogin('pro')"
                 class="mt-4 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
                 본사 직원(생산팀)로 로그인
             </button>
 
-            <button @click="devHqLogin('whs')"
+            <button @click="devLogin('whs')"
                 class="mt-4 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
                 본사 직원(물류팀)로 로그인
             </button>
