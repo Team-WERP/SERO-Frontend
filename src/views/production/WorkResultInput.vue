@@ -131,12 +131,6 @@
                     </div>
 
                     <div class="form-grid">
-                        <div class="form-group full">
-                            <label>공정 선택</label>
-                            <select class="full-select">
-                                <option>1공정 - 권선/절연</option>
-                            </select>
-                        </div>
 
                         <div class="form-group">
                             <label>양품 수량</label>
@@ -163,6 +157,32 @@
                             <textarea v-model="endForm.note" placeholder="특이사항을 입력하세요"></textarea>
                         </div>
                     </div>
+
+                    <!-- 아이템별 생산 수량 -->
+                    <div class="form-group full" style="margin-top: 20px">
+                        <label>아이템별 생산 수량</label>
+
+                        <table class="wo-table">
+                            <thead>
+                                <tr>
+                                    <th>품목명</th>
+                                    <th>계획 수량</th>
+                                    <th>생산 수량</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in previewItems" :key="item.workOrderItemId">
+                                    <td>{{ item.itemName }}</td>
+                                    <td>{{ item.plannedQuantity }}</td>
+                                    <td>
+                                        <input type="number" v-model.number="item.producedQuantity" min="0"
+                                            style="width: 100px; text-align: right;" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
 
                 <footer class="modal-footer">
@@ -204,14 +224,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import {
     getWorkOrdersByDate,
     startWorkOrder,
     pauseWorkOrder,
     resumeWorkOrder,
     endWorkOrder,
-    getWorkOrderHistory
+    getWorkOrderHistory,
+    previewWorkOrderResult
 } from '@/api/production/workOrder.js'
 
 const getTodayKST = () => {
@@ -227,6 +248,7 @@ const list = ref([])
 const activeModal = ref(null)
 const selectedWO = ref(null)
 const historyList = ref([])
+const previewItems = ref([])
 
 const endForm = ref({
     goodQuantity: 0,
@@ -365,11 +387,46 @@ const openEndConfirm = (wo) => {
     activeModal.value = 'END_CONFIRM'
 }
 
-const openResult = () => {
-    // 실적 폼 기본값
-    endForm.value.goodQuantity = selectedWO.value?.quantity ?? 0
+const toHHMM = (d) => {
+    if (!(d instanceof Date)) return ''
+    const h = String(d.getHours()).padStart(2, '0')
+    const m = String(d.getMinutes()).padStart(2, '0')
+    return `${h}:${m}`
+}
+
+const getFirstStartTime = (history) => {
+    if (!Array.isArray(history)) return null
+
+    const first = history
+        .filter(h => isStart(h.action))
+        .map(h => parseDT(h.actedAt))
+        .filter(d => d instanceof Date)
+        .sort((a, b) => a - b)[0]
+
+    return first || null
+}
+
+const openResult = async () => {
+    const woId = selectedWO.value.woId
+
+    // 1. 기본 값 세팅
+    endForm.value.goodQuantity =
+        selectedWO.value?.plannedQuantity ?? 0
     endForm.value.defectiveQuantity = 0
     endForm.value.note = ''
+
+    const { data: history } = await getWorkOrderHistory(woId)
+    const firstStart = getFirstStartTime(history)
+
+    endForm.value.startTime = firstStart ? toHHMM(firstStart) : ''
+    endForm.value.endTime = toHHMM(new Date())
+
+    const { data } = await previewWorkOrderResult(woId, {
+        goodQuantity: endForm.value.goodQuantity
+    })
+
+    previewItems.value = data.items
+
     activeModal.value = 'RESULT'
 }
 
@@ -410,7 +467,12 @@ const end = async () => {
         defectiveQuantity: endForm.value.defectiveQuantity,
         startTime: `${selectedDate.value} ${endForm.value.startTime}:00`,
         endTime: `${selectedDate.value} ${endForm.value.endTime}:00`,
-        note: endForm.value.note
+        note: endForm.value.note,
+
+        items: previewItems.value.map(i => ({
+            workOrderItemId: i.workOrderItemId,
+            producedQuantity: i.producedQuantity
+        }))
     })
     closeModal()
     await fetchList()
@@ -438,6 +500,17 @@ const formatHMS = (sec) => {
     const ss = String(s % 60).padStart(2, '0')
     return `${h}:${m}:${ss}`
 }
+
+watch(() => endForm.value.goodQuantity, async (qty) => {
+    if (!selectedWO.value) return
+
+    const { data } = await previewWorkOrderResult(
+        selectedWO.value.woId,
+        { goodQuantity: qty }
+    )
+
+    previewItems.value = data.items
+})
 
 onMounted(fetchList)
 onBeforeUnmount(stopTick)
