@@ -70,9 +70,21 @@
 
         <!-- 출고지시 목록 -->
         <div class="items-section">
+            <div
+                v-if="isLoading"
+                class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+            >
+                <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+                    </path>
+                </svg>
+            </div>
             <div class="section-header">
                 <span class="total-count">총 {{ giList.length }}건</span>
             </div>
+
             <table class="items-table">
                 <thead>
                     <tr>
@@ -123,7 +135,7 @@
                         </td>
                     </tr>
 
-                    <tr v-if="giList.length === 0">
+                    <tr v-if="!isLoading && giList.length === 0">
                         <td colspan="11" class="text-center empty-message">
                             조회된 출고지시가 없습니다.
                         </td>
@@ -173,6 +185,7 @@ const selectedStatus = ref('')
 const giList = ref([])
 const warehouseList = ref([])
 const isModalOpen = ref(false)
+const isLoading = ref(true)
 
 // 상태 필터 목록
 const statusFilters = [
@@ -199,6 +212,7 @@ const fetchWarehouses = async () => {
 const fetchGIList = async () => {
     console.log('🔍 fetchGIList 함수 실행됨!')
     try {
+        isLoading.value = true
         const params = {}
 
         if (searchKeyword.value) params.searchKeyword = searchKeyword.value
@@ -237,6 +251,8 @@ const fetchGIList = async () => {
         if (error.response?.status !== 401) {
             alert('출고지시 목록을 불러오는데 실패했습니다.')
         }
+    } finally {
+        isLoading.value = false
     }
 }
 
@@ -511,6 +527,7 @@ onMounted(() => {
 
 /* ===== 리스트 섹션 ===== */
 .items-section {
+    position: relative;
     background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 8px;

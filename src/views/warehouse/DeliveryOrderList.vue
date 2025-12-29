@@ -57,9 +57,21 @@
 
         <!-- 납품서 목록 -->
         <div class="items-section">
+            <div
+                v-if="isLoading"
+                class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+            >
+                <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+                    </path>
+                </svg>
+            </div>
             <div class="section-header">
                 <span class="total-count">총 {{ doList.length }}건</span>
             </div>
+
             <table class="items-table">
                 <thead>
                     <tr>
@@ -85,9 +97,11 @@
 
                         <td>{{ dorder.soCode }}</td>
                         <td>{{ dorder.companyName }}</td>
-                        <td class="item-name">
-                            {{ dorder.itemName }}
-                            <span v-if="dorder.itemCount > 1" class="item-count">외 {{ dorder.itemCount - 1 }}건</span>
+                        <td>
+                            <div class="item-name">
+                                <span>{{ dorder.itemName }}</span>
+                                <span v-if="dorder.itemCount > 1" class="item-count">외 {{ dorder.itemCount - 1 }}건</span>
+                            </div>
                         </td>
                         <td>{{ dorder.managerName || '-' }}</td>
                         <td>{{ formatDateTime(dorder.createdAt) }}</td>
@@ -100,7 +114,7 @@
                     </tr>
 
                     <!-- 데이터 없을 때 -->
-                    <tr v-if="doList.length === 0">
+                    <tr v-if="!isLoading && doList.length === 0">
                         <td colspan="9" class="no-data">조회된 납품서가 없습니다.</td>
                     </tr>
                 </tbody>
@@ -130,9 +144,8 @@ const endDate = ref('')
 // 상태 필터
 const selectedStatus = ref('')
 const statusFilters = [
-    { value: 'DO_BEFORE_GI', label: '출고 전' },
-    { value: 'DO_SHIPPED', label: '출고 완료' },
-    { value: 'DO_DELIVERED', label: '배송 완료' }
+    { value: 'DO_BEFORE_GI', label: '출고지시 전' },
+    { value: 'DO_AFTER_GI', label: '출고지시 완료' }
 ]
 
 // 검색
@@ -140,6 +153,9 @@ const searchKeyword = ref('')
 
 // 납품서 목록
 const doList = ref([])
+
+// 로딩 상태
+const isLoading = ref(true)
 
 // 미리보기 모달
 const isPreviewModalOpen = ref(false)
@@ -188,6 +204,7 @@ const resetFilters = () => {
 // 납품서 목록 조회
 const fetchDOList = async () => {
     try {
+        isLoading.value = true
         const params = {}
 
         if (startDate.value) params.startDate = startDate.value
@@ -200,6 +217,8 @@ const fetchDOList = async () => {
     } catch (error) {
         console.error('납품서 목록 조회 실패:', error)
         alert('납품서 목록을 불러오는데 실패했습니다.')
+    } finally {
+        isLoading.value = false
     }
 }
 
@@ -223,9 +242,8 @@ const closePreviewModal = () => {
 // 상태 라벨
 const getStatusLabel = (status) => {
     const statusMap = {
-        'DO_BEFORE_GI': '출고 전',
-        'DO_SHIPPED': '출고 완료',
-        'DO_DELIVERED': '배송 완료'
+        'DO_BEFORE_GI': '출고지시 전',
+        'DO_AFTER_GI': '출고지시 완료'
     }
     return statusMap[status] || status
 }
@@ -234,8 +252,7 @@ const getStatusLabel = (status) => {
 const getStatusClass = (status) => {
     const classMap = {
         'DO_BEFORE_GI': 'pending',
-        'DO_SHIPPED': 'in-progress',
-        'DO_DELIVERED': '완료'
+        'DO_AFTER_GI': 'completed'
     }
     return classMap[status] || 'pending'
 }
@@ -414,6 +431,7 @@ onMounted(() => {
 
 /* ===== 아이템 섹션 ===== */
 .items-section {
+    position: relative;
     background: #ffffff;
     border-radius: 12px;
     padding: 24px;
@@ -458,6 +476,7 @@ onMounted(() => {
     font-size: 14px;
     color: #111827;
     border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
 }
 
 .clickable-row {
