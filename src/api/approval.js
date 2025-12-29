@@ -1,5 +1,17 @@
 import api from "./axios";
 
+export const approve = async (approvalId, note) => {
+    return api.post(`/approvals/${approvalId}/approve`, {
+        note
+    });
+};
+
+export const reject = async (approvalId, note) => {
+    return api.post(`/approvals/${approvalId}/reject`, {
+        note
+    });
+};
+
 // 결재 상신 API
 export const submitApproval = async (formData) => {
     const res = await api.post("/approvals", formData, {

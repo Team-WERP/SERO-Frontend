@@ -369,7 +369,7 @@
                         class="px-5 py-3 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors group">
                         <div class="flex justify-between items-start mb-1">
                             <span class="text-sm font-bold text-slate-700 group-hover:text-blue-700">{{ doc.clientName
-                                }}</span>
+                            }}</span>
                             <div class="flex gap-2">
                                 <span v-if="doc.hasPdf"
                                     class="text-[10px] bg-red-100 text-red-600 px-1 rounded font-bold">PDF</span>
@@ -690,7 +690,7 @@ const approvalFlow = computed(() => {
         },
         ...approvalLine.value
     ]
-})
+});
 
 const getRefDocType = (refDocCode) => {
     const refDocType = refDocCode.slice(0, 2);

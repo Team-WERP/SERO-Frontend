@@ -257,8 +257,6 @@ const fetchData = async () => {
         size: pageInfo.value.size
     };
 
-    console.log('결재 요청함 조회 params:', params);
-
     try {
         const response = await getRequestedApprovals(params);
         if (response) {

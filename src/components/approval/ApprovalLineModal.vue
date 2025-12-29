@@ -1,6 +1,6 @@
 <template>
     <!-- 모달 오버레이 -->
-    <div class="fixed inset-0 bg-black/30 flex items-center justify-center z-50" v-if="isOpen">
+    <div class="fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center z-50" v-if="isOpen">
 
         <!-- 모달 윈도우 -->
         <div class="bg-[#ffffff] rounded shadow-xl w-[1100px] h-[640px] flex flex-col">

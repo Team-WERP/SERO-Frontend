@@ -27,8 +27,9 @@
                         목록으로
                     </button>
 
-                    <button v-if="isMyTurn"
-                        class="px-3 py-1.5 bg-[#4c4cdd] text-white rounded text-sm font-medium hover:bg-[#3b3bcf] shadow-sm flex items-center gap-1.5 transition-colors">
+                    <button v-if="isMyTurn" @click="openApprovalModal" class="px-3 py-1.5 bg-[#4c4cdd] text-white rounded text-sm font-medium hover:bg-[#3b3bcf]
+                        shadow-sm
+                        flex items-center gap-1.5 transition-colors">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
@@ -155,7 +156,7 @@
 
                             <div class="col-span-2" v-if="approvalData.refDocCode">
                                 <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">관련 문서</label>
-                                <div
+                                <button @click="goToRefDocDetail"
                                     class="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 flex justify-between items-center cursor-pointer hover:bg-blue-100 transition-colors">
                                     <div class="flex items-center gap-2">
                                         <span
@@ -170,7 +171,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                     </svg>
-                                </div>
+                                </button>
                             </div>
                         </div>
                     </section>
@@ -268,25 +269,37 @@
 
             </div>
         </div>
+
+        <ApprovalActionModal v-if="isApprovalModalOpen" :data="approvalData" @close="closeApprovalModal"
+            @approve="handleApprove" @reject="handleReject" />
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getApprovalDetail } from '@/api/approval.js';
+import { storeToRefs } from 'pinia';
+import { getApprovalDetail, approve, reject } from '@/api/approval.js';
+import { useUserStore } from '@/stores/user';
 import ApprovalPreviewModal from '@/components/approval/ApprovalPreviewModal.vue';
+import ApprovalActionModal from '@/components/approval/ApprovalActionModal.vue';
 import { EMPLOYEE_RANK, EMPLOYEE_POSITION, APPROVAL_TYPE, DOC_TYPE_LABEL } from '@/constants/approval.js';
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
+const isApprovalModalOpen = ref(false);
+
+const {
+    user
+} = storeToRefs(userStore)
 
 const approvalId = route.params.approvalId;
 
 const loading = ref(true);
 const isPreviewOpen = ref(false);
 const approvalData = ref(null);
-const isMyTurn = ref(false); // 내가 결재할 차례인지 여부 (추후 로직 구현)
+const isMyTurn = ref(false);
 
 const fetchApprovalData = async () => {
     loading.value = true;
@@ -296,12 +309,7 @@ const fetchApprovalData = async () => {
 
         approvalData.value = response;
 
-        // [TODO] 로그인한 사용자 ID와 비교하여 isMyTurn 설정
         checkMyTurn();
-        // const myId = userStore.id;
-        // const currentApprover = mockResponse.approvalLines.find(line => line.status === 'PENDING');
-        // isMyTurn.value = currentApprover && currentApprover.approverId === myId;
-
     } catch (error) {
         console.error(error);
     } finally {
@@ -310,12 +318,24 @@ const fetchApprovalData = async () => {
 };
 
 const checkMyTurn = () => {
+    const currentApprover = approvalData.value.approvalLines.find(line => line.status === 'ALS_RVW');
 
+    const loggedUserId = user.value.id;
+
+    isMyTurn.value = currentApprover && currentApprover.approverId === loggedUserId;
 };
 
 onMounted(() => {
     fetchApprovalData();
 });
+
+const openApprovalModal = () => {
+    isApprovalModalOpen.value = true;
+};
+
+const closeApprovalModal = () => {
+    isApprovalModalOpen.value = false;
+};
 
 // 시각화용 결재 흐름 (기안자 + 결재자 + 협조자)
 const approvalFlow = computed(() => {
@@ -332,8 +352,6 @@ const approvalFlow = computed(() => {
         lineType: 'drafter',
         processedAt: approvalData.value.draftedAt
     };
-
-    console.log(approvalData.value.approvalLines);
 
     // 2. 결재 라인 (순서대로 정렬)
     const lines = [...(approvalData.value.approvalLines || [])].sort((a, b) => a.sequence - b.sequence);
@@ -375,7 +393,6 @@ const historyLogs = computed(() => {
     });
 });
 
-// 히스토리 날짜 텍스트 표시 로직
 const getLogTimeText = (log) => {
     // 1. 처리가 완료된 경우 (승인/반려/기안)
     if (log.processedAt || log.lineType === 'drafter') {
@@ -390,8 +407,6 @@ const getLogTimeText = (log) => {
     // 3. 처리도 안 됐고, 열람도 안 한 경우 (검토중 - 미열람)
     return '미열람';
 };
-
-// --- 스타일 및 텍스트 변환 헬퍼 ---
 
 const getDocStatusName = (status) => {
     const map = { 'AS_ING': '결재 중', 'AS_APPR': '승인', 'AS_RJCT': '반려' };
@@ -486,4 +501,49 @@ const getDocType = (docType) => {
 
     return '';
 }
+
+const goToRefDocDetail = () => {
+    const refDocCode = approvalData.value.refDocCode;
+    const refDocId = approvalData.value.refDocId;
+    const refDocType = refDocCode.slice(0, 2);
+
+    if (refDocType.toUpperCase() === 'SO') {
+        router.push(`/order/management/${refDocId}`);
+    } else if (refDocType.toUpperCase() === 'GI') {
+        router.push('');
+    } else if (refDocType.toUpperCase() === 'PR') {
+        router.push('');
+    } else {
+        alert('지원하지 않는 문서 타입입니다.');
+    }
+};
+
+const handleApprove = async (note) => {
+    try {
+        await approve(approvalData.value.approvalId, note);
+
+        alert('결재가 승인되었습니다.');
+        closeApprovalModal();
+
+        fetchApprovalData();
+    } catch (e) {
+        console.error(e);
+        alert('결재 승인에 실패했습니다.');
+    }
+};
+
+const handleReject = async (note) => {
+    try {
+        await reject(approvalData.value.approvalId, note);
+
+        alert('결재가 반려되었습니다.');
+        closeApprovalModal();
+
+        fetchApprovalData();
+    } catch (e) {
+        console.error(e);
+        alert('결재 반려에 실패했습니다.');
+    }
+};
+
 </script>
