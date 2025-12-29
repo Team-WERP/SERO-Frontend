@@ -85,9 +85,11 @@
 
                         <td>{{ dorder.soCode }}</td>
                         <td>{{ dorder.companyName }}</td>
-                        <td class="item-name">
-                            {{ dorder.itemName }}
-                            <span v-if="dorder.itemCount > 1" class="item-count">외 {{ dorder.itemCount - 1 }}건</span>
+                        <td>
+                            <div class="item-name">
+                                <span>{{ dorder.itemName }}</span>
+                                <span v-if="dorder.itemCount > 1" class="item-count">외 {{ dorder.itemCount - 1 }}건</span>
+                            </div>
                         </td>
                         <td>{{ dorder.managerName || '-' }}</td>
                         <td>{{ formatDateTime(dorder.createdAt) }}</td>
@@ -458,6 +460,7 @@ onMounted(() => {
     font-size: 14px;
     color: #111827;
     border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
 }
 
 .clickable-row {
