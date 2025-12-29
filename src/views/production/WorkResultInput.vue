@@ -25,9 +25,9 @@
                     <tr>
                         <th>No</th>
                         <th>작업지시번호</th>
-                        <th>생산요청번호</th>
                         <th>라인</th>
                         <th>품목명</th>
+                        <th>규격</th>
                         <th>계획수량</th>
                         <th>상태</th>
                         <th>작업제어</th>
@@ -38,12 +38,11 @@
                 <tbody>
                     <tr v-for="(wo, idx) in list" :key="wo.woId">
                         <td>{{ idx + 1 }}</td>
-                        <td class="code-text">{{ wo.woCode }}</td>
-                        <td class="code-text">{{ wo.prCode }}</td>
+                        <td>{{ wo.woCode }}</td>
                         <td>{{ wo.lineName }}</td>
-                        <td class="material-text">{{ wo.materialName }}</td>
-                        <td class="qty-text">{{ wo.quantity?.toLocaleString() }}</td>
-
+                        <td>{{ wo.materialName }}</td>
+                        <td>{{ wo.materialSpec }}</td>
+                        <td>{{ wo.plannedQuantity.toLocaleString() }} {{ wo.baseUnit }}</td>
                         <td>
                             <span class="status-badge" :class="wo.woStatus">
                                 {{ statusLabel(wo.woStatus) }}
@@ -215,7 +214,14 @@ import {
     getWorkOrderHistory
 } from '@/api/production/workOrder.js'
 
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const getTodayKST = () => {
+    const now = new Date()
+    const kstOffset = 9 * 60 * 60 * 1000
+    const kst = new Date(now.getTime() + kstOffset)
+    return kst.toISOString().slice(0, 10)
+}
+
+const selectedDate = ref(getTodayKST())
 const list = ref([])
 
 const activeModal = ref(null)
@@ -256,7 +262,7 @@ const calcElapsedFromHistory = (history) => {
     let open = null
 
     for (const h of history) {
-        const t = parseDT(h.actedAt) // ✅ actedAt 사용 (핵심)
+        const t = parseDT(h.actedAt)
         if (!t) continue
 
         if (isStart(h.action) || isResume(h.action)) {
@@ -441,30 +447,25 @@ onBeforeUnmount(stopTick)
 <style scoped>
 /* 1. 기본 레이아웃 및 텍스트 스타일 */
 .wo-page {
-    background-color: #f4f6f9;
-    padding: 24px;
-    color: #333;
-    min-height: 100vh;
+    padding: 5px;
 }
 
 .page-header {
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24px;
+    align-items: flex-end;
 }
 
 .page-title {
-    font-size: 22px;
-    font-weight: 800;
-    margin: 0;
-    color: #1a1a1a;
+    font-size: 28px;
+    font-weight: 700;
+    color: #111827;
 }
 
 .page-desc {
-    color: #666;
     font-size: 14px;
-    margin: 4px 0 0;
+    color: #6b7280;
 }
 
 .date-picker {

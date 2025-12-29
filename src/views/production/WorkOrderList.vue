@@ -189,7 +189,13 @@ import { getDailyPlanPreview } from '@/api/production/productionPlan.js'
 import { createWorkOrder as createWorkOrderApi } from '@/api/production/workOrder.js'
 import WODocument from '@/components/production/WODocument.vue'
 
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const getKSTDateString = (date = new Date()) => {
+    const kstOffset = 9 * 60 * 60 * 1000
+    const kstDate = new Date(date.getTime() + kstOffset)
+    return kstDate.toISOString().slice(0, 10)
+}
+
+const selectedDate = ref(getKSTDateString())
 const plans = ref([])
 
 const showModal = ref(false)
@@ -197,7 +203,7 @@ const createQuantity = ref(0)
 const recommendedQuantity = ref(0)
 const selectedGroup = ref(null)
 
-const today = new Date().toISOString().slice(0, 10)
+const today = getKSTDateString()
 
 const isNotToday = computed(() => selectedDate.value !== today)
 
@@ -207,9 +213,9 @@ const setToday = () => {
 }
 
 const moveDate = (diff) => {
-    const d = new Date(selectedDate.value)
+    const d = new Date(selectedDate.value + 'T00:00:00')
     d.setDate(d.getDate() + diff)
-    selectedDate.value = d.toISOString().slice(0, 10)
+    selectedDate.value = getKSTDateString(d)
     fetchDailyPreview()
 }
 
