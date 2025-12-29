@@ -227,7 +227,7 @@
                                         <span class="text-xs text-blue-600 opacity-70">{{ formData.relatedDoc.soCode ||
                                             formData.relatedDoc.prCode ||
                                             formData.relatedDoc.giCode
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <p class="text-sm font-bold text-blue-800 leading-tight">{{
                                         formData.relatedDoc.clientName }}</p>
@@ -360,7 +360,7 @@
                         class="px-5 py-3 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors group">
                         <div class="flex justify-between items-start mb-1">
                             <span class="text-sm font-bold text-slate-700 group-hover:text-blue-700">{{ doc.clientName
-                            }}</span>
+                                }}</span>
                             <div class="flex gap-2">
                                 <span v-if="doc.hasPdf"
                                     class="text-[10px] bg-red-100 text-red-600 px-1 rounded font-bold">PDF</span>
@@ -384,6 +384,7 @@
 <script setup>
 import { reactive, ref, watch, computed } from 'vue';
 import { storeToRefs } from 'pinia';
+import { useRoute, useRouter } from 'vue-router';
 import ApprovalLineModal from '@/components/approval/ApprovalLineModal.vue';
 import { useApprovalLineStore } from '@/stores/approvalLine';
 import { EMPLOYEE_RANK, EMPLOYEE_POSITION, APPROVAL_TYPE, DOC_TYPE_LABEL } from '@/constants/approval.js';
@@ -391,6 +392,9 @@ import { submitApproval as submitApprovalAPI } from '@/api/approval.js';
 
 const approvalLineStore = useApprovalLineStore();
 approvalLineStore.reset();
+
+const route = useRoute();
+const router = useRouter();
 
 const {
     approvalLines,
@@ -531,7 +535,13 @@ const submitApproval = async () => {
         const res = await submitApprovalAPI(formDataToSend);
 
         console.log('결재 상신 완료', res.data);
+
+        const approvalId = res.data.approvalId;
+
         alert('결재 상신이 완료되었습니다.');
+
+        router.push(`/approval/${approvalId}`);
+
     } catch (err) {
         console.error(err);
         alert('결재 상신에 실패했습니다.');

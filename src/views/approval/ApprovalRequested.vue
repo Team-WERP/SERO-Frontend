@@ -8,7 +8,7 @@
                     결재선에 본인이 포함되어 있으며, 현재 결재 차례가 본인인 결재 목록을 조회합니다.
                 </p>
             </div>
-            </div>
+        </div>
 
         <div class="search-section">
             <h2 class="filter-title">필터 및 검색</h2>
@@ -43,12 +43,8 @@
 
                 <div class="filter-item keyword">
                     <label>검색</label>
-                    <input 
-                        type="text" 
-                        v-model="searchFilter.keyword" 
-                        placeholder="제목, 기안자, 결재코드 검색"
-                        @keyup.enter="fetchData"
-                    >
+                    <input type="text" v-model="searchFilter.keyword" placeholder="제목, 기안자, 결재코드 검색"
+                        @keyup.enter="fetchData">
                 </div>
 
                 <button class="search-btn" @click="fetchData">검색</button>
@@ -89,9 +85,9 @@
                             <td class="text-center">
                                 {{ pageInfo.totalElements - (pageInfo.number * pageInfo.size) - index }}
                             </td>
-                            
+
                             <td class="text-center code-text">{{ item.approvalCode }}</td>
-                            
+
                             <td>
                                 <span class="doc-type-badge" :class="getRefDocTypeClass(item.refDocType)">
                                     {{ getRefDocTypeName(item.refDocType) }}
@@ -101,28 +97,25 @@
                             <td>
                                 <div class="title-wrapper">
                                     <span v-if="!item.viewedAt" class="badge-new">N</span>
-                                    
-                                    <span 
-                                        class="link" 
-                                        :class="{ 'font-bold': !item.viewedAt }" 
-                                        @click="goToDetail(item.approvalId)"
-                                    >
+
+                                    <span class="link" :class="{ 'font-bold': !item.viewedAt }"
+                                        @click="goToDetail(item.approvalId)">
                                         {{ item.title }}
                                     </span>
                                 </div>
                             </td>
-                            
+
                             <td class="text-center">
                                 <span v-if="item.isApprovalAttachment" style="color:#6b7280">📎</span>
                                 <span v-else>-</span>
                             </td>
-                            
+
                             <td>
                                 <span class="status-badge" :class="getStatusBadgeClass(item.approvalStatus)">
                                     {{ getStatusName(item.approvalStatus) }}
                                 </span>
                             </td>
-                            
+
                             <td class="text-center align-middle">
                                 <div class="progress-cell">
                                     <div class="progress-info">
@@ -134,10 +127,8 @@
                                         </span>
                                     </div>
                                     <div class="progress-track">
-                                        <div 
-                                            class="progress-fill bar-active" 
-                                            :style="{ width: getProgressWidth(item) + '%' }"
-                                        ></div>
+                                        <div class="progress-fill bar-active"
+                                            :style="{ width: getProgressWidth(item) + '%' }"></div>
                                     </div>
                                     <div class="current-approver">
                                         <span class="dot"></span> 현 결재: {{ item.currentApproverName }}
@@ -147,7 +138,7 @@
 
                             <td>{{ item.drafterName }}</td>
                             <td class="text-gray">{{ item.drafterDepartment }}</td>
-                            
+
                             <td>{{ formatDate(item.draftedAt) }}</td>
                         </tr>
                     </tbody>
@@ -155,27 +146,16 @@
             </div>
 
             <div class="pagination" v-if="pageInfo.totalPages > 0">
-                <button 
-                    class="page-btn prev-btn" 
-                    :disabled="pageInfo.number === 0"
-                    @click="changePage(pageInfo.number - 1)"
-                >
+                <button class="page-btn prev-btn" :disabled="pageInfo.number === 0"
+                    @click="changePage(pageInfo.number - 1)">
                     &lt;
                 </button>
-                <button 
-                    v-for="page in visiblePages" 
-                    :key="page"
-                    class="page-btn"
-                    :class="{ active: pageInfo.number === (page - 1) }"
-                    @click="changePage(page - 1)"
-                >
+                <button v-for="page in visiblePages" :key="page" class="page-btn"
+                    :class="{ active: pageInfo.number === (page - 1) }" @click="changePage(page - 1)">
                     {{ page }}
                 </button>
-                <button 
-                    class="page-btn next-btn" 
-                    :disabled="pageInfo.number >= pageInfo.totalPages - 1"
-                    @click="changePage(pageInfo.number + 1)"
-                >
+                <button class="page-btn next-btn" :disabled="pageInfo.number >= pageInfo.totalPages - 1"
+                    @click="changePage(pageInfo.number + 1)">
                     &gt;
                 </button>
             </div>
@@ -185,7 +165,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { getRequestedApprovals } from '@/api/approval.js'; 
+import { getRequestedApprovals } from '@/api/approval.js';
+import { useRoute, useRouter } from 'vue-router';
+
+const route = useRoute();
+const router = useRouter();
 
 const searchFilter = ref({
     keyword: '',
@@ -240,7 +224,7 @@ const getProgressWidth = (item) => {
 const visiblePages = computed(() => {
     const currentPage = pageInfo.value.number + 1;
     const total = pageInfo.value.totalPages;
-    const pageCount = 5; 
+    const pageCount = 5;
     let start = Math.floor((currentPage - 1) / pageCount) * pageCount + 1;
     let end = start + pageCount - 1;
     if (end > total) end = total;
@@ -256,8 +240,7 @@ const changePage = (page) => {
 };
 
 const goToDetail = (id) => {
-    console.log('상세 페이지 이동:', id);
-    // 상세 이동 로직 (router.push 등)
+    router.push(`/approval/${id}`);
 };
 
 // === API 호출 ===
@@ -282,7 +265,7 @@ const fetchData = async () => {
             approvals.value = response.approvals || [];
             pageInfo.value.totalElements = response.totalElements || 0;
             pageInfo.value.totalPages = response.totalPages || 0;
-            
+
             unreadCount.value = approvals.value.filter(item => !item.viewedAt).length;
         }
     } catch (error) {
@@ -298,99 +281,391 @@ onMounted(() => {
 
 <style scoped>
 /* ===== 레이아웃 ===== */
-.requested-approval-page { padding: 5px; width: 100%; }
-.page-header { margin-bottom: 24px; }
-.breadcrumb { font-size: 14px; color: #6b7280; margin: 0 0 4px 0; }
-.page-title { font-size: 28px; font-weight: 700; color: #111827; margin-bottom: 8px; }
-.page-description { font-size: 14px; color: #6b7280; }
+.requested-approval-page {
+    padding: 5px;
+    width: 100%;
+}
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.breadcrumb {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0 0 4px 0;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+.page-description {
+    font-size: 14px;
+    color: #6b7280;
+}
 
 /* ===== 검색 / 필터 ===== */
-.filter-title { font-size: 20px; font-weight: 600; color: #111827; margin-bottom: 10px; }
-.search-section { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
-.filter-row { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.filter-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 10px;
+}
 
-.filter-item { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #374151; }
-.filter-item label { font-size: 14px; font-weight: 600; color: #374151; }
+.search-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
 
-.date-range-box { display: flex; align-items: center; gap: 4px; }
-.date-range-box .tilde { font-size: 14px; color: #6b7280; }
+.filter-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: #374151;
+}
+
+.filter-item label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.date-range-box {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.date-range-box .tilde {
+    font-size: 14px;
+    color: #6b7280;
+}
 
 .filter-item input[type="date"],
 .filter-item input[type="text"],
 .filter-item select {
-    height: 36px; padding: 0 10px; border: 1px solid #d1d5db; border-radius: 6px; 
-    font-size: 13px; background: #ffffff; min-width: 140px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #ffffff;
+    min-width: 140px;
 }
-.filter-item.keyword { flex: 1; min-width: 260px; } 
-.filter-item input:focus, .filter-item select:focus { outline: none; border-color: #4C4CDD; }
+
+.filter-item.keyword {
+    flex: 1;
+    min-width: 260px;
+}
+
+.filter-item input:focus,
+.filter-item select:focus {
+    outline: none;
+    border-color: #4C4CDD;
+}
 
 .search-btn {
-    height: 36px; padding: 0 24px; background: #4C4CDD; color: #ffffff; 
-    border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;
+    height: 36px;
+    padding: 0 24px;
+    background: #4C4CDD;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
 }
-.search-btn:hover { background: #3d3dbb; }
+
+.search-btn:hover {
+    background: #3d3dbb;
+}
 
 /* ===== 리스트 & 테이블 ===== */
-.items-section { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; }
-.table-responsive { width: 100%; overflow-x: auto; scrollbar-width: thin; }
-.table-responsive::-webkit-scrollbar { height: 8px; }
-.table-responsive::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 4px; }
+.items-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 24px;
+}
 
-.items-table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-.items-table thead { background: #f9fafb; border-bottom: 2px solid #e5e7eb; }
-.items-table th { padding: 12px 12px; font-size: 14px; font-weight: 600; color: #374151; text-align: left; }
-.items-table td { padding: 12px 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; color: #111827; vertical-align: middle; }
-.items-table tbody tr:hover { background: #f9fafb; }
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
 
-.text-center { text-align: center; }
-.text-gray { color: #6b7280; font-size: 13px; }
-.link { color: #4C4CDD; cursor: pointer; font-weight: 500; }
-.link:hover { text-decoration: underline; }
-.font-bold { font-weight: 700; color: #111827; } /* 안 읽었을 때 진하게 */
-.code-text { font-family: monospace; color: #6b7280; font-weight: 600; }
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 4px;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+.items-table thead {
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.items-table th {
+    padding: 12px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    text-align: left;
+}
+
+.items-table td {
+    padding: 12px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 14px;
+    color: #111827;
+    vertical-align: middle;
+}
+
+.items-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-gray {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.link {
+    color: #4C4CDD;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.font-bold {
+    font-weight: 700;
+    color: #111827;
+}
+
+/* 안 읽었을 때 진하게 */
+.code-text {
+    font-family: monospace;
+    color: #6b7280;
+    font-weight: 600;
+}
 
 /* ★ 안 읽음 뱃지 스타일 */
-.title-wrapper { display: flex; align-items: center; gap: 6px; }
+.title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .badge-new {
-    background-color: #ef4444; color: white; font-size: 10px; font-weight: 700;
-    padding: 1px 5px; border-radius: 4px; line-height: 1.2;
+    background-color: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    line-height: 1.2;
 }
 
 /* 뱃지 */
-.doc-type-badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
-.badge-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
-.badge-green { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
-.badge-purple { background: #f3e8ff; color: #7e22ce; border: 1px solid #f3e8ff; }
+.doc-type-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
 
-.status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-.status-active { background: #dcfce7; color: #166534; }
-.status-reject { background: #fee2e2; color: #991b1b; }
-.status-progress { background: #ede9fe; color: #5b21b6; }
+.badge-blue {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+}
+
+.badge-green {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #dcfce7;
+}
+
+.badge-purple {
+    background: #f3e8ff;
+    color: #7e22ce;
+    border: 1px solid #f3e8ff;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-reject {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-progress {
+    background: #ede9fe;
+    color: #5b21b6;
+}
 
 /* 진행 Bar */
-.progress-cell { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 4px; width: 100%; }
-.progress-info { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-bottom: 2px; }
-.step-text b { color: #4C4CDD; font-weight: 700; }
-.percent-text { font-weight: 600; color: #374151; }
-.progress-track { width: 100%; height: 6px; background-color: #f3f4f6; border-radius: 3px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-.bar-active { background-color: #4C4CDD; }
+.progress-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 4px;
+    width: 100%;
+}
 
-.current-approver { font-size: 11px; color: #4b5563; text-align: left; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-.current-approver .dot { width: 6px; height: 6px; background-color: #4C4CDD; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
 
-.empty-message { padding: 60px 0; color: #9ca3af; font-size: 14px; }
+.step-text b {
+    color: #4C4CDD;
+    font-weight: 700;
+}
+
+.percent-text {
+    font-weight: 600;
+    color: #374151;
+}
+
+.progress-track {
+    width: 100%;
+    height: 6px;
+    background-color: #f3f4f6;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.bar-active {
+    background-color: #4C4CDD;
+}
+
+.current-approver {
+    font-size: 11px;
+    color: #4b5563;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.current-approver .dot {
+    width: 6px;
+    height: 6px;
+    background-color: #4C4CDD;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.empty-message {
+    padding: 60px 0;
+    color: #9ca3af;
+    font-size: 14px;
+}
 
 /* 페이지네이션 */
-.pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 24px; margin-bottom: 24px; }
-.page-btn {
-    min-width: 32px; height: 32px; padding: 0 6px; border: 1px solid #e5e7eb;
-    background-color: #ffffff; color: #374151; font-size: 13px; font-weight: 500;
-    border-radius: 4px; cursor: pointer; transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center;
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    margin-bottom: 24px;
 }
-.page-btn:hover:not(:disabled) { border-color: #4C4CDD; color: #4C4CDD; background-color: #eff6ff; }
-.page-btn.active { background-color: #4C4CDD; color: #ffffff; border-color: #4C4CDD; }
-.page-btn:disabled { background-color: #f9fafb; color: #9ca3af; cursor: not-allowed; border-color: #e5e7eb; }
-.prev-btn, .next-btn { font-family: monospace; font-weight: 700; }
+
+.page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 6px;
+    border: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-btn:hover:not(:disabled) {
+    border-color: #4C4CDD;
+    color: #4C4CDD;
+    background-color: #eff6ff;
+}
+
+.page-btn.active {
+    background-color: #4C4CDD;
+    color: #ffffff;
+    border-color: #4C4CDD;
+}
+
+.page-btn:disabled {
+    background-color: #f9fafb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    border-color: #e5e7eb;
+}
+
+.prev-btn,
+.next-btn {
+    font-family: monospace;
+    font-weight: 700;
+}
 </style>
