@@ -121,7 +121,7 @@
                     <div class="card-content">
                         <div class="info-row">
                             <span class="label">주문번호</span>
-                            <span class="value link" @click="goToOrder(giDetail.soCode)">
+                            <span class="value link" @click="goToOrder">
                                 {{ giDetail.soCode }}
                             </span>
                         </div>
@@ -134,9 +134,9 @@
                             <span class="value">{{ formatDateTime(giDetail.shippedAt) }}</span>
                         </div>
                     </div>
-                    <router-link :to="`/orders/${giDetail.soCode}`" class="view-order-link">
+                    <div class="view-order-link" @click="goToOrder">
                         주문상세 바로가기 →
-                    </router-link>
+                    </div>
                 </div>
             </div>
 
@@ -608,6 +608,7 @@ const giDetail = ref({
     address: '',
     recipientName: '',
     recipientContact: '',
+    soId: null,
     soCode: '',
     doCode: '',
     clientName: '',
@@ -784,9 +785,9 @@ const requestApproval = () => {
 }
 
 // 주문 상세 페이지로 이동
-const goToOrder = (soCode) => {
-    if (soCode) {
-        router.push(`/orders/${soCode}`)
+const goToOrder = () => {
+    if (giDetail.value.soId) {
+        router.push(`/order/management/${giDetail.value.soId}`)
     }
 }
 
