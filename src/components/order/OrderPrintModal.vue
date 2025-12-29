@@ -21,21 +21,21 @@
 
           <div class="grid grid-cols-2 gap-0 border-t border-l border-black mb-8" style="display: flex;">
             <div class="border-r border-b border-black" style="flex: 1;">
-              <div class="bg-gray-100 p-2 font-bold border-b border-black text-center">수주처</div>
+              <div class="bg-gray-100 p-2 font-bold border-b border-black text-center">발주처</div>
               <table class="w-full text-sm">
                 <tr><td class="w-24 bg-gray-50 p-2 border-r border-black font-bold text-center">회사명</td><td class="p-2">{{ order.clientName }}</td></tr>
                 <tr class="border-t border-black"><td class="bg-gray-50 p-2 border-r border-black font-bold text-center">담당자</td><td class="p-2">{{ order.clientManagerName }}</td></tr>
                 <tr class="border-t border-black"><td class="bg-gray-50 p-2 border-r border-black font-bold text-center">연락처</td><td class="p-2">{{ order.clientManagerContact }}</td></tr>
-                <tr class="border-t border-black"><td class="bg-gray-50 p-2 border-r border-black font-bold text-center">주소</td><td class="p-2 text-xs leading-tight">{{ order.clientAddress || '-' }}</td></tr>
+                <tr class="border-t border-black"><td class="bg-gray-50 p-2 border-r border-black font-bold text-center">주소</td><td class="p-2 leading-tight">{{ order.clientAddress || '-' }}</td></tr>
               </table>
             </div>
             <div class="border-r border-b border-black" style="flex: 1;">
-              <div class="bg-gray-100 p-2 font-bold border-b border-black text-center">발주처</div>
+              <div class="bg-gray-100 p-2 font-bold border-b border-black text-center">수주처</div>
               <table class="w-full text-sm">
                 <tr><td class="w-24 bg-gray-50 p-2 border-r border-black font-bold text-center">회사명</td><td class="p-2">새로</td></tr>
                 <tr class="border-t border-black"><td class="bg-gray-50 p-2 border-r border-black font-bold text-center">담당자</td><td class="p-2">{{ order.managerName || '-' }}</td></tr>
                 <tr class="border-t border-black"><td class="bg-gray-50 p-2 border-r border-black font-bold text-center">연락처</td><td class="p-2">010-4444-5555</td></tr>
-                <tr class="border-t border-black"><td class="bg-gray-50 p-2 border-r border-black font-bold text-center">주소</td><td class="p-2 text-xs leading-tight">서울시 동작구 보라매로 87</td></tr>
+                <tr class="border-t border-black"><td class="bg-gray-50 p-2 border-r border-black font-bold text-center">주소</td><td class="p-2 leading-tight">서울시 동작구 보라매로 87</td></tr>
               </table>
             </div>
           </div>
