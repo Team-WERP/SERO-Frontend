@@ -9,6 +9,7 @@ import Login from "@/views/auth/Login.vue";
 import ClientDashboard from "@/views/client-portal/ClientDashboard.vue";
 import ClientOrderCreate from "@/views/client-portal/ClientOrderCreate.vue";
 import ClientOrderList from "@/views/client-portal/ClientOrderList.vue";
+import ClientOrderDetail from "@/views/client-portal/ClientOrderDetail.vue";
 import ClientOrderDelivery from "@/views/client-portal/ClientOrderDelivery.vue";
 import ClientItemList from "@/views/client-portal/ClientItemList.vue";
 import ClientAddress from "@/views/client-portal/ClientAddress.vue";
@@ -95,10 +96,8 @@ const router = createRouter({
                     component: ClientOrderCreate,
                 },
                 { path: "/client-portal/orders", component: ClientOrderList },
-                {
-                    path: "/client-portal/order-delivery",
-                    component: ClientOrderDelivery,
-                },
+                { path: "/client-portal/orders/:orderId", component: ClientOrderDetail },
+                { path: "/client-portal/order-delivery", component: ClientOrderDelivery },
                 { path: "/client-portal/items", component: ClientItemList },
                 { path: "/client-portal/address", component: ClientAddress },
                 {
