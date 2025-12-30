@@ -203,26 +203,17 @@
                     <h2 class="section-title">특이사항</h2>
                     <div class="button-group">
                         <button class="btn-secondary" @click="openDeliveryOrderPreview">납품서 인쇄</button>
-                        <button class="btn-secondary" @click="openGIPreview">출고지시서 인쇄</button>
 
-                        <!-- PDF 다운로드 버튼 (담당자 배정 후 표시) -->
-                        <a
-                            v-if="giDetail.giUrl && giDetail.giUrl !== ''"
-                            :href="giDetail.giUrl"
-                            target="_blank"
+                        <!-- 출고지시서 인쇄 버튼 (담당자 배정 후 표시) -->
+                        <button
+                            v-if="giDetail.managerName"
                             class="btn-secondary"
-                            style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px;"
+                            @click="openGIPreview"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                            </svg>
-                            PDF 다운로드
-                        </a>
-                        <span v-else-if="giDetail.managerName" class="text-gray-500" style="padding: 8px 16px; font-size: 14px;">
-                            PDF 생성 중...
-                        </span>
+                            출고지시서 인쇄
+                        </button>
                         <span v-else class="text-gray-400" style="padding: 8px 16px; font-size: 14px;">
-                            담당자 배정 후 다운로드 가능
+                            담당자 배정 후 출고지시서 인쇄 가능
                         </span>
                     </div>
                 </div>
