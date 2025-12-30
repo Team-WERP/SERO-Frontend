@@ -2,23 +2,6 @@
     <div class="print-page">
         <div class="header-container">
             <h1 class="doc-title">생 산 요 청 서</h1>
-
-            <table class="sign-table">
-                <tbody>
-                    <tr>
-                        <th rowspan="2" class="sign-title">결<br>재</th>
-                        <th>담당</th>
-                        <th>검토</th>
-                        <th>승인</th>
-                    </tr>
-                    <tr>
-                        <td class="sign-box"></td>
-                        <td class="sign-box"></td>
-                        <td class="sign-box"></td>
-                    </tr>
-                </tbody>
-            </table>
-
         </div>
 
         <table class="info-table">
