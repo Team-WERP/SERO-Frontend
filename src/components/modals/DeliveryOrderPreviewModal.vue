@@ -17,44 +17,46 @@
 
                 <!-- 기본 정보 테이블 -->
                 <table class="info-table">
-                    <tr>
-                        <th class="col-label">문서번호</th>
-                        <td class="col-value">{{ deliveryOrder.doCode }}</td>
-                        <th class="col-label">일자</th>
-                        <td class="col-value">{{ formatDate(deliveryOrder.createdAt) }}</td>
-                    </tr>
-                    <tr>
-                        <th class="col-label">수신처</th>
-                        <td colspan="3" class="col-value">{{ deliveryOrder.recipient }}</td>
-                    </tr>
-                    <tr>
-                        <th class="col-label">상호</th>
-                        <td class="col-value">{{ deliveryOrder.companyName }}</td>
-                        <th class="col-label">대표자</th>
-                        <td class="col-value">{{ deliveryOrder.ceoName }}</td>
-                    </tr>
-                    <tr>
-                        <th class="col-label">사업자번호</th>
-                        <td class="col-value">{{ deliveryOrder.businessNo }}</td>
-                        <th class="col-label">전화번호</th>
-                        <td class="col-value">{{ deliveryOrder.companyContact }}</td>
-                    </tr>
-                    <tr>
-                        <th class="col-label">주소</th>
-                        <td colspan="3" class="col-value">{{ deliveryOrder.address }}</td>
-                    </tr>
-                    <tr>
-                        <th class="col-label">업태</th>
-                        <td class="col-value">{{ deliveryOrder.businessType }}</td>
-                        <th class="col-label">업종</th>
-                        <td class="col-value">{{ deliveryOrder.businessItem }}</td>
-                    </tr>
-                    <tr>
-                        <th class="col-label">합계금액</th>
-                        <td colspan="3" class="col-value total-amount">
-                            일금 {{ numberToKorean(deliveryOrder.totalAmount) }} (₩{{ formatNumber(deliveryOrder.totalAmount) }})
-                        </td>
-                    </tr>
+                    <tbody>
+                        <tr>
+                            <th class="col-label">문서번호</th>
+                            <td class="col-value">{{ deliveryOrder.doCode }}</td>
+                            <th class="col-label">일자</th>
+                            <td class="col-value">{{ formatDate(deliveryOrder.createdAt) }}</td>
+                        </tr>
+                        <tr>
+                            <th class="col-label">수신처</th>
+                            <td colspan="3" class="col-value">{{ deliveryOrder.recipient }}</td>
+                        </tr>
+                        <tr>
+                            <th class="col-label">상호</th>
+                            <td class="col-value">{{ deliveryOrder.companyName }}</td>
+                            <th class="col-label">대표자</th>
+                            <td class="col-value">{{ deliveryOrder.ceoName }}</td>
+                        </tr>
+                        <tr>
+                            <th class="col-label">사업자번호</th>
+                            <td class="col-value">{{ deliveryOrder.businessNo }}</td>
+                            <th class="col-label">전화번호</th>
+                            <td class="col-value">{{ deliveryOrder.companyContact }}</td>
+                        </tr>
+                        <tr>
+                            <th class="col-label">주소</th>
+                            <td colspan="3" class="col-value">{{ deliveryOrder.address }}</td>
+                        </tr>
+                        <tr>
+                            <th class="col-label">업태</th>
+                            <td class="col-value">{{ deliveryOrder.businessType }}</td>
+                            <th class="col-label">업종</th>
+                            <td class="col-value">{{ deliveryOrder.businessItem }}</td>
+                        </tr>
+                        <tr>
+                            <th class="col-label">합계금액</th>
+                            <td colspan="3" class="col-value total-amount">
+                                일금 {{ numberToKorean(deliveryOrder.totalAmount) }} (₩{{ formatNumber(deliveryOrder.totalAmount) }})
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
 
                 <!-- 품목 테이블 -->
@@ -98,18 +100,20 @@
 
                 <!-- 하단 정보 -->
                 <table class="bottom-info-table">
-                    <tr>
-                        <th class="col-label">납품기한</th>
-                        <td class="col-value">{{ formatDate(deliveryOrder.shippedAt) }}</td>
-                    </tr>
-                    <tr>
-                        <th class="col-label">납품장소</th>
-                        <td class="col-value">{{ deliveryOrder.deliveryLocation }}</td>
-                    </tr>
-                    <tr>
-                        <th class="col-label">특이사항</th>
-                        <td class="col-value">{{ deliveryOrder.note || '-' }}</td>
-                    </tr>
+                    <tbody>
+                        <tr>
+                            <th class="col-label">납품기한</th>
+                            <td class="col-value">{{ formatDate(deliveryOrder.shippedAt) }}</td>
+                        </tr>
+                        <tr>
+                            <th class="col-label">납품장소</th>
+                            <td class="col-value">{{ deliveryOrder.deliveryLocation }}</td>
+                        </tr>
+                        <tr>
+                            <th class="col-label">특이사항</th>
+                            <td class="col-value">{{ deliveryOrder.note || '-' }}</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
 
