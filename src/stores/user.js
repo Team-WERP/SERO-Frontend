@@ -7,6 +7,8 @@ export const useUserStore = defineStore("user", {
         clientId: null,
         isAuthenticated: false,
         authorities: [],
+        tokenExp: null,
+        now: Date.now(),
     }),
 
     getters: {
@@ -55,6 +57,24 @@ export const useUserStore = defineStore("user", {
             if (state.user?.department.includes("DEPT_WHS_1")) return "물류1팀";
             if (state.user?.department.includes("DEPT_WHS_2")) return "물류2팀";
         },
+
+        remainingTimeMs(state) {
+            if (!state.tokenExp) return 0;
+            return Math.max(state.tokenExp - state.now, 0);
+        },
+
+        remainingTimeText() {
+            if (!this.tokenExp) return "";
+
+            const ms = this.remainingTimeMs;
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+
+            return `${m}분 ${s}초`;
+        },
+        isExpiringSoon() {
+            return this.remainingTimeMs <= 5 * 60 * 1000;
+        },
     },
 
     actions: {
@@ -72,7 +92,7 @@ export const useUserStore = defineStore("user", {
             };
 
             this.authorities = payload.auth ? payload.auth.split(",") : [];
-
+            this.tokenExp = payload.exp * 1000;
             this.isAuthenticated = true;
         },
 
@@ -81,6 +101,7 @@ export const useUserStore = defineStore("user", {
             this.user = null;
             this.clientId = null;
             this.authorities = [];
+            this.tokenExp = null;
             this.isAuthenticated = false;
 
             localStorage.removeItem("accessToken");
@@ -93,6 +114,17 @@ export const useUserStore = defineStore("user", {
                 return true;
             }
             return false;
-        }
+        },
+        tick() {
+            this.now = Date.now();
+        },
+        setTokenExp(exp) {
+            this.tokenExp = exp;
+        },
+
+        async refreshToken() {
+            // const res = await refreshTokenApi();
+            // this.setTokenExp(res.accessTokenExp); // 🔄 카운트 리셋
+        },
     },
 });

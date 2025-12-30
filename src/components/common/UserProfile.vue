@@ -1,5 +1,5 @@
 <template>
-    <div class="user-profile">
+    <div class="user-profile" @click="openModal()">
         <div class="user-profile__avatar">
             {{ userInitial }}
         </div>
@@ -13,47 +13,45 @@
             </div>
         </div>
 
-        <button @click="handleLogout" class="ml-4 px-3 py-1 text-[14px] bg-[#4C4CDD] text-white rounded cursor-pointer">
-            로그아웃
-        </button>
+        <UserProfileModal v-if="isModalActive" @close="isModalActive = false" />
     </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { useRouter } from "vue-router";
-import { logout as logoutApi } from "@/api/auth";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useUserStore } from "@/stores/user";
+import UserProfileModal from "./UserProfileModal.vue";
 
 const userStore = useUserStore();
-const router = useRouter();
 
 const userName = localStorage.getItem("name");
 const userRole = computed(() => userStore.userRoleLabel);
 const userPosition = computed(() => userStore.userPosition);
+const userInitial = computed(() => userName ? userName.charAt(0) : "");
+const isModalActive = ref(true);
 
-const userInitial = computed(() =>
-    userName ? userName.charAt(0) : ""
-);
+const openModal = () => {
+    isModalActive.value = !isModalActive.value;
+}
 
-const handleLogout = async () => {
-    try {
-        const type = userStore.hasAuthority("AC_CLI")
-            ? "client"
-            : "hq";
-
-        await logoutApi(type);
-    } catch (e) {
-        console.error("로그아웃 API 실패", e);
-    } finally {
-        userStore.logout();
-        router.replace("/login");
+const handleClickOutside = (event) => {
+    if (isModalActive.value && !event.target.closest(".user-profile")) {
+        isModalActive.value = false;
     }
 };
+
+onMounted(() => {
+    window.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <style scoped>
 .user-profile {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
