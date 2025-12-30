@@ -427,24 +427,39 @@
       <div class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b p-5">
           <h3 class="text-xl font-bold text-gray-900"><span class="text-[#4C4CDD]">{{ selectedItemName }}</span> 변동 이력</h3>
-          <button @click="isHistoryModalOpen = false" class="text-gray-400 hover:text-gray-600"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+          <button @click="isHistoryModalOpen = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
+        
         <div class="p-6">
           <div class="overflow-hidden rounded-xl border border-gray-200">
             <table class="w-full text-center text-sm">
-              <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+              <thead class="bg-gray-50 text-gray-500 font-bold">
                 <tr>
-                  <th class="px-3 py-3">가용재고</th>
-                  <th class="px-3 py-3">생산요청</th>
-                  <th class="px-3 py-3">생산입고</th>
-                  <th class="px-3 py-3">기납품수량</th>
-                  <th class="px-3 py-3">출고지시</th>
-                  <th class="px-3 py-3">출고완료</th>
-                  <th class="px-3 py-3">배송완료</th>
-                  <th class="px-3 py-3">생성일시</th>
+                  <th class="px-3 py-3 border-b">가용재고</th>
+                  <th class="px-3 py-3 border-b">생산요청</th>
+                  <th class="px-3 py-3 border-b">생산입고</th>
+                  <th class="px-3 py-3 border-b">기납품수량</th>
+                  <th class="px-3 py-3 border-b">출고지시</th>
+                  <th class="px-3 py-3 border-b">출고완료</th>
+                  <th class="px-3 py-3 border-b">배송완료</th>
+                  <th class="px-3 py-3 border-b">이력 생성일시</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
+                <tr v-if="historyDetails.length === 0">
+                  <td colspan="8" class="py-12">
+                    <div class="flex flex-col items-center justify-center">
+                      <img 
+                        src="@/assets/새로이새로미.png" 
+                        alt="No Data" 
+                        class="mb-4 h-16 w-auto opacity-40" 
+                      />
+                      <p class="text-gray-400 font-medium">변동 이력 데이터가 없습니다.</p>
+                    </div>
+                  </td>
+                </tr>
                 <tr v-for="h in historyDetails" :key="h.historyId">
                   <td class="px-3 py-4 font-medium">{{ formatPrice(h.item.availableStock) }}</td>
                   <td class="px-3 py-4">{{ formatPrice(h.prQuantity) }}</td>
@@ -459,7 +474,10 @@
             </table>
           </div>
         </div>
-        <div class="flex justify-end p-5 border-t"><button @click="isHistoryModalOpen = false" class="rounded-lg bg-gray-100 px-6 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200">닫기</button></div>
+        <div class="flex justify-end p-5 border-t">
+          <button @click="isHistoryModalOpen = false" class="rounded-lg bg-gray-100 px-6 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200">닫기</button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -704,7 +722,10 @@ const getLinkPath = (type, doc) => {
   
   switch (type) {
     case 'PRODUCTION':
-      return `/production/requests/${doc.id}`;
+    if (doc.status === 'PR_TMP') {
+        return `/production/requests`;
+      }
+      return `/production/requests/${doc.prId}`;
     case 'DELIVERY': 
       return `/warehouse/delivery-orders`;
     case 'ISSUE':     
@@ -721,6 +742,7 @@ const fetchAllDocuments = async () => {
     try {
       const response = await section.fetchFn(orderId);
       section.data = response || [];
+      console.log("문서!",section);
     } catch (err) {
       console.error(`${section.title} 조회 실패:`, err);
       section.data = [];
