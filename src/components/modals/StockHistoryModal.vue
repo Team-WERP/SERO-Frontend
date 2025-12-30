@@ -133,10 +133,6 @@
                 </div>
             </div>
 
-            <!-- 모달 푸터 -->
-            <div class="modal-footer">
-                <button class="btn-secondary" @click="closeModal">닫기</button>
-            </div>
         </div>
     </div>
 </template>
@@ -475,31 +471,6 @@ const formatDateTime = (value) => {
     padding: 60px;
     color: #9ca3af;
     font-size: 14px;
-}
-
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 20px 30px;
-    border-top: 1px solid #e5e7eb;
-}
-
-.btn-secondary {
-    padding: 10px 24px;
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
 }
 
 /* 스크롤바 스타일링 */
