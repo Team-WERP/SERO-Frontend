@@ -156,7 +156,7 @@
                                         <span class="dot"
                                             :class="{ 'dot-red': item.approvalStatus === 'AS_RJCT' }"></span>
                                         <span v-if="item.approvalStatus === 'AS_RJCT'">반려자: {{ item.rejecterName
-                                        }}</span>
+                                            }}</span>
                                         <span v-else>현 결재: {{ item.currentApproverName }}</span>
                                     </div>
                                     <div class="current-approver" v-else style="visibility: hidden;">&nbsp;</div>
@@ -308,8 +308,6 @@ const fetchData = async () => {
         page: pageInfo.value.number,
         size: pageInfo.value.size
     };
-
-    console.log('참조 문서함 조회 params:', params);
 
     try {
         const response = await getReferencedApprovals(params);

@@ -7,7 +7,7 @@
             </div>
 
             <!-- 메뉴 영역 -->
-            <div v-for="nav in navItems" :key="nav.key" class="mb-2">
+            <div v-for="nav in filteredNavItems" :key="nav.key" class="mb-2">
                 <!-- 상단 메뉴 -->
                 <button class="mobile-section-btn" :class="{
                     'mobile-section-btn--open': opened === nav.key,
@@ -28,11 +28,11 @@
                 <!-- 사이드 메뉴 -->
                 <ul class="submenu mt-2 space-y-1" :class="{ 'submenu--open': opened === nav.key }">
 
-                    <li v-for="item in menus[nav.key]" :key="item.path">
+                    <li v-for="item in filteredMenusByModule(nav.key)" :key="item.path">
                         <RouterLink :to="item.path" class="side-menu-link" :class="{
                             'side-menu-link--active':
                                 route.path.startsWith(item.path)
-                        }" @click="onClickMenu(nav.key)">
+                        }" @click="onClickMenu(item.path, nav.key)">
                             {{ item.name }}
                         </RouterLink>
                     </li>
@@ -44,13 +44,16 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useMenuStore } from '@/stores/menu'
+import { useUserStore } from '@/stores/user'
 import AppLogo from '@/components/common/AppLogo.vue'
 
 const route = useRoute()
+const router = useRouter()
 const menuStore = useMenuStore()
 const emit = defineEmits(['close'])
+const userStore = useUserStore()
 
 const navItems = [
     { key: 'clientPortal', label: '고객포털' },
@@ -63,8 +66,27 @@ const navItems = [
     { key: 'system', label: '관리자' }
 ]
 
-const menus = computed(() => menuStore.menus)
 const opened = ref(menuStore.activeModule)
+
+const filteredNavItems = computed(() => {
+    const roles = userStore.authorities
+
+    return navItems.filter(nav => {
+        const menus = menuStore.menus[nav.key] || []
+        return menus.some(menu =>
+            !menu.role || menu.role.some(r => roles.includes(r))
+        )
+    })
+})
+
+const filteredMenusByModule = (key) => {
+    const roles = userStore.authorities
+    const menus = menuStore.menus[key] || []
+
+    return menus.filter(menu =>
+        !menu.role || menu.role.some(r => roles.includes(r))
+    )
+}
 
 const toggle = (key) => {
     opened.value = opened.value === key ? null : key
@@ -80,8 +102,23 @@ watch(
     { immediate: true }
 )
 
-const onClickMenu = (key) => {
-    menuStore.setActiveModule(key)
+const onClickMenu = () => {
+    const roles = userStore.authorities
+    const menus = menuStore.menus[moduleKey] || []
+
+    const accessible = menus.find(menu =>
+        menu.path === path &&
+        (!menu.role || menu.role.some(r => roles.includes(r)))
+    )
+
+    if (!accessible) {
+        router.push('/forbidden')
+        emitClose()
+        return
+    }
+
+    menuStore.setActiveModule(moduleKey)
+    router.push(path)
     emitClose()
 }
 
