@@ -91,21 +91,24 @@
                     {{ activeModal === 'START' ? '▶' : activeModal === 'PAUSE' ? '⏸' : '■' }}
                 </div>
 
-                <h3>
+                <h3 class="h3">
                     {{ activeModal === 'START' ? '작업 시작' : activeModal === 'PAUSE' ? '일시 중지' : '작업 종료' }}
                 </h3>
 
                 <p v-if="activeModal === 'START'">
                     <strong>{{ selectedWO?.materialName }}</strong> 작업을 시작하시겠습니까?
                 </p>
-                <p v-else-if="activeModal === 'PAUSE'">작업을 잠시 중단하시겠습니까?</p>
-                <p v-else>작업을 종료하고 실적을 등록하시겠습니까?</p>
+                <p v-else-if="activeModal === 'PAUSE'">
+                    현재 작업을 일시 중지하시겠습니까?
+                </p>
+                <p v-else>
+                    작업을 종료하고 생산 실적을 등록합니다.
+                </p>
 
                 <div class="confirm-actions">
                     <button class="btn ghost" @click="closeModal">아니오</button>
-                    <button class="btn primary" :class="{ danger: activeModal === 'END_CONFIRM' }"
-                        @click="activeModal === 'START' ? start() : activeModal === 'PAUSE' ? pause() : openResult()">
-                        네, 실행합니다
+                    <button v-if="confirmMeta" class="btn" :class="confirmMeta.class" @click="confirmMeta.action">
+                        {{ confirmMeta.label }}
                     </button>
                 </div>
             </div>
@@ -478,6 +481,32 @@ const end = async () => {
     await fetchList()
 }
 
+const confirmMeta = computed(() => {
+    switch (activeModal.value) {
+        case 'START':
+            return {
+                label: '작업 시작',
+                action: start,
+                class: 'primary'
+            }
+        case 'PAUSE':
+            return {
+                label: '일시 중지',
+                action: pause,
+                class: 'warning'
+            }
+        case 'END_CONFIRM':
+            return {
+                label: '종료 후 실적 등록',
+                action: openResult,
+                class: 'danger'
+            }
+        default:
+            return null
+    }
+})
+
+
 /* ---------- LABELS / FORMAT ---------- */
 const statusLabel = (s) => ({
     WO_READY: '대기',
@@ -546,6 +575,12 @@ onBeforeUnmount(stopTick)
     border: 1px solid #d1d5db;
     border-radius: 6px;
     font-weight: 600;
+}
+
+.h3 {
+    font-size: 21px;
+    font-weight: 700;
+    margin-bottom: 12px;
 }
 
 /* 2. 테이블 디자인 */
@@ -987,7 +1022,7 @@ textarea {
 .btn {
     padding: 10px 20px;
     border-radius: 8px;
-    font-weight: 900;
+    font-weight: 600;
     cursor: pointer;
     border: none;
 }
@@ -1012,5 +1047,22 @@ textarea {
     gap: 8px;
     margin-top: 20px;
     justify-content: center;
+}
+
+.btn.warning {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn.warning:hover {
+    background: #d97706;
+}
+
+.btn.primary:hover {
+    background: #2563eb;
+}
+
+.btn.danger:hover {
+    background: #dc2626;
 }
 </style>
