@@ -472,24 +472,26 @@ const printGoodsIssue = () => {
 }
 
 .btn-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #6b7280;
-    cursor: pointer;
-    padding: 0;
     width: 32px;
     height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s;
 }
 
 .btn-close:hover {
-    background: #f3f4f6;
-    color: #111827;
+    background: #e5e7eb;
+}
+
+.icon-close {
+    font-size: 20px;
+    color: #6b7280;
+    font-style: normal;
 }
 
 /* ===== 출고지시서 내용 ===== */
