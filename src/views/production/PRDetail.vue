@@ -210,7 +210,7 @@
                             </tbody>
                         </table>
                         <div class="section-footer">
-                            <router-link v-if="header.approvalCode" :to="`/approvals/${header.approvalId}`"
+                            <router-link v-if="header.approvalCode" :to="`/approval/${header.approvalId}`"
                                 class="view-approval-link">
                                 결재 바로가기 →
                             </router-link>
