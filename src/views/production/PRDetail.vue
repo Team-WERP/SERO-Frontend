@@ -446,7 +446,7 @@ const showRequestApprovalBtn = computed(() => {
 })
 
 
-const requestApproval = async () => {
+const requestApproval = () => {
     if (!header.value.managerId) {
         alert('담당자를 먼저 배정해주세요.')
         return
@@ -454,7 +454,17 @@ const requestApproval = async () => {
 
     if (!confirm('결재를 요청하시겠습니까?')) return
 
+    const routeData = router.resolve({
+        path: '/approval/create',
+        query: {
+            refDocType: 'pr',
+            refDocId: header.value.prId
+        }
+    })
+
+    window.open(routeData.href, '_blank')
 }
+
 
 const openAssignmentModal = async () => {
     try {
