@@ -251,7 +251,7 @@
                         <div class="flow-step">
                             <div class="flow-circle completed">기안</div>
                             <div class="flow-info">
-                                <div class="flow-label">기안</div>
+                                <div class="flow-label">{{ giDetail.managerName || '기안' }} · {{ giDetail.managerDepartment || '-' }}</div>
                             </div>
                         </div>
 
@@ -295,7 +295,7 @@
                                 <td>{{ giDetail.managerName || '-' }}</td>
                                 <td>{{ formatRole(giDetail.managerRank, giDetail.managerPosition) }}</td>
                                 <td>{{ giDetail.managerDepartment || '-' }}</td>
-                                <td><span class="status-text approved">승인</span></td>
+                                <td><span class="status-text approved">상신</span></td>
                                 <td>{{ formatDateTime(giDetail.createdAt) }}</td>
                                 <td>-</td>
                             </tr>
