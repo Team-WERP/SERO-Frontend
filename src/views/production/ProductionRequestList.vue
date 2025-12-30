@@ -30,16 +30,6 @@
                 </div>
 
                 <div class="filter-item">
-                    <label>담당자</label>
-                    <select v-model="managerId">
-                        <option value="">전체</option>
-                        <option v-for="m in managers" :key="m.id" :value="m.id">
-                            {{ m.name }}
-                        </option>
-                    </select>
-                </div>
-
-                <div class="filter-item">
                     <label>상태</label>
                     <select v-model="selectedStatus">
                         <option v-for="s in statusFilters" :key="s.value" :value="s.value">
@@ -53,6 +43,7 @@
                     <input type="text" v-model="searchKeyword" placeholder="요청번호 / 주문번호 / 품목명" />
                 </div>
 
+                <button class="reset-btn" @click="resetFilters">초기화</button>
                 <button class="search-btn" @click="fetchPRList">검색</button>
             </div>
         </div>
@@ -70,7 +61,6 @@
                         <th style="width: 140px;">생산요청일</th>
                         <th style="width: 140px;">생산마감일</th>
                         <th style="width: 110px;">요청자</th>
-                        <th style="width: 110px;">담당자</th>
                         <th style="width: 110px; text-align:center;">상태</th>
                     </tr>
                 </thead>
@@ -154,6 +144,17 @@ const statusFilters = [
     { label: '생산완료', value: 'PR_DONE' },
     { label: '취소', value: 'PR_CANCEL' }
 ]
+
+const resetFilters = () => {
+    requestedDate.value = ''
+    dueDate.value = ''
+    managerId.value = ''
+    searchKeyword.value = ''
+    selectedStatus.value = ''
+
+    fetchPRList()
+}
+
 
 const fetchPRList = async () => {
     const params = {}
@@ -522,5 +523,22 @@ onMounted(fetchPRList)
 
 .create-btn:hover {
     background: #3d3dbb;
+}
+
+.reset-btn {
+    height: 36px;
+    padding: 0 20px;
+    background: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.reset-btn:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
 }
 </style>
