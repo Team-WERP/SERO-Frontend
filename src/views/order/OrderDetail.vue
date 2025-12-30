@@ -236,7 +236,7 @@
               <img src="@/assets/새로이새로미.png" alt="No Approval" class="mb-4 h-24 w-auto opacity-40" />
               <p class="text-gray-400 font-medium mb-6">진행 중인 결재 건이 없습니다.</p>
               <button 
-                v-if="order.status === 'ORD_RVW' && order.managerId === userStore.user?.id"
+                v-if="order.status === 'ORD_RVW' && order.managerId == userStore.user?.id"
                 @click="goToCreateApproval"
                 class="rounded-lg bg-[#4C4CDD] px-8 py-2.5 text-sm font-bold text-white hover:bg-[#3b3bbb] shadow-md transition-all active:scale-95"
               >
