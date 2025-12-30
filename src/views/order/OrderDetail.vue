@@ -360,7 +360,17 @@
                       </td>
                       <td class="px-4 py-4">{{ doc[section.dateField] }}</td>
                       <td class="px-4 py-4 text-center">
-                        <button v-if="!(section.type === 'PRODUCTION' && doc.status === 'PR_TMP')" class="text-[12px] font-medium underline underline-offset-4 hover:text-gray-400 transition-all">미리보기</button>
+                        <button 
+                          v-if="!(section.type === 'PRODUCTION' && doc.status === 'PR_TMP')" 
+                          @click="openDocument(doc)" 
+                          class="text-[12px] font-medium underline underline-offset-4 text-gray-600 hover:text-gray-400 transition-all"
+                          title="문서 보기"
+                        >
+                          <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                          </svg>
+                        </button>
+                        <span v-else-if="section.type !== 'PRODUCTION'" class="text-gray-300">-</span>
                       </td>
                       <td class="px-4 py-4 text-center">
                         <div class="flex justify-center flex-row items-center gap-1.5">
@@ -846,6 +856,20 @@ const getGIStatusLabel = (s) => {
         'GI_CANCEL': '취소'
     };
     return map[s] || s;
+};
+
+const getDocumentUrl = (doc) => {
+  if (!doc) return null;
+  return doc.giUrl || doc.doUrl || doc.prUrl || null;
+};
+
+const openDocument = (doc) => {
+  const url = getDocumentUrl(doc);
+  if (url) {
+    window.open(url, '_blank');
+  } else {
+    alert('해당 문서의 PDF 파일을 찾을 수 없습니다');
+  }
 };
 
 
