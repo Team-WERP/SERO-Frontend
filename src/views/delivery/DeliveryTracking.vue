@@ -2,9 +2,9 @@
     <div class="delivery-tracking-page">
         <!-- 상단 헤더 -->
         <div class="page-header">
-            <div class="breadcrumb">[물류팀] - 배송실적 추적</div>
+            <div class="breadcrumb">[물류팀] - 배송추적 주체</div>
             <h1 class="page-title">배송 추적 (Shipment Tracking)</h1>
-            <p class="page-description">출고 번호를 입력하여 현재 물품 상태를 확인하세요.</p>
+            <p class="page-description">주문 번호를 입력하여 현재 물품 상태를 확인하세요.</p>
         </div>
 
         <!-- 검색 영역 -->
@@ -12,7 +12,7 @@
             <input
                 v-model="searchCode"
                 type="text"
-                placeholder="GI-20251223-003"
+                placeholder="ORD-20251211-01"
                 class="search-input"
                 @keyup.enter="searchDelivery"
             />
@@ -26,16 +26,16 @@
             <!-- 주문 정보 -->
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="info-label">출고지시 번호</span>
-                    <span class="info-value">{{ deliveryInfo.giCode }}</span>
-                </div>
-                <div class="info-item">
                     <span class="info-label">주문 번호</span>
                     <span class="info-value">{{ deliveryInfo.soCode }}</span>
                 </div>
                 <div class="info-item">
+                    <span class="info-label">고객사</span>
+                    <span class="info-value">{{ deliveryInfo.companyName }}</span>
+                </div>
+                <div class="info-item">
                     <span class="info-label">주문 일자</span>
-                    <span class="info-value">{{ formatDate(deliveryInfo.createdAt) }}</span>
+                    <span class="info-value">{{ deliveryInfo.createdAt }}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">현재 상태</span>
@@ -58,8 +58,7 @@
                     </div>
                     <div class="step-info">
                         <div class="step-title">출고 완료</div>
-                        <div class="step-date">예정 완료</div>
-                        <div class="step-detail">{{ formatDateTime(deliveryInfo.createdAt) }}</div>
+                        <div class="step-date">{{ deliveryInfo.departedAt || '예정 중' }}</div>
                     </div>
                 </div>
 
@@ -67,17 +66,13 @@
 
                 <div class="timeline-step" :class="{ active: isStepActive(2), completed: isStepCompleted(2) }">
                     <div class="step-icon">
-                        <svg v-if="isStepCompleted(2)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M18 18.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm1.5-9H17V12h4.46L19.5 9.5zM6 18.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zM20 8l3 4v5h-2c0 1.66-1.34 3-3 3s-3-1.34-3-3H9c0 1.66-1.34 3-3 3s-3-1.34-3-3H1V6c0-1.1.9-2 2-2h14v4h3z"/>
                         </svg>
                     </div>
                     <div class="step-info">
                         <div class="step-title">배송중</div>
                         <div class="step-date">{{ isStepActive(2) ? '이동 중' : '예정' }}</div>
-                        <div class="step-detail">{{ isStepActive(2) && deliveryInfo.shippedAt ? formatDateTime(deliveryInfo.shippedAt) : '고객사 수령 대기' }}</div>
                     </div>
                 </div>
 
@@ -85,40 +80,51 @@
 
                 <div class="timeline-step" :class="{ active: isStepActive(3), completed: isStepCompleted(3) }">
                     <div class="step-icon">
-                        <svg v-if="isStepCompleted(3)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                         </svg>
                     </div>
                     <div class="step-info">
                         <div class="step-title">도착 완료</div>
-                        <div class="step-date">{{ deliveryInfo.status === 'GI_SHIP_DONE' ? '배송 완료' : '고객사 수령 대기' }}</div>
-                        <div class="step-detail">{{ deliveryInfo.status === 'GI_SHIP_DONE' && deliveryInfo.updatedAt ? formatDateTime(deliveryInfo.updatedAt) : '고객사 수령 대기' }}</div>
+                        <div class="step-date">{{ deliveryInfo.arrivedAt || '고객사 수령 대기' }}</div>
                     </div>
                 </div>
             </div>
 
             <!-- 상세 히스토리 -->
-            <div class="history-section">
+            <div v-if="deliveryInfo.history && deliveryInfo.history.length > 0" class="history-section">
                 <h3 class="history-title">📦 상세 현황</h3>
                 <div class="history-list">
-                    <div class="history-item" v-if="deliveryInfo.status === 'GI_SHIP_DONE'">
-                        <div class="history-time">[{{ formatDateTime(deliveryInfo.updatedAt) }}]</div>
-                        <div class="history-content">배송 완료 (담당자: {{ deliveryInfo.managerName || '김홍길' }})</div>
+                    <div
+                        v-for="(item, index) in deliveryInfo.history"
+                        :key="index"
+                        class="history-item"
+                    >
+                        <div class="history-time">{{ item.timestamp }}</div>
+                        <div class="history-content">{{ item.message }}</div>
                     </div>
-                    <div class="history-item" v-if="deliveryInfo.status === 'GI_SHIP_ING' || deliveryInfo.status === 'GI_SHIP_DONE'">
-                        <div class="history-time">[{{ deliveryInfo.status === 'GI_SHIP_ING' ? formatDateTime(deliveryInfo.updatedAt) : formatDateTime(deliveryInfo.shippedAt) }}]</div>
-                        <div class="history-content">배송 시작 (담당자: {{ deliveryInfo.managerName || '김홍길' }})</div>
+                </div>
+            </div>
+
+            <!-- 기본 히스토리 (API에서 history가 없을 경우) -->
+            <div v-else class="history-section">
+                <h3 class="history-title">📦 상세 현황</h3>
+                <div class="history-list">
+                    <div class="history-item" v-if="deliveryInfo.arrivedAt">
+                        <div class="history-time">{{ deliveryInfo.arrivedAt }}</div>
+                        <div class="history-content">수령 완료(담당자: {{ deliveryInfo.managerName || '고객사' }})</div>
                     </div>
-                    <div class="history-item" v-if="deliveryInfo.shippedAt || deliveryInfo.status !== 'GI_RVW'">
-                        <div class="history-time">[{{ formatDateTime(deliveryInfo.shippedAt || deliveryInfo.createdAt) }}]</div>
-                        <div class="history-content">출고 지시 접수 완료 (담당자: {{ deliveryInfo.requesterName || '관리자' }})</div>
+                    <div class="history-item" v-if="deliveryInfo.departedAt && deliveryInfo.status === 'GI_SHIP_ING'">
+                        <div class="history-time">현재</div>
+                        <div class="history-content">배송 중</div>
+                    </div>
+                    <div class="history-item" v-if="deliveryInfo.departedAt">
+                        <div class="history-time">{{ deliveryInfo.departedAt }}</div>
+                        <div class="history-content">출고 시작 완료(담당자: {{ deliveryInfo.managerName || '-' }})</div>
                     </div>
                     <div class="history-item">
-                        <div class="history-time">[{{ formatDateTime(deliveryInfo.createdAt) }}]</div>
-                        <div class="history-content">출고 지시 접수 완료 (담당자: {{ deliveryInfo.requesterName || '관리자' }})</div>
+                        <div class="history-time">{{ deliveryInfo.createdAt }}</div>
+                        <div class="history-content">출고지시 접수 완료(담당자: {{ deliveryInfo.requesterName || '-' }})</div>
                     </div>
                 </div>
             </div>
@@ -139,31 +145,9 @@ const searchCode = ref('')
 const deliveryInfo = ref(null)
 const searched = ref(false)
 
-// 날짜 포맷팅 (날짜만)
-const formatDate = (dateStr) => {
-    if (!dateStr) return '-'
-    const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-}
-
-// 날짜 시간 포맷팅
-const formatDateTime = (dateStr) => {
-    if (!dateStr) return null
-    const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    return `${year}-${month}-${day} ${hours}:${minutes}`
-}
-
 const searchDelivery = async () => {
     if (!searchCode.value.trim()) {
-        alert('출고지시 번호를 입력해주세요.')
+        alert('주문 번호 또는 출고지시 번호를 입력해주세요.')
         return
     }
 
@@ -171,13 +155,11 @@ const searchDelivery = async () => {
         searched.value = true
         // 출고지시 목록에서 검색
         const result = await getGoodsIssueList({
-            giCode: searchCode.value.trim()
+            soCode: searchCode.value.trim()
         })
 
         if (result && result.length > 0) {
-            // 정확히 일치하는 giCode 찾기
-            const exactMatch = result.find(item => item.giCode === searchCode.value.trim())
-            deliveryInfo.value = exactMatch || result[0]
+            deliveryInfo.value = result[0]
         } else {
             deliveryInfo.value = null
         }
@@ -190,10 +172,9 @@ const searchDelivery = async () => {
 
 const getStatusText = (status) => {
     const statusMap = {
-        'GI_ISSUED': '출고완료',
         'GI_RVW': '검토중',
         'GI_APR': '승인완료',
-        'GI_SHIP_ISSUED': '배송시작',
+        'GI_SHIP_ISSUED': '출고완료',
         'GI_SHIP_ING': '배송중',
         'GI_SHIP_DONE': '도착완료'
     }
@@ -204,7 +185,6 @@ const getStatusClass = (status) => {
     if (status === 'GI_SHIP_DONE') return 'status-completed'
     if (status === 'GI_SHIP_ING') return 'status-shipping'
     if (status === 'GI_SHIP_ISSUED') return 'status-issued'
-    if (status === 'GI_ISSUED') return 'status-issued'
     return 'status-pending'
 }
 
@@ -212,8 +192,8 @@ const isStepActive = (step) => {
     if (!deliveryInfo.value) return false
     const status = deliveryInfo.value.status
 
-    if (step === 1) return ['GI_ISSUED', 'GI_SHIP_ISSUED', 'GI_SHIP_ING', 'GI_SHIP_DONE'].includes(status)
-    if (step === 2) return ['GI_SHIP_ISSUED', 'GI_SHIP_ING', 'GI_SHIP_DONE'].includes(status)
+    if (step === 1) return ['GI_SHIP_ISSUED', 'GI_SHIP_ING', 'GI_SHIP_DONE'].includes(status)
+    if (step === 2) return ['GI_SHIP_ING', 'GI_SHIP_DONE'].includes(status)
     if (step === 3) return status === 'GI_SHIP_DONE'
     return false
 }
@@ -375,7 +355,7 @@ const isStepCompleted = (step) => {
 /* 타임라인 */
 .tracking-timeline {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     margin-bottom: 40px;
     padding: 0 20px;
@@ -393,7 +373,7 @@ const isStepCompleted = (step) => {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: #e5e7eb;
+    background: #f3f4f6;
     color: #9ca3af;
     display: flex;
     align-items: center;
@@ -408,7 +388,7 @@ const isStepCompleted = (step) => {
 
 .timeline-step.active .step-icon,
 .timeline-step.completed .step-icon {
-    background: #10b981;
+    background: #4C4CDD;
     color: #ffffff;
 }
 
@@ -425,18 +405,12 @@ const isStepCompleted = (step) => {
 
 .timeline-step.active .step-title,
 .timeline-step.completed .step-title {
-    color: #10b981;
+    color: #4C4CDD;
 }
 
 .step-date {
     font-size: 12px;
     color: #6b7280;
-    margin-bottom: 4px;
-}
-
-.step-detail {
-    font-size: 11px;
-    color: #9ca3af;
 }
 
 .timeline-line {
@@ -445,11 +419,11 @@ const isStepCompleted = (step) => {
     background: #e5e7eb;
     margin: 0 16px;
     position: relative;
-    top: 30px;
+    top: -30px;
 }
 
 .timeline-line.active {
-    background: #10b981;
+    background: #4C4CDD;
 }
 
 /* 히스토리 */
@@ -483,7 +457,7 @@ const isStepCompleted = (step) => {
     font-size: 13px;
     color: #6b7280;
     font-weight: 500;
-    min-width: 160px;
+    min-width: 140px;
 }
 
 .history-content {

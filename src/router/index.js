@@ -9,6 +9,7 @@ import Login from "@/views/auth/Login.vue";
 import ClientDashboard from "@/views/client-portal/ClientDashboard.vue";
 import ClientOrderCreate from "@/views/client-portal/ClientOrderCreate.vue";
 import ClientOrderList from "@/views/client-portal/ClientOrderList.vue";
+import ClientOrderDetail from "@/views/client-portal/ClientOrderDetail.vue";
 import ClientOrderDelivery from "@/views/client-portal/ClientOrderDelivery.vue";
 import ClientItemList from "@/views/client-portal/ClientItemList.vue";
 import ClientAddress from "@/views/client-portal/ClientAddress.vue";
@@ -34,6 +35,11 @@ import PRDetail from "@/views/production/PRDetail.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
+import DeliveryManagement from "@/views/delivery/DeliveryManagement.vue";
+import DriverLogin from "@/views/delivery/DriverLogin.vue";
+import GoodsIssueList from "@/views/warehouse/GoodsIssueList.vue";
+import GoodsIssueCreate from "@/views/warehouse/GoodsIssueCreate.vue";
+import GoodsIssueDetail from "@/views/warehouse/GoodsIssueDetail.vue";
 
 // 기준정보
 import ItemBomManagement from "@/views/master/ItemBomManagement.vue";
@@ -44,6 +50,11 @@ import EmployeeList from "@/views/master/EmployeeList.vue";
 import ApprovalDashboard from "@/views/approval/ApprovalDashboard.vue";
 import ApprovalSubmitted from "@/views/approval/ApprovalSubmitted.vue";
 import ApprovalReceived from "@/views/approval/ApprovalReceived.vue";
+import ApprovalRequested from "@/views/approval/ApprovalRequested.vue";
+import ApprovalArchived from "@/views/approval/ApprovalArchived.vue";
+import ApprovalReferenced from "@/views/approval/ApprovalReferenced.vue";
+import ApprovalCreate from "@/views/approval/ApprovalCreate.vue";
+import ApprovalDetail from "@/views/approval/ApprovalDetail.vue";
 
 // 공지사항
 import NoticeList from "@/views/notices/NoticeList.vue";
@@ -71,6 +82,22 @@ const router = createRouter({
                     component: Login,
                     meta: {
                         hideLayout: true,
+                        noPadding: true,
+                    },
+                },
+                {
+                    path: "/driver/login",
+                    component: DriverLogin,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
+                {
+                    path: "/delivery/login",
+                    component: DriverLogin,
+                    meta: {
+                        hideLayout: true,
                         noPadding: true
                     }
                 },
@@ -78,13 +105,23 @@ const router = createRouter({
                 // ---------------------
                 // 고객포털
                 // ---------------------
-                { path: "/client-portal/dashboard", component: ClientDashboard },
-                { path: "/client-portal/order-create", component: ClientOrderCreate },
+                {
+                    path: "/client-portal/dashboard",
+                    component: ClientDashboard,
+                },
+                {
+                    path: "/client-portal/order-create",
+                    component: ClientOrderCreate,
+                },
                 { path: "/client-portal/orders", component: ClientOrderList },
+                { path: "/client-portal/orders/:orderId", component: ClientOrderDetail },
                 { path: "/client-portal/order-delivery", component: ClientOrderDelivery },
                 { path: "/client-portal/items", component: ClientItemList },
                 { path: "/client-portal/address", component: ClientAddress },
-                { path: "/client-portal/company", component: ClientCompanyInfo },
+                {
+                    path: "/client-portal/company",
+                    component: ClientCompanyInfo,
+                },
                 { path: "/client-portal/notices", component: ClientNotices },
 
                 // ---------------------
@@ -98,14 +135,32 @@ const router = createRouter({
                 // ---------------------
                 // 생산
                 // ---------------------
-                { path: "/production/dashboard", component: ProductionDashboard },
-                { path: "/production/requests", component: ProductionRequestList },
+                {
+                    path: "/production/dashboard",
+                    component: ProductionDashboard,
+                },
+                {
+                    path: "/production/requests",
+                    component: ProductionRequestList,
+                },
                 { path: "/production/plans", component: ProductionPlanList },
                 { path: "/production/work-orders", component: WorkOrderList },
-                { path: "/production/work-results/input", component: WorkResultInput },
-                { path: "/production/work-results/management", component: WorkResultList },
-                { path: "/production/process-flow", component: ProcessFlowManagement },
-                { path: "/production/requests/drafts/:prId", component: PRDraftDetailView },
+                {
+                    path: "/production/work-results/input",
+                    component: WorkResultInput,
+                },
+                {
+                    path: "/production/work-results/management",
+                    component: WorkResultList,
+                },
+                {
+                    path: "/production/process-flow",
+                    component: ProcessFlowManagement,
+                },
+                {
+                    path: "/production/requests/drafts/:prId",
+                    component: PRDraftDetailView,
+                },
                 { path: "/production/requests/:prId", component: PRDetail },
 
                 // ---------------------
@@ -113,7 +168,18 @@ const router = createRouter({
                 // ---------------------
                 { path: "/warehouse/stock", component: StockByWarehouse },
                 { path: "/warehouse/delivery-orders", component: DeliveryOrderList },
+                { path: "/warehouse/goods-issues", component: GoodsIssueList },
+                { path: "/warehouse/goods-issues/create/:doCode", name: "GoodsIssueCreate", component: GoodsIssueCreate },
+                { path: "/warehouse/goods-issues/:giCode", name: "GoodsIssueDetail", component: GoodsIssueDetail },
                 { path: "/warehouse/tracking", component: DeliveryTracking },
+                {
+                    path: "/delivery/management",
+                    component: DeliveryManagement,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true
+                    }
+                },
 
                 // ---------------------
                 // 기준정보
@@ -128,7 +194,18 @@ const router = createRouter({
                 // ---------------------
                 { path: "/approval/dashboard", component: ApprovalDashboard },
                 { path: "/approval/submitted", component: ApprovalSubmitted },
+                { path: "/approval/requested", component: ApprovalRequested },
+                { path: "/approval/archived", component: ApprovalArchived },
                 { path: "/approval/received", component: ApprovalReceived },
+                { path: "/approval/referenced", component: ApprovalReferenced },
+                {
+                    path: "/approval/create",
+                    component: ApprovalCreate,
+                },
+                {
+                    path: "/approval/:approvalId",
+                    component: ApprovalDetail,
+                },
 
                 // ---------------------
                 // 공지사항
@@ -139,11 +216,14 @@ const router = createRouter({
                 // 시스템 관리
                 // ---------------------
                 { path: "/system/common-code", component: SystemCommonCode },
-                { path: "/system/employees", component: SystemEmployeeManagement },
-                { path: "/system/roles", component: RoleManagement }
-            ]
-        }
-    ]
+                {
+                    path: "/system/employees",
+                    component: SystemEmployeeManagement,
+                },
+                { path: "/system/roles", component: RoleManagement },
+            ],
+        },
+    ],
 });
 
 export default router;

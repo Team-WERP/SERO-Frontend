@@ -15,8 +15,10 @@ api.interceptors.request.use(
         const token = localStorage.getItem('accessToken');
 
         if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        };
+            // 토큰에서 공백 제거
+            const cleanToken = token.trim();
+            config.headers.Authorization = `Bearer ${cleanToken}`;
+        }
 
         return config;
     },
@@ -38,8 +40,14 @@ api.interceptors.response.use(
 
                 const currentPath = window.location.pathname;
 
-                if (!currentPath.startsWith('/login')) {
-                    window.location.href = '/login';
+                // 로그인 페이지가 아닌 경우에만 리다이렉트
+                if (!currentPath.startsWith('/login') && !currentPath.includes('/delivery/login')) {
+                    // 배송 앱에서는 배송 로그인으로, 일반 앱에서는 일반 로그인으로
+                    if (currentPath.startsWith('/delivery/')) {
+                        window.location.href = '/delivery/login';
+                    } else {
+                        window.location.href = '/login';
+                    }
                 }
             }
         }
