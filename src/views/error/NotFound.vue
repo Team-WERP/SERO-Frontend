@@ -1,7 +1,6 @@
 <template>
     <div class="min-h-screen flex flex-col items-center justify-center">
-        <img :src="logo" class="w-55">
-        <div class="text-[72px] mb-4">404</div>
+        <img :src="logo" class="w-120">
 
         <h1 class="text-2xl font-semibold text-gray-800 mb-2">
             페이지를 찾을 수 없습니다.
@@ -28,7 +27,7 @@
 
 <script setup>
 import { useRouter } from "vue-router";
-import logo from "@/assets/새로이새로미.png";
+import logo from "@/assets/404_logo.png";
 
 const router = useRouter();
 

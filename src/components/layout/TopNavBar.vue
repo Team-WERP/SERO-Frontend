@@ -62,10 +62,10 @@ const navItems = [
     { key: 'clientPortal', label: '고객포털', roles: ['AC_CLI'] },
     { key: 'order', label: '주문', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
     { key: 'production', label: '생산', roles: ['AC_SAL', 'AC_PRO', 'AC_SYS'] },
-    { key: 'warehouse', label: '재고·물류', roles: ['AC_SAL', 'AC_WHS', 'AC_SYS'] },
+    { key: 'warehouse', label: '재고·물류', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
     { key: 'master', label: '기준정보', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
     { key: 'approval', label: '전자결재', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
-    { key: 'notices', label: '공지사항' },
+    { key: 'notices', label: '공지사항', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
     { key: 'system', label: '관리자', roles: ['AC_SYS'] },
 ]
 

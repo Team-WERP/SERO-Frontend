@@ -213,7 +213,7 @@ const router = createRouter({
                 {
                     path: "production/requests/drafts/:prId",
                     component: PRDraftDetailView,
-                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_SYS"] },
+                    meta: { roles: ["AC_SAL", "AC_SYS"] },
                 },
                 {
                     path: "production/requests/:prId",
@@ -287,17 +287,17 @@ const router = createRouter({
                 {
                     path: "system/common-code",
                     component: SystemCommonCode,
-                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                    meta: { roles: ["AC_SYS"] },
                 },
                 {
                     path: "system/employees",
                     component: SystemEmployeeManagement,
-                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                    meta: { roles: ["AC_SYS"] },
                 },
                 {
                     path: "system/roles",
                     component: RoleManagement,
-                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                    meta: { roles: ["AC_SYS"] },
                 },
                 // 전자결재
                 {
