@@ -544,7 +544,7 @@ const getLineStatusLabel = (status) => {
   return map[status] || status;
 };
 const getLineStatusClass = (status) => {
-  if (status === 'ALS_APPR') return 'text-green-600';
+  if (status === 'ALS_APPR') return 'text-[#10B981]';
   if (status === 'ALS_RJCT') return 'text-red-600';
   if (status === 'ALS_RVW') return 'text-blue-600';
   return 'text-gray-400';
