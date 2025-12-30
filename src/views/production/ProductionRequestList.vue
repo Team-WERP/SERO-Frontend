@@ -40,7 +40,7 @@
 
                 <div class="filter-item keyword">
                     <label>검색</label>
-                    <input type="text" v-model="searchKeyword" placeholder="요청번호 / 주문번호 / 품목명" />
+                    <input type="text" v-model="searchKeyword" placeholder="요청번호 / 주문번호 / 품목명 / 담당자명" />
                 </div>
 
                 <button class="reset-btn" @click="resetFilters">초기화</button>
