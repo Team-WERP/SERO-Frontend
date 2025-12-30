@@ -43,6 +43,7 @@ import GoodsIssueDetail from "@/views/warehouse/GoodsIssueDetail.vue";
 
 // 기준정보
 import ItemBomManagement from "@/views/master/ItemBomManagement.vue";
+import ItemBomDetail from "@/views/master/ItemBomDetail.vue";
 import MasterCompanyInfo from "@/views/master/MasterCompanyInfo.vue";
 import EmployeeList from "@/views/master/EmployeeList.vue";
 
@@ -185,6 +186,7 @@ const router = createRouter({
                 // 기준정보
                 // ---------------------
                 { path: "/master/bom", component: ItemBomManagement },
+                { path: "/master/bom/:id", component: ItemBomDetail },
                 { path: "/master/company", component: MasterCompanyInfo },
                 { path: "/master/employees", component: EmployeeList },
                 { path: "/master/common-code", component: SystemCommonCode },

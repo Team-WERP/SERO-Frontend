@@ -1,0 +1,646 @@
+<template>
+    <div class="material-detail-page">
+        <!-- 상단 헤더 -->
+        <div class="page-header">
+            <div class="header-left">
+                <button class="back-btn" @click="goBack">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    목록으로
+                </button>
+                <div>
+                    <h1 class="page-title">자재 상세 조회</h1>
+                    <p class="page-description">자재 상세 조회</p>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="isLoading" class="loading-container">
+            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+        </div>
+
+        <div v-else-if="material" class="content-wrapper">
+            <!-- 제품 정보 섹션 -->
+            <div class="info-section">
+                <h3 class="section-title">제품 정보</h3>
+                <div class="info-content">
+                    <div class="image-section">
+                        <img
+                            :src="material.imageUrl || defaultImage"
+                            :alt="material.name"
+                            class="product-image"
+                        />
+
+                        <div class="basic-info-list">
+                            <div class="info-item-row">
+                                <span class="label">품명</span>
+                                <span class="value">{{ material.name || '-' }}</span>
+                            </div>
+                            <div class="info-item-row">
+                                <span class="label">자재 코드</span>
+                                <span class="value">{{ material.materialCode || '-' }}</span>
+                            </div>
+                            <div class="info-item-row">
+                                <span class="label">담당자</span>
+                                <span class="value">{{ material.manager?.name || '-' }}</span>
+                            </div>
+                            <div class="info-item-row">
+                                <span class="label">등록일</span>
+                                <span class="value">{{ formatDate(material.createdAt) }}</span>
+                            </div>
+                            <div class="info-item-row">
+                                <span class="label">최근 수정일</span>
+                                <span class="value">{{ formatDate(material.updatedAt) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="details-section">
+                        <div class="detail-row">
+                            <div class="detail-col">
+                                <span class="label">자재 유형</span>
+                                <span class="value">{{ getMaterialTypeLabel(material.type) }}</span>
+                            </div>
+                            <div class="detail-col">
+                                <span class="label">상태</span>
+                                <span class="value">
+                                    <span :class="getStatusClass(material.status)">
+                                        {{ getStatusLabel(material.status) }}
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="detail-col">
+                                <span class="label">규격</span>
+                                <span class="value">{{ material.spec || '-' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-col">
+                                <span class="label">작업 단위 (AUn)</span>
+                                <span class="value">{{ material.operationUnit || '-' }}</span>
+                            </div>
+                            <div class="detail-col">
+                                <span class="label">기본 단위 (BUn)</span>
+                                <span class="value">{{ material.baseUnit || '-' }}</span>
+                            </div>
+                            <div class="detail-col">
+                                <span class="label">변환 비율 (AUn:BUn)</span>
+                                <span class="value">{{ material.conversionRate ? `1:${material.conversionRate}` : '-' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-col">
+                                <span class="label">최소 주문 수량 (MOQ)</span>
+                                <span class="value">{{ formatNumber(material.moq) }}</span>
+                            </div>
+                            <div class="detail-col">
+                                <span class="label">사이클 타임 (초)</span>
+                                <span class="value">{{ material.cycleTime || '-' }}</span>
+                            </div>
+                            <div class="detail-col">
+                                <span class="label">생산 소요 시간 (분)</span>
+                                <span class="value">{{ formatCycleTimeMinutes(material.cycleTime) }}</span>
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-col">
+                                <span class="label">단가 (원)</span>
+                                <span class="value">{{ formatCurrency(material.unitPrice) }}</span>
+                            </div>
+                            <div class="detail-col">
+                                <span class="label">안전 재고</span>
+                                <span class="value">{{ formatNumber(material.safetyStock) }}</span>
+                            </div>
+                            <div class="detail-col">
+                                <span class="label">구성 자재 수</span>
+                                <span class="value">{{ material.rawMaterialCount || 0 }}개</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOM 구성 자재 목록 섹션 -->
+            <div class="bom-section">
+                <div class="bom-header">
+                    <h3 class="section-title">BOM 구성 자재 목록</h3>
+                    <div class="header-actions">
+                        <span class="help-text">
+                            문서에 관련된 사항 참고 모달나다. 작동은 우측 품목 이미지로도 가능합니다.
+                        </span>
+                        <button v-if="material.type === 'MAT_FG'" class="add-btn-small" @click="openBomModal">
+                            추가
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="material.type === 'MAT_FG'">
+                    <table v-if="material.bomList && material.bomList.length > 0" class="bom-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">No</th>
+                                <th style="width: 150px;">자재코드</th>
+                                <th style="width: 200px;">자재명</th>
+                                <th style="width: 200px;">규격</th>
+                                <th style="width: 100px; text-align:center;">(BUn)<br/>단위</th>
+                                <th style="width: 100px; text-align:right;">소요량</th>
+                                <th style="width: 200px;">비고</th>
+                                <th style="width: 100px; text-align:center;">작업</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(bom, index) in material.bomList" :key="bom.id">
+                                <td class="text-center">{{ index + 1 }}</td>
+                                <td>{{ bom.rawMaterial?.materialCode || '-' }}</td>
+                                <td>{{ bom.rawMaterial?.name || '-' }}</td>
+                                <td>{{ bom.rawMaterial?.spec || '-' }}</td>
+                                <td class="text-center">{{ bom.rawMaterial?.baseUnit || '-' }}</td>
+                                <td class="text-right">{{ formatNumber(bom.requirement) }}</td>
+                                <td>{{ bom.note || '메모' }}</td>
+                                <td class="text-center">
+                                    <button class="delete-btn-small" @click="deleteBomItem(bom.id)">삭제</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div v-else class="empty-bom-message">
+                        <p>※ 해당 품목에 대한 자재 참고 모달이 업데이트되지 않았습니다. 작동은 우측 품목 이미지로도 가능합니다.</p>
+                    </div>
+                </div>
+                <div v-else class="empty-bom-message">
+                    <p>원자재는 BOM 구성이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="no-data-message">
+            <p>자재 정보를 불러올 수 없습니다.</p>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { getMaterialDetail } from '@/api/material/material.js'
+import defaultImage from '@/assets/새로이새로미.png'
+
+const router = useRouter()
+const route = useRoute()
+
+const isLoading = ref(true)
+const material = ref(null)
+
+// 자재 상세 조회
+const fetchMaterialDetail = async () => {
+    try {
+        isLoading.value = true
+        const materialId = route.params.id
+        const result = await getMaterialDetail(materialId)
+        material.value = result
+    } catch (error) {
+        console.error('자재 상세 조회 실패:', error)
+        if (error.response?.status !== 401) {
+            alert('자재 정보를 불러오는데 실패했습니다.')
+        }
+    } finally {
+        isLoading.value = false
+    }
+}
+
+// 목록으로 돌아가기
+const goBack = () => {
+    router.push('/master/bom')
+}
+
+// BOM 추가 모달 열기
+const openBomModal = () => {
+    // TODO: BOM 추가 모달 구현
+    alert('BOM 추가 기능은 추후 구현 예정입니다.')
+}
+
+// BOM 항목 삭제
+const deleteBomItem = (bomId) => {
+    // TODO: BOM 삭제 기능 구현
+    if (confirm('해당 BOM 항목을 삭제하시겠습니까?')) {
+        alert('BOM 삭제 기능은 추후 구현 예정입니다.')
+    }
+}
+
+// 날짜 포맷팅
+const formatDate = (value) => {
+    if (!value) return '-'
+    return new Date(value).toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).replace(/\./g, '-').replace(/ /g, '').slice(0, -1)
+}
+
+// 사이클타임 포맷팅 (분)
+const formatCycleTimeMinutes = (seconds) => {
+    if (!seconds) return '-'
+    const minutes = Math.floor(seconds / 60)
+    return minutes === 0 ? '1분 미만' : `${minutes}분`
+}
+
+// 숫자 포맷팅
+const formatNumber = (value) => {
+    if (value === null || value === undefined) return '-'
+    return value.toLocaleString()
+}
+
+// 금액 포맷팅
+const formatCurrency = (value) => {
+    if (value === null || value === undefined) return '-'
+    return '₩' + value.toLocaleString()
+}
+
+// 자재 유형 라벨
+const getMaterialTypeLabel = (type) => {
+    const labels = {
+        MAT_FG: '완제품',
+        MAT_RM: '원자재'
+    }
+    return labels[type] || type || '-'
+}
+
+// 상태 클래스
+const getStatusClass = (status) => {
+    const classes = {
+        MAT_NORMAL: 'status-badge status-normal',
+        MAT_STOP_PREP: 'status-badge status-stop-prep',
+        MAT_STOP: 'status-badge status-stop',
+        MAT_DISCONTINUED: 'status-badge status-discontinued'
+    }
+    return classes[status] || 'status-badge'
+}
+
+// 상태 라벨
+const getStatusLabel = (status) => {
+    const labels = {
+        MAT_NORMAL: '정상',
+        MAT_STOP_PREP: '판매 중단 예정',
+        MAT_STOP: '판매 중단',
+        MAT_DISCONTINUED: '단종'
+    }
+    return labels[status] || status || '-'
+}
+
+// 초기 로드
+onMounted(() => {
+    fetchMaterialDetail()
+})
+</script>
+
+<style scoped>
+.material-detail-page {
+    padding: 5px;
+    width: 100%;
+}
+
+/* ===== 헤더 ===== */
+.page-header {
+    margin-bottom: 20px;
+}
+
+.header-left {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: fit-content;
+    margin-top: 4px;
+}
+
+.back-btn:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+.page-description {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* ===== 로딩 ===== */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+}
+
+/* ===== 컨텐츠 ===== */
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ===== 정보 섹션 ===== */
+.info-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 20px;
+}
+
+.info-content {
+    display: flex;
+    gap: 24px;
+}
+
+/* ===== 이미지 섹션 ===== */
+.image-section {
+    flex-shrink: 0;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.product-image {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.image-placeholder {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #9ca3af;
+}
+
+.image-placeholder p {
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+.basic-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-item-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.info-item-row .label {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.info-item-row .value {
+    font-size: 13px;
+    color: #111827;
+    font-weight: 600;
+}
+
+/* ===== 상세정보 섹션 ===== */
+.details-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.detail-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.detail-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.detail-col .label {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.detail-col .value {
+    font-size: 14px;
+    color: #111827;
+    font-weight: 600;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 8px 0;
+}
+
+.stat-box {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* ===== BOM 섹션 ===== */
+.bom-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.bom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.help-text {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.add-btn-small {
+    background: #4C4CDD;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-btn-small:hover {
+    background: #3d3dbb;
+}
+
+/* ===== BOM 테이블 ===== */
+.bom-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bom-table thead {
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.bom-table th {
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    text-align: left;
+}
+
+.bom-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 14px;
+    color: #111827;
+}
+
+.bom-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.delete-btn-small {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: #dc2626;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.delete-btn-small:hover {
+    background: #fee2e2;
+    border-color: #dc2626;
+}
+
+.empty-bom-message {
+    padding: 60px 20px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.no-data-message {
+    padding: 100px 20px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 16px;
+}
+
+/* ===== 상태 뱃지 ===== */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-normal {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-stop-prep {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-stop {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-discontinued {
+    background: #f3f4f6;
+    color: #374151;
+}
+</style>
