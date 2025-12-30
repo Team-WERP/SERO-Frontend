@@ -50,7 +50,7 @@
             <div class="p-2 border-r border-b border-black" style="grid-column: span 3;">{{ order.shippedAt?.slice(0, 10) }}</div>
             
             <div class="bg-gray-100 p-2 font-bold border-r border-b border-black text-center">비고</div>
-            <div class="p-2 border-r border-b border-black text-xs" style="grid-column: span 3;">{{ order.note || '-' }}</div>
+            <div class="p-2 border-r border-b border-black" style="grid-column: span 3;">{{ order.note || '-' }}</div>
           </div>
 
           <h3 class="text-lg font-bold mb-2">주문 품목 정보</h3>
@@ -78,7 +78,7 @@
                 <td class="border-r border-b border-black p-2 text-right">{{ formatNumber(item.unitPrice) }}</td>
                 <td class="border-r border-b border-black p-2 text-right">{{ formatNumber(item.totalPrice) }}</td>
               </tr>
-              <tr class="bg-gray-100 font-bold">
+              <tr class="bg-gray-100 font-medium">
                 <td colspan="4" class="border-r border-b border-black p-2">합계</td>
                 <td class="border-r border-b border-black p-2">{{ formatNumber(totalQuantity) }}</td>
                 <td colspan="2" class="border-r border-b border-black p-2"></td>
@@ -87,14 +87,14 @@
             </tbody>
           </table>
 
-          <div class="border-t border-l border-black text-sm font-bold" style="display: grid; grid-template-columns: repeat(4, 1fr);">
+          <div class="border-t border-l border-black text-sm font-medium" style="display: grid; grid-template-columns: repeat(4, 1fr);">
             <div class="bg-gray-100 p-3 border-r border-b border-black text-center">총 수량</div>
             <div class="p-3 border-r border-b border-black text-center">{{ formatNumber(totalQuantity) }}</div>
             <div class="bg-gray-100 p-3 border-r border-b border-black text-center">공급가액</div>
             <div class="p-3 border-r border-b border-black text-right">{{ formatNumber(order.totalPrice) }} 원</div>
             
             <div class="bg-gray-100 p-4 border-r border-b border-black text-center flex items-center justify-center">총 합계 금액</div>
-            <div class="p-4 border-r border-b border-black text-right text-lg" style="grid-column: span 3;">
+            <div class="p-4 border-r border-b border-black text-right" style="grid-column: span 3;">
               {{ formatNumber(order.totalPrice) }} 원
             </div>
           </div>
