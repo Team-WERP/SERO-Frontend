@@ -239,8 +239,9 @@ const router = createRouter({
                 },
                 {
                     path: "warehouse/goods-issues/create/:doCode",
+                    name: "GoodsIssueCreate",
                     component: GoodsIssueCreate,
-                    meta: { roles: ["AC_WHS", "AC_SYS"] },
+                    meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
                 },
                 {
                     path: "warehouse/goods-issues/:giCode",
