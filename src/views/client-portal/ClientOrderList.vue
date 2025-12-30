@@ -114,11 +114,17 @@
               </span>
             </td>
             <td class="py-4" @click.stop>
-              <button class="text-gray-400 hover:text-[#4C4CDD] transition-colors">
+              <button 
+                v-if="order.soUrl"
+                @click="openPdf(order.soUrl)" 
+                class="text-gray-400 hover:text-[#4C4CDD] transition-all active:scale-90"
+                title="주문서 보기"
+              >
                 <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
               </button>
+              <span v-else class="text-gray-300">-</span>
             </td>
           </tr>
         </tbody>
@@ -171,28 +177,34 @@ const resetFilter = () => {
   fetchOrders();
 };
 
+const openPdf = (url) => {
+  if (!url) {
+    alert('등록된 주문서 파일이 없습니다.');
+    return;
+  }
+  
+  window.open(url, '_blank');
+};
+
 const handleSearch = () => {
   if ((filter.startDate && !filter.endDate) || (!filter.startDate && filter.endDate)) {
     dateError.value = true;
     return;
   }
   dateError.value = false;
-  currentPage.value = 1; // 검색 시 1페이지로 리셋
+  currentPage.value = 1; 
   fetchOrders();
 };
   
 const fetchOrders = async () => {
   isLoading.value = true;
   try {
-    // 필터에 현재 페이지 번호 반영
     filter.page = currentPage.value;
     const response = await getClientOrderList(filter);
     
-    // API 응답 구조에 따라 데이터 할당 (response.data 또는 response)
     const resultData = response.data || response;
     orders.value = resultData; 
-    
-    // 데이터 개수가 pageSize보다 작으면 마지막 페이지로 간주
+  
     isLastPage.value = resultData.length < pageSize;
   } catch (error) {
     console.error('주문 목록 로드 실패:', error);
