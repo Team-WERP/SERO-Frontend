@@ -13,6 +13,14 @@
         <span :class="getStatusClass(order.status)" class="px-3 py-1 rounded-full text-[13px] font-bold">
           {{ getStatusLabel(order.status) }}
         </span>
+        <div v-if="order.status === 'CLI_SO_CANCEL'" class="flex items-center gap-2 ml-2 px-3 py-1.5 bg-rose-50 border border-rose-100 rounded-lg">
+          <svg class="w-4 h-4 text-rose-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-[14px] text-rose-600 font-bold">
+            취소 사유: <span class="font-medium ml-1">{{ order.rejectionReason }}</span>
+          </span>
+        </div>
       </div>
       <p class="text-[13px] text-gray-500 mt-1">고객사 담당자: <span class="font-medium text-gray-800">{{ order.clientManagerName || '-' }}</span></p>
     </header>
@@ -25,13 +33,13 @@
             기본 주문 정보
           </h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-[13px]">
-            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">주문번호</span><span class="font-medium">{{ order.soCode }}</span></div>
-            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">PO번호</span><span class="font-medium">{{ order.poCode || '-' }}</span></div>
-            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">주문일시</span><span>{{ order.orderedAt }}</span></div>
-            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">납기 요청일</span><span class="font-medium">{{ order.shippedAt }}</span></div>
+            <div class="flex border-b border-gray-200 pb-2"><span class="w-32 text-gray-500">주문번호</span><span class="font-medium">{{ order.soCode }}</span></div>
+            <div class="flex border-b border-gray-200 pb-2"><span class="w-32 text-gray-500">PO번호</span><span class="font-medium">{{ order.poCode || '-' }}</span></div>
+            <div class="flex border-b border-gray-200 pb-2"><span class="w-32 text-gray-500">주문일시</span><span>{{ order.orderedAt }}</span></div>
+            <div class="flex border-b border-gray-200 pb-2"><span class="w-32 text-gray-500">납기 요청일</span><span class="font-medium">{{ order.shippedAt }}</span></div>
             <div class="md:col-span-2 pt-2">
               <p class="text-gray-500 mb-2 font-medium">비고</p>
-              <div class="bg-gray-50 p-3 rounded-lg text-gray-800 border border-gray-100 min-h-[50px]">
+              <div class="bg-gray-50 p-3 rounded-lg text-gray-800 border border-gray-200 min-h-[50px]">
                 {{ order.note || '특이사항 없음' }}
               </div>
             </div>
@@ -47,7 +55,7 @@
               <p class="text-gray-500 mb-3 font-bold">주문서</p>
               <a v-if="order.soUrl" :href="order.soUrl" target="_blank" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-md text-blue-600 hover:bg-blue-50 transition-colors  font-medium">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                PDF 주문서 확인하기
+                주문서_{{ order.soCode }}.pdf
               </a>
               <span v-else class="text-gray-400">등록된 주문서가 없습니다.</span>
             </div>
@@ -55,7 +63,7 @@
               <p class="text-gray-500 mb-3 font-bold">납품서</p>
               <div v-if="order.doUrls && order.doUrls.length" class="flex flex-wrap gap-2">
                 <a v-for="(url, idx) in order.doUrls" :key="idx" :href="url" target="_blank" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-md text-blue-600 hover:bg-blue-50 transition-colors  font-medium">
-                  납품서_{{ idx + 1 }}.pdf
+                 납품서_{{ order.soCode + "_" + idx + 1 }}.pdf
                 </a>
               </div>
               <span v-else class="text-gray-400">등록된 납품서가 없습니다.</span>
@@ -108,10 +116,10 @@
              배송지 정보
           </h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-[13px]">
-            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">납품처</span><span>{{ order.shippingName }}</span></div>
-            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">수령인</span><span class="font-medium">{{ order.recipientName }}</span></div>
-            <div class="flex border-b border-gray-50 pb-2 md:col-span-2"><span class="w-32 text-gray-500">배송 주소</span><span class="flex-1">{{ order.address }}</span></div>
-            <div class="flex border-b border-gray-50 pb-2"><span class="w-32 text-gray-500">연락처</span><span>{{ order.recipientContact }}</span></div>
+            <div class="flex border-b border-gray-200 pb-2"><span class="w-32 text-gray-500">납품처</span><span>{{ order.shippingName }}</span></div>
+            <div class="flex border-b border-gray-200 pb-2"><span class="w-32 text-gray-500">수령인</span><span class="font-medium">{{ order.recipientName }}</span></div>
+            <div class="flex border-b border-gray-200 pb-2 md:col-span-2"><span class="w-32 text-gray-500">배송 주소</span><span class="flex-1">{{ order.address }}</span></div>
+            <div class="flex border-b border-gray-200 pb-2"><span class="w-32 text-gray-500">연락처</span><span>{{ order.recipientContact }}</span></div>
           </div>
         </section>
       </div>

@@ -21,17 +21,6 @@
     </div>
 
     <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
-      <div
-        v-if="loading"
-        class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
-      >
-        <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
-          </path>
-        </svg>
-      </div>
       <h3 class="text-sm font-bold mb-5 text-gray-800">필터 및 검색</h3>
       <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 items-end">
         
@@ -105,10 +94,24 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div class="p-4 border-b border-gray-100 flex items-center bg-gray-50/50 text-sm text-gray-600 font-medium">
-        조회 결과: <span class="text-indigo-600 font-bold mx-1">{{ orders[0]?.orderCount }}</span>건
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative min-h-[400px]">
+      
+      <div
+        v-if="loading"
+        class="absolute inset-0 z-20 flex items-center justify-center bg-white/40 backdrop-blur-[1px] transition-all"
+      >
+        <div class="flex flex-col items-center gap-3">
+          <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        </div>
       </div>
+
+      <div class="p-4 border-b border-gray-100 flex items-center bg-gray-50/50 text-sm text-gray-600 font-medium">
+        조회 결과: <span class="text-indigo-600 font-bold mx-1">{{ orders[0]?.orderCount || 0 }}</span>건
+      </div>
+
       <div class="overflow-x-auto">
         <table class="w-full text-left">
           <thead>
@@ -124,19 +127,12 @@
               <th class="px-5 py-3">진행상태</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
+          <tbody :class="{'opacity-40 pointer-events-none transition-opacity': loading}" class="divide-y divide-gray-100">
             <tr v-for="(order, index) in orders" :key="order.orderId" class="hover:bg-indigo-50/30 transition-colors text-sm text-black text-center">
               <td class="px-5 py-4 text-gray-400 text-xs">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
-              
               <td class="px-5 py-4 font-semibold">
-                <span 
-                  class="cursor-pointer hover:underline"
-                  @click="goToDetail(order.id)"
-                >
-                  {{ order.soCode }}
-                </span>
+                <span class="cursor-pointer hover:underline" @click="goToDetail(order.id)">{{ order.soCode }}</span>
               </td>
-
               <td class="px-5 py-4">{{ order.clientName }}</td>
               <td class="px-5 py-4">
                 {{ order.mainItemName }}
@@ -160,9 +156,9 @@
       </div>
 
       <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-center gap-4 bg-gray-50/30">
-        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1" class="px-4 py-1.5 border border-gray-300 rounded-md text-sm font-semibold bg-white text-gray-600 disabled:opacity-30 hover:bg-gray-50 transition-colors">이전</button>
+        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1 || loading" class="px-4 py-1.5 border border-gray-300 rounded-md text-sm font-semibold bg-white text-gray-600 disabled:opacity-30 hover:bg-gray-50 transition-colors">이전</button>
         <span class="text-sm font-bold text-gray-700">{{ currentPage }}</span>
-        <button @click="changePage(currentPage + 1)" :disabled="isLastPage" class="px-4 py-1.5 border border-gray-300 rounded-md text-sm font-semibold bg-white text-gray-600 disabled:opacity-30 hover:bg-gray-50 transition-colors">다음</button>
+        <button @click="changePage(currentPage + 1)" :disabled="isLastPage || loading" class="px-4 py-1.5 border border-gray-300 rounded-md text-sm font-semibold bg-white text-gray-600 disabled:opacity-30 hover:bg-gray-50 transition-colors">다음</button>
       </div>
     </div>
   </div>
