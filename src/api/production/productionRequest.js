@@ -33,6 +33,14 @@ export const getPRDraftDetail = (prId) => {
 }
 
 /** 
+ * 임시저장 등록
+ */
+export const createPRDraft = (data) => {
+    return api.post('/production-requests/draft', data)
+    .then(res => res.data)
+}
+
+/** 
  * 임시저장 수정 
  */
 export const updatePRDraft = (prId, data) =>
@@ -50,4 +58,10 @@ export const requestProduction = (prId) =>
 export const getPRListByOrderId = (orderId) => {
     return api.get(`/production-requests/search/${orderId}`, orderId)
         .then(res => res.data)
+}
+
+export const assignPRManager = (prId, managerId) => {
+    return api.put(`/production-requests/${prId}/manager`, {
+        managerId
+    })
 }

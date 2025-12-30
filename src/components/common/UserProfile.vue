@@ -6,7 +6,11 @@
 
         <div class="user-profile__info">
             <div class="user-profile__name">{{ userName }}</div>
-            <div class="user-profile__role">{{ userRole }} · {{ userPosition }}</div>
+            <div class="user-profile__role">{{ userRole }}
+                <span v-if="userPosition">
+                    · {{ userPosition }}
+                </span>
+            </div>
         </div>
 
         <button @click="handleLogout" class="ml-4 px-3 py-1 text-[14px] bg-[#4C4CDD] text-white rounded cursor-pointer">

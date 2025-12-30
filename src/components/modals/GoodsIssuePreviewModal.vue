@@ -125,7 +125,18 @@
 
             <!-- 모달 푸터 -->
             <div class="modal-footer">
-                <button class="btn-secondary" @click="closeModal">닫기</button>
+                <a
+                    v-if="goodsIssue.giUrl && goodsIssue.giUrl !== ''"
+                    :href="goodsIssue.giUrl"
+                    target="_blank"
+                    class="btn-secondary"
+                    style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    PDF 다운로드
+                </a>
                 <button class="btn-primary" @click="printGoodsIssue">인쇄</button>
             </div>
         </div>
@@ -461,24 +472,26 @@ const printGoodsIssue = () => {
 }
 
 .btn-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #6b7280;
-    cursor: pointer;
-    padding: 0;
     width: 32px;
     height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s;
 }
 
 .btn-close:hover {
-    background: #f3f4f6;
-    color: #111827;
+    background: #e5e7eb;
+}
+
+.icon-close {
+    font-size: 20px;
+    color: #6b7280;
+    font-style: normal;
 }
 
 /* ===== 출고지시서 내용 ===== */

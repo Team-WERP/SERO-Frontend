@@ -1,7 +1,7 @@
 <template>
   <div v-if="order" class="min-h-screen bg-[#F9FAFB] p-6 font-sans">
     <nav class="mb-2 text-gray-500">
-      <router-link to="/order/management" class="font-medium text-[#4C4CDD] over:underline">
+      <router-link to="/order/management" class="font-medium text-[#4C4CDD] hover:underline">
         주문 관리
       </router-link>
       <span class="mx-2 text-gray-400">›</span>
@@ -93,9 +93,10 @@
         <div class="mb-8">
           <div class="flex justify-between items-center mb-3">
             <h3 class="text-lg font-bold text-[#4C4CDD]">주문 품목 정보</h3>
-            <button class="rounded-lg border border-[#4C4CDD] px-3 py-1 text-sm font-bold text-[#4C4CDD] hover:bg-[#F0F0FF]">
+            <button @click="openPrintModal" class="rounded-lg border border-[#4C4CDD] px-3 py-1 text-sm font-bold text-[#4C4CDD] hover:bg-[#F0F0FF]">
               주문서 인쇄
             </button>
+            <OrderPrintModal v-if="isPrintModalOpen" :order="order" @close="isPrintModalOpen = false" />
           </div>
           <div class="overflow-hidden rounded-xl border border-gray-200">
             <table class="w-full text-left text-sm">
@@ -128,34 +129,138 @@
             </table>
           </div>
         </div>
-        <h3 class="mb-4 text-lg font-bold text-[#4C4CDD]">주문 결재 진행 상황</h3>
-        <div class="flex h-50 flex-col items-center justify-center rounded-xl bg-[#F9FAFB] border border-dashed border-gray-300">
-          <img src="@/assets/새로이새로미.png" alt="No Approval" class="mb-4 h-24 w-auto opacity-40" />
-          <p class="text-gray-400 font-medium">진행 중인 결재 건이 없습니다.</p>
+
+        <div class="mb-8">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-[#4C4CDD]">주문 결재 진행 상황</h3>
+          </div>
+
+          <div class="relative rounded-xl border border-gray-200 bg-white min-h-[300px] overflow-hidden">
+            <div v-if="isApprovalLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
+              <svg class="animate-spin h-10 w-10 text-[#4C4CDD]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+            </div>
+
+            <template v-if="approvalData">
+              <div class="flex items-center justify-center gap-4 py-12 px-6 bg-white border-b border-gray-50">
+  <div class="flex flex-col items-center">
+    <div class="flex h-16 w-16 items-center justify-center rounded-full bg-[#D1FAE5] text-sm font-bold text-[#238869] mb-3 ">
+      기안
+    </div>
+    <div class="text-sm font-bold text-gray-900">{{ approvalData.drafterName }}</div>
+    <div class="text-[11px] text-gray-500 text-center leading-tight">
+      {{ getPositionLabel(approvalData.drafterPositionCode) }} / {{ approvalData.drafterDepartment }}
+    </div>
+  </div>
+  
+  <div v-for="(appr, index) in approvalData.approvers" :key="appr.approvalLineId" class="flex items-center">
+    <div :class="[
+      'h-[3px] w-30 mx-4 mb-10 transition-colors duration-300', 
+      (index === 0 || approvalData.approvers[index - 1].status === 'ALS_APPR') 
+        ? 'bg-[#D1FAE5]' 
+        : 'bg-gray-200'
+    ]"></div>
+    
+    <div class="flex flex-col items-center">
+      <div :class="[ 
+        'flex h-16 w-16 items-center justify-center rounded-full text-sm font-bold mb-3 transition-all',
+        appr.status === 'ALS_APPR' ? 'bg-[#D1FAE5] text-[#238869] border-[#A7F3D0]' : 
+        appr.status === 'ALS_RVW' ? 'bg-[#DBEAFE] text-[#3223DD] border-[#BFDBFE]' : 
+        'bg-gray-100 text-gray-400 border-gray-200'
+      ]">
+        {{ getLineTypeLabel(appr.lineType) }}
+      </div>
+      <div class="text-sm font-bold text-gray-900">{{ appr.approverName }}</div>
+      <div class="text-[11px] text-gray-500 text-center leading-tight">
+        {{ getPositionLabel(appr.approverPositionCode) }} / {{ appr.approverDepartment }}
+      </div>
+    </div>
+  </div>
+</div>
+
+              <div class="overflow-x-auto m-6">
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                  <table class="w-full text-[13px] text-center table-fixed border-collapse">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th class="w-20 px-2 py-3 text-gray-600 font-bold">구분</th>
+                        <th class="w-24 px-2 py-3 text-gray-600 font-bold">이름</th>
+                        <th class="w-32 px-2 py-3 text-gray-600 font-bold">직위/직책</th>
+                        <th class="w-40 px-2 py-3 text-gray-600 font-bold">소속</th>
+                        <th class="w-24 px-2 py-3 text-gray-600 font-bold">상태</th>
+                        <th class="w-44 px-2 py-3 text-gray-600 font-bold">결재일</th>
+                        <th class="w-64 px-4 py-3 text-gray-600 font-bold">비고</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                      <tr class="hover:bg-gray-50 transition-colors text-center">
+                        <td class="py-4">기안</td>
+                        <td class="py-4">{{ approvalData.drafterName }}</td>
+                        <td class="py-4">{{ getPositionLabel(approvalData.drafterPositionCode) }}</td>
+                        <td class="py-4">{{ approvalData.drafterDepartment }}</td>
+                        <td class="py-4 text-[#10B981]">승인</td>
+                        <td class="py-4">{{ approvalData.draftedAt }}</td>
+                        <td class="px-4 py-4 text-gray-400">-</td>
+                      </tr>
+                      <tr v-for="appr in approvalData.approvers" :key="appr.approvalLineId" class="hover:bg-gray-50 transition-colors text-center">
+                        <td class="py-4">{{ getLineTypeLabel(appr.lineType) }}</td>
+                        <td class="py-4">{{ appr.approverName }}</td>
+                        <td class="py-4">{{ getPositionLabel(appr.approverPositionCode) }}</td>
+                        <td class="py-4">{{ appr.approverDepartment }}</td>
+                        <td :class="getLineStatusClass(appr.status)" class="py-4">
+                          {{ getLineStatusLabel(appr.status) }}
+                        </td>
+                        <td class="py-4">{{ appr.processedAt || '-' }}</td>
+                        <td class="px-4 py-4 truncate text-gray-400" :title="appr.note">
+                          {{ appr.note || '-' }}
+                        </td>
+                      </tr> 
+                    </tbody>
+                  </table>
+                </div>
+                <div class="flex justify-end mt-4">
+                  <router-link 
+                    v-if="!['ORD_RED', 'ORD_RVW'].includes(order.status)"
+                    :to="`/approval/${approvalData.approvalId}`"
+                    class="text-[13px] font-bold text-[#4C4CDD] hover:underline flex items-center gap-1"
+                  >
+                    결재 바로가기 <span class="text-lg">→</span>
+                  </router-link>
+                </div>
+              </div>
+            </template>
+
+            <div v-else-if="!isApprovalLoading" class="flex flex-col items-center justify-center py-16 px-4">
+              <img src="@/assets/새로이새로미.png" alt="No Approval" class="mb-4 h-24 w-auto opacity-40" />
+              <p class="text-gray-400 font-medium mb-6">진행 중인 결재 건이 없습니다.</p>
+              <button 
+                v-if="order.status === 'ORD_RVW' && order.managerId == userStore.user?.id"
+                @click="goToCreateApproval"
+                class="rounded-lg bg-[#4C4CDD] px-8 py-2.5 text-sm font-bold text-white hover:bg-[#3b3bbb] shadow-md transition-all active:scale-95"
+              >
+                결재 상신하기
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-
-
-      <div v-if="activeTab === 'PRODUCTION'">
-        <div
-            v-if="isLoading"
-            class="absolute inset-0 z-[9999] flex items-center justify-center bg-white/70 backdrop-blur-sm"
-          >
+      <div v-if="activeTab === 'PRODUCTION'" class="relative min-h-[500px]">    
+        <div v-if="isLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px] transition-all">
+          <div class="flex flex-col items-center gap-3">
             <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
-              </path>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
             </svg>
           </div>
+        </div>
         <div class="mb-8">
           <div class="flex justify-between items-end mb-3">
             <div>
               <h3 class="text-lg font-bold text-[#4C4CDD]">생산 · 납품 · 출고 현황</h3>
-              <p class="text-[11px] text-gray-400 mt-1">
-                * 최신 변동 이력 기준
-              </p>
+              <p class="text-[11px] text-gray-400 mt-1">* 최신 변동 이력 기준</p>
             </div>
           </div>
 
@@ -191,10 +296,7 @@
                   <td class="px-2 py-4">{{ formatPrice(hItem.shippedQuantity) }}</td>
                   <td class="px-2 py-4">{{ formatPrice(hItem.completedQuantity) }}</td>
                   <td class="px-2 py-4">
-                    <button @click="openHistoryModal(hItem.itemId, hItem.item.itemName)" 
-                            class="text-[13px] underline hover:text-gray-700">
-                      이력 조회
-                    </button>
+                    <button @click="openHistoryModal(hItem.itemId, hItem.item.itemName)" class="text-[13px] underline hover:text-gray-700">이력 조회</button>
                   </td>
                 </tr>
               </tbody>
@@ -202,83 +304,86 @@
           </div>
 
           <div class="flex gap-2 justify-end mb-5">
-            <button class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">생산 설정</button>
-            <button class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">납품 설정</button>
+            <template v-if="order.status === 'ORD_APPR_DONE'">
+              <button @click="openPRModal" class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">생산 설정</button>
+              <button @click="openDOModal" class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">납품 설정</button>
+            </template>
           </div>
+
+          <ProductionRequestModal 
+            v-if="isPRModalOpen"
+            :soId="Number(route.params.orderId)"
+            :items="order.items"
+            :isUpdate="isPRUpdateMode"
+            :initialData="prInitialData"
+            @close="isPRModalOpen = false"
+            @submit="handlePRDraftSubmit"
+          />
+
+          <DeliveryOrderModal
+            v-if="isDOModalOpen"
+            :soId="Number(route.params.orderId)"
+            :items="order.items"
+            :historyItems="itemHistory?.items"
+            @close="isDOModalOpen = false"
+            @submit="handleDOSubmit"
+          />
+
 
           <div class="space-y-8">
             <section v-for="section in docSections" :key="section.title">
               <h3 class="mb-3 text-lg font-bold text-[#4C4CDD]">{{ section.title }}</h3>
               <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <table class="w-full text-sm text-center">
-                  <thead class="bg-gray-50 text-gray-500 font-bold">
+                <table class="w-full text-sm text-center table-fixed">
+                  <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
                     <tr>
-                      <th class="w-[100px] px-4 py-3 border-b">No</th>
-                      <th class="w-[150px] px-4 py-3 border-b">요청번호</th>
-                      <th class="w-[200px] px-4 py-3 border-b ">품목명</th> 
-                      <th class="w-[150px] px-4 py-3 border-b">상태</th>
-                      <th class="w-[150px] px-4 py-3 border-b">작성일</th>
-                      <th class="w-[100px] px-4 py-3 border-b">문서</th>
-                      <th class="w-[200px] px-4 py-3 border-b">액션</th>
+                      <th class="py-3 w-[6%]">No</th>
+                      <th class="py-3 w-[18%]">요청번호</th>
+                      <th class="py-3 w-[18%]">품목명</th> 
+                      <th class="py-3 w-[14%]">상태</th>
+                      <th class="py-3 w-[14%]">작성일</th>
+                      <th class="py-3 w-[12%]">문서</th>
+                      <th class="py-3 w-[12%]">액션</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-if="section.data.length === 0">
-                      <td colspan="7" class="py-12 text-center text-gray-400 font-medium">
-                        등록된 문서가 없습니다.
-                      </td>
+                      <td colspan="7" class="py-12 text-center text-gray-400 font-medium">등록된 문서가 없습니다.</td>
                     </tr>
                     <tr v-for="(doc, dIdx) in section.data" :key="dIdx" class="border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-colors">
-                      <td class="px-4 py-4 text-gray-400">{{ dIdx + 1 }}</td>
-                      
-                      <td class="px-4 py-4 font-medium truncate">
-                        {{ doc[section.codeField] }}
-                      </td>
-
-                      <td class="px-4 py-4 text-center">
+                      <td class="py-4 text-gray-400">{{ dIdx + 1 }}</td>
+                      <td class="py-4 font-medium truncate px-2">{{ doc[section.codeField] }}</td>
+                      <td class="py-4 truncate">
                         {{ doc[section.nameField] }}
-                        <span v-if="(doc.itemTypeCount || doc.itemCount) > 1">
+                        <span v-if="(doc.itemTypeCount || doc.itemCount) > 1" class="text-gray-400 text-xs ml-1">
                           외 {{ (doc.itemTypeCount || doc.itemCount) - 1 }}건
                         </span>
                       </td>
-
-                      <td class="px-4 py-4">
-                        <span 
-                          :class="section.badgeFn(doc.status)" 
-                          class="rounded-full px-3 py-1 text-[11px] font-bold whitespace-nowrap"
-                        >
+                      <td class="py-4">
+                        <span :class="section.badgeFn(doc.status)" class="rounded-full px-3 py-1 text-[11px] font-bold whitespace-nowrap">
                           {{ section.labelFn(doc.status) }}
                         </span>
                       </td>
-
-                      <td class="px-4 py-4">
-                        {{ doc[section.dateField] }}
-                      </td>
-
-                      <td class="px-4 py-4 text-center">
+                      <td class="py-4 text-gray-600">{{ doc[section.dateField] }}</td>
+                      <td class="py-4 text-center">
                         <button 
-                          v-if="!(section.type === 'PRODUCTION' && doc.status === 'PR_TMP')"
-                          class="text-[12px] font-medium underline underline-offset-4 hover:text-gray-400 hover:decoration-gray-400 transition-all"
+                          v-if="!(section.type === 'PRODUCTION' && doc.status === 'PR_TMP')" 
+                          @click="openDocument(doc)" 
+                          class="text-gray-400 hover:text-[#4C4CDD] transition-all"
+                          title="문서 보기"
                         >
-                          미리보기
+                          <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                          </svg>
                         </button>
+                        <span v-else class="text-gray-300">-</span>
                       </td>
-                      <td class="px-4 py-4 text-center">
-                        <div class="flex justify-center flex-row items-center gap-1.5">
-                          <button
-                            v-if="section.title === '생산 요청 문서' && doc.status === 'PR_TMP'"
-                            class="rounded border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">
-                            수정
-                          </button>
-                          <router-link
-                            :to="getLinkPath(section.type, doc)"
-                            class="h-7 flex items-center justify-center rounded bg-[#4C4CDD] px-2.5 text-[11px] font-bold text-white hover:bg-[#3b3bbb] whitespace-nowrap"
-                          >
-                            {{ section.title.split(' ')[0] }} 바로가기
-                          </router-link>
+                      <td class="py-4 text-center">
+                        <div class="flex justify-center items-center gap-1.5 px-2">
+                          <button v-if="section.title === '생산 요청 문서' && doc.status === 'PR_TMP'" @click="openEditPRModal(doc.prId)" class="rounded border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">수정</button>
+                          <router-link :to="getLinkPath(section.type, doc)" class="h-7 flex items-center justify-center rounded bg-[#4C4CDD] px-2.5 text-[11px] font-bold text-white hover:bg-[#3b3bbb] whitespace-nowrap">바로가기</router-link>
                         </div>
                       </td>
-
                     </tr>
                   </tbody>
                 </table>
@@ -288,26 +393,40 @@
         </div>
       </div>
 
-      <div v-if="order.status === 'ORD_RED' && activeTab === 'ORDER'" class="flex justify-end mt-5">
-          <button @click="openAssignmentModal" 
-                  class="rounded-lg px-3 py-2 text-sm font-bold text-[#fff] bg-[#4C4CDD] hover:bg-[#4c4cddba]">
-              담당자 배정
-        </button>
-      </div>
-      
-      <ManagerAssignmentModal 
-        v-if="isModalOpen" 
-        :departmentData="deptEmployees"
-        @close="isModalOpen = false"
-        @confirm="onConfirmAssignment"
-      />
+      <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+  
+        <div class="flex justify-end mt-8">
+          <button 
+            v-if="order && ['ORD_RVW', 'ORD_APPR_RJCT'].includes(order.status) && order.managerId === userStore.user?.id"
+            @click="isCancelModalOpen = true"
+            class="px-6 py-2.5 rounded-lg border border-red-200 bg-red-50 text-sm font-bold text-red-600 hover:bg-red-100"
+          >
+            주문 취소
+          </button>
+        </div>
+
+        <CancelOrderModal 
+          v-if="isCancelModalOpen"
+          :is-submitting="isCancelling"
+          @close="isCancelModalOpen = false"
+          @confirm="handleCancelConfirm"
+        />
+      <button 
+        v-if="order && order.status === 'ORD_RED'"
+        @click="openAssignmentModal" 
+        class="px-6 py-2 text-sm font-bold rounded-lg bg-[#4C4CDD] text-white hover:bg-[#3b3bbb] shadow-md transition-all active:scale-95"
+      >
+        담당자 배정
+      </button>
     </div>
+      
+      <ManagerAssignmentModal v-if="isModalOpen" :departmentData="deptEmployees" @close="isModalOpen = false" @confirm="onConfirmAssignment" />
+    </div>
+
     <div v-if="isHistoryModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b p-5">
-          <h3 class="text-xl font-bold text-gray-900">
-            <span class="text-[#4C4CDD]">{{ selectedItemName }}</span> 변동 이력
-          </h3>
+          <h3 class="text-xl font-bold text-gray-900"><span class="text-[#4C4CDD]">{{ selectedItemName }}</span> 변동 이력</h3>
           <button @click="isHistoryModalOpen = false" class="text-gray-400 hover:text-gray-600">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -358,6 +477,7 @@
         <div class="flex justify-end p-5 border-t">
           <button @click="isHistoryModalOpen = false" class="rounded-lg bg-gray-100 px-6 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200">닫기</button>
         </div>
+
       </div>
     </div>
   </div>
@@ -365,29 +485,104 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory } from '@/api/order/salesOrder';
+import { useRoute,useRouter } from 'vue-router';
+import ProductionRequestModal from '@/components/order/ProductionRequestModal.vue';
+import DeliveryOrderModal from '@/components/order/DeliveryOrderModal.vue';
+import CancelOrderModal from './CancelOrderModal.vue';
+import OrderPrintModal from '@/components/order/OrderPrintModal.vue';
+import { getSODetail, assignManager, getOrderItemsHistory, getItemHistory, cancelOrder } from '@/api/order/salesOrder';
 import { getEmployees } from '@/api/employee/employee';
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
-import { getPRListByOrderId } from '@/api/production/productionRequest';
-import { getDOListByOrderId } from '@/api/shipping/deliveryOrder';
+import { 
+  getPRListByOrderId, 
+  createPRDraft, 
+  getPRDraftDetail, 
+  updatePRDraft 
+} from '@/api/production/productionRequest';
+import { getDOListByOrderId, createDO } from '@/api/shipping/deliveryOrder';
 import { getGIListByOrderId } from '@/api/shipping/goodsIssue';
+import { getApprovalSummary } from '@/api/approval/approval';
+import { useUserStore } from '@/stores/user';
 
+const userStore = useUserStore();
 const route = useRoute();
+const router = useRouter();
 const activeTab = ref('ORDER');
 const order = ref(null);
 const itemHistory = ref(null);
-const isModalOpen = ref(false);
 const deptEmployees = ref([]);
 
-const isHistoryModalOpen = ref(false);
 const selectedItemName = ref('');
 const historyDetails = ref([]);
 
 const isLoading = ref(false);
+const isApprovalLoading = ref(false);
+
+const isModalOpen = ref(false);
+const isPRModalOpen = ref(false);
+const isHistoryModalOpen = ref(false);
+const isDOModalOpen = ref(false);
+const isPrintModalOpen = ref(false);
+const isCancelModalOpen = ref(false);
+
+const prInitialData = ref(null);
+const isPRUpdateMode = ref(false);
+const currentPrId = ref(null);
+const approvalData = ref(null); 
+const isCancelling = ref(false);
 
 
 const steps = ['접수/검토', '주문 결재', '생산/출고', '배송 완료'];
+
+const fetchApprovalSummary = async () => {
+  if (!order.value?.approvalCode) {
+    approvalData.value = null;
+    return;
+  }
+  
+  isApprovalLoading.value = true;
+  try {
+    const data = await getApprovalSummary(order.value.approvalCode);
+    approvalData.value = data;
+  } catch (err) {
+    console.error('결재 현황 로드 실패:', err);
+    approvalData.value = null;
+  } finally {
+    isApprovalLoading.value = false;
+  }
+};
+
+
+const goToCreateApproval = () => {
+  const routeData = router.resolve({
+    path: '/approval/create',
+    query: { 
+      refDocType: 'so', 
+      refDocId: route.params.orderId 
+    }
+  });
+
+  window.open(routeData.href, '_blank');
+};
+
+const getPositionLabel = (code) => {
+  const map = { JP_CEO: '사장', JP_DIR: '이사', JP_MGR: '부장', JP_SM: '과장', JP_AM: '대리', JP_STF: '사원' };
+  return map[code] || code;
+};
+const getLineTypeLabel = (type) => {
+  const map = { AT_APPR: '결재', AT_RVW: '협조', AT_REF: '참조', AT_RCPT: '수신' };
+  return map[type] || '결재';
+};
+const getLineStatusLabel = (status) => {
+  const map = { ALS_PEND: '대기', ALS_RVW: '검토중', ALS_APPR: '승인', ALS_RJCT: '반려' };
+  return map[status] || status;
+};
+const getLineStatusClass = (status) => {
+  if (status === 'ALS_APPR') return 'text-[#10B981]';
+  if (status === 'ALS_RJCT') return 'text-red-600';
+  if (status === 'ALS_RVW') return 'text-blue-600';
+  return 'text-gray-400';
+};
 
 const currentStepIndex = computed(() => {
     const status = order.value?.status;
@@ -415,10 +610,14 @@ const getStepDate = (idx) => {
 
 const fetchDetail = async () => {
     try {
+        isLoading.value = true;
         const data = await getSODetail(route.params.orderId);
         order.value = data;
+        if (data.approvalCode) fetchApprovalSummary();
     } catch (err) {
         console.error('상세 정보 조회 실패:', err);
+    } finally {
+      isLoading.value = false;
     }
 };
 
@@ -452,17 +651,85 @@ const openHistoryModal = async (itemId, itemName) => {
   }
 };
 
-// !! 납품 & 출고 지시 부분 주소 수정 필요 
+const openPRModal = () => {
+  isPRModalOpen.value = true;
+};
+
+const openEditPRModal = async (prId) => {
+  try {
+    isLoading.value = true;
+    const data = await getPRDraftDetail(prId);
+    prInitialData.value = data;
+    currentPrId.value = prId;
+    isPRUpdateMode.value = true;
+    isPRModalOpen.value = true;
+  } catch (err) {
+    console.error('상세 정보 로드 실패:', err);
+    alert('데이터를 불러오지 못했습니다.');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const handlePRDraftSubmit = async (payload) => {
+  try {
+    isLoading.value = true;
+    if (isPRUpdateMode.value) {
+      await updatePRDraft(currentPrId.value, payload);
+      alert('생산 요청이 수정되었습니다.');
+    } else {
+      await createPRDraft({ ...payload, soId: Number(route.params.orderId) });
+      alert('생산 요청이 임시저장되었습니다.');
+    }
+    
+    isPRModalOpen.value = false;
+    await fetchAllDocuments(); 
+  } catch (err) {
+    console.error('저장 실패:', err);
+    alert('처리에 실패했습니다.');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+
+const openDOModal = () => {
+  isDOModalOpen.value = true;
+};
+
+const handleDOSubmit = async (payload) => {
+  try {
+    isLoading.value = true;
+    await createDO(payload);
+    
+    alert('납품서가 생성되었습니다.');
+    isDOModalOpen.value = false;
+    if (activeTab.value === 'PRODUCTION') await fetchAllDocuments();
+  } catch (err) {
+    console.error('납품 요청 실패:', err);
+    alert('납품 요청이 실패했습니다.');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const openPrintModal = () => {
+  isPrintModalOpen.value = true;
+};
+
 const getLinkPath = (type, doc) => {
   if (!doc) return '#';
   
   switch (type) {
     case 'PRODUCTION':
+    if (doc.status === 'PR_TMP') {
+        return `/production/requests`;
+      }
       return `/production/requests/${doc.prId}`;
     case 'DELIVERY': 
-      return `/warehouse/delivery-orders/${doc.doCode}`;
+      return `/warehouse/delivery-orders`;
     case 'ISSUE':     
-      return `/warehouse/delivery-orders/goods-issues/${doc.id}`; 
+      return `/warehouse/goods-issues/${doc.id}`;
     default:
       return '#';
   }
@@ -475,6 +742,7 @@ const fetchAllDocuments = async () => {
     try {
       const response = await section.fetchFn(orderId);
       section.data = response || [];
+      console.log("문서!",section);
     } catch (err) {
       console.error(`${section.title} 조회 실패:`, err);
       section.data = [];
@@ -495,6 +763,14 @@ watch(activeTab, async (newTab) => {
     ]);
   } finally {
     isLoading.value = false;
+  }
+});
+
+watch(isPRModalOpen, (val) => {
+  if (!val) {
+    isPRUpdateMode.value = false;
+    prInitialData.value = null;
+    currentPrId.value = null;
   }
 });
 
@@ -542,7 +818,7 @@ const getOrderStatusBadgeClass = (s) => {
 const getOrderStatusLabel = (s) => {
     const map = { 
         'ORD_RED': '접수대기', 'ORD_RVW': '주문검토', 'ORD_APPR_PEND': '주문결재중', 
-        'ORD_APPR_DONE': '결재승인', 'ORD_PRO': '생산중', 'ORD_SHIP_READY': '배송중', 'ORD_SHIPPING': '출고중', 
+        'ORD_APPR_DONE': '결재승인', 'ORD_APPR_RJCT': '결재반려','ORD_PRO': '생산중', 'ORD_SHIP_READY': '배송중', 'ORD_SHIPPING': '출고중', 
         'ORD_DONE': '배송완료', 'ORD_CANCEL': '주문취소' 
     };
     return map[s] || s;
@@ -610,6 +886,20 @@ const getGIStatusLabel = (s) => {
     return map[s] || s;
 };
 
+const getDocumentUrl = (doc) => {
+  if (!doc) return null;
+  return doc.giUrl || doc.doUrl || doc.prUrl || null;
+};
+
+const openDocument = (doc) => {
+  const url = getDocumentUrl(doc);
+  if (url) {
+    window.open(url, '_blank');
+  } else {
+    alert('해당 문서의 PDF 파일을 찾을 수 없습니다');
+  }
+};
+
 
 const docSections = ref([
   { 
@@ -650,10 +940,26 @@ const docSections = ref([
   }
 ]);
 
+const handleCancelConfirm = async (cancelData) => {
+  isCancelling.value = true;
+  try {
+    await cancelOrder(route.params.orderId, cancelData);
+    
+    alert('주문이 성공적으로 취소되었습니다.');
+    isCancelModalOpen.value = false; 
 
+    if (typeof fetchDetail === 'function') await fetchDetail();
+  } catch (error) {
+    console.error('취소 실패:', error);
+    alert('주문 취소 처리 중 오류가 발생했습니다.');
+  } finally {
+    isCancelling.value = false;
+  }
+};
 
 onMounted(() => {
   fetchDetail();
+
 });
 </script>
 

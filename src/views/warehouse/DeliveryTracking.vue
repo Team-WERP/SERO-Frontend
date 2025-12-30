@@ -19,8 +19,18 @@
             <button class="search-btn" @click="searchDelivery">조회</button>
         </div>
 
+        <!-- 로딩 상태 -->
+        <div v-if="isLoading" class="loading-overlay">
+            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+                </path>
+            </svg>
+        </div>
+
         <!-- 배송 정보 영역 -->
-        <div v-if="deliveryInfo" class="delivery-info-section">
+        <div v-else-if="deliveryInfo" class="delivery-info-section">
             <h2 class="product-title">{{ deliveryInfo.itemName }}</h2>
 
             <!-- 주문 정보 -->
@@ -138,6 +148,7 @@ import { getGoodsIssueList } from '@/api/delivery'
 const searchCode = ref('')
 const deliveryInfo = ref(null)
 const searched = ref(false)
+const isLoading = ref(false)
 
 // 날짜 포맷팅 (날짜만)
 const formatDate = (dateStr) => {
@@ -168,7 +179,10 @@ const searchDelivery = async () => {
     }
 
     try {
+        isLoading.value = true
         searched.value = true
+        deliveryInfo.value = null
+
         // 출고지시 목록에서 검색
         const result = await getGoodsIssueList({
             giCode: searchCode.value.trim()
@@ -185,6 +199,8 @@ const searchDelivery = async () => {
         console.error('배송 조회 실패:', error)
         deliveryInfo.value = null
         alert('배송 정보를 조회하는데 실패했습니다.')
+    } finally {
+        isLoading.value = false
     }
 }
 
@@ -489,6 +505,42 @@ const isStepCompleted = (step) => {
 .history-content {
     font-size: 14px;
     color: #111827;
+}
+
+/* 로딩 오버레이 */
+.loading-overlay {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.h-10 {
+    height: 2.5rem;
+}
+
+.w-10 {
+    width: 2.5rem;
+}
+
+.text-indigo-600 {
+    color: #4C4CDD;
 }
 
 /* 빈 상태 */

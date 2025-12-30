@@ -26,88 +26,61 @@
 
         <!-- 라인별 섹션 -->
         <div v-for="group in lineGroups" :key="group.lineId" class="line-section">
-            <!-- 라인 헤더 -->
-            <div class="line-title">
-                {{ group.lineName }}
+
+            <div class="line-header">
+                <div class="line-title">{{ group.lineName }}</div>
+
+                <div class="action-buttons" style="display: flex; gap: 8px;">
+                    <button class="btn" @click="onPrint(group)">
+                        작업지시서 인쇄
+                    </button>
+
+                    <button class="btn primary" :disabled="group.hasWorkOrder || isNotToday"
+                        @click="openCreateModal(group)">
+                        작업지시 생성
+                    </button>
+                </div>
             </div>
 
-            <!-- 라인별 테이블 -->
-            <div class="items-section">
-                <table class="items-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 200px;">품목</th>
-                            <th style="width: 180px;">생산계획(PP)</th>
-                            <th style="width: 180px;">생산요청(PR)</th>
-                            <th style="width: 100px;">생산계획 수량</th>
-                            <th style="width: 100px;">누적실적</th>
-                            <th style="width: 100px;">잔여</th>
-                            <th style="width: 180px;">생산계획 기준 진행률</th>
-                            <th style="width: 120px; text-align:center;">작업지시</th>
-                        </tr>
-                    </thead>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>품목</th>
+                        <th>생산계획</th>
+                        <th>오늘 계획 수량</th>
+                        <th>작업지시 수량</th>
+                    </tr>
+                </thead>
 
-                    <tbody>
-                        <tr v-for="row in group.items" :key="row.ppId">
+                <tbody>
+                    <tr v-for="row in group.items" :key="row.ppId">
+                        <td>
+                            <div class="item-name">{{ row.materialName }}</div>
+                            <div class="item-code">{{ row.materialCode }}</div>
+                        </td>
+                        <td>{{ row.ppCode }}</td>
+                        <td>
+                            {{ formatQuantity(row.dailyPlannedQuantity) }}
+                            <span class="unit">{{ row.baseUnit }}</span>
+                        </td>
+                        <td>
+                            {{ formatQuantity(row.woPlannedQuantity) }}
+                            <span class="unit">{{ row.baseUnit }}</span>
+                        </td>
 
-                            <!-- 품목 -->
-                            <td>
-                                <div class="code">
-                                    <div class="primary">{{ row.materialName }}</div>
-                                    <div class="secondary">{{ row.materialCode }}</div>
-                                </div>
-                            </td>
 
-                            <!-- PP -->
-                            <td class="code-cell">
-                                {{ row.ppCode }}
-                            </td>
+                    </tr>
 
-                            <!-- PR -->
-                            <td class="code-cell">
-                                {{ row.prCode }}
-                            </td>
+                    <tr class="line-total-row">
+                        <td colspan="3"></td>
+                        <td>{{ formatQuantity(group.totalRecommended) }}</td>
+                    </tr>
+                </tbody>
 
-                            <td>{{ formatQuantity(row.plannedQuantity) }}</td>
-                            <td>{{ formatQuantity(row.totalProducedQty) }}</td>
-                            <td>{{ formatQuantity(row.remainingQuantity) }}</td>
+            </table>
 
-                            <td>
-                                <div class="progress-wrap">
-                                    <div class="progress-bar-bg">
-                                        <div class="progress-bar" :style="{ width: row.progressRate + '%' }" />
-                                    </div>
-                                    <span class="progress-text">
-                                        {{ row.progressRate }}%
-                                    </span>
-                                </div>
-                            </td>
-
-                            <td class="text-center">
-                                <button v-if="row.remainingQuantity === 0" class="btn disabled" disabled>
-                                    완료
-                                </button>
-
-                                <button v-else-if="row.todayWorkQuantity > 0" class="btn disabled" disabled>
-                                    생성됨
-                                </button>
-
-                                <button v-else class="btn primary" :class="{ disabled: isNotToday }"
-                                    :disabled="isNotToday" @click="openCreateModal(row)">
-                                    생성
-                                </button>
-                            </td>
-                        </tr>
-
-                        <tr v-if="group.items.length === 0">
-                            <td colspan="8" class="empty-message text-center">
-                                해당 라인에 생성할 생산계획이 없습니다.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
         </div>
+
 
         <!-- 작업지시 생성 모달 -->
         <div v-if="showModal" class="modal-backdrop">
@@ -115,52 +88,96 @@
                 <h3 class="modal-title">작업지시 생성</h3>
 
                 <div class="modal-sub">
-                    {{ selectedRow.lineName }} · {{ selectedRow.materialName }}
+                    {{ selectedGroup.lineName }}
                 </div>
 
+                <!-- 작업일자 -->
                 <div class="modal-info">
                     <div>
                         <span class="label">작업일자</span>
                         <span class="value">{{ selectedDate }}</span>
                     </div>
-                    <div>
-                        <span class="label">생산계획</span>
-                        <span class="value">{{ selectedRow.ppCode }}</span>
-                    </div>
                 </div>
+
+                <!-- 생산계획별 수량 -->
+                <div class="pp-quantity-section">
+                    <span class="label">생산계획별 작업 수량</span>
+
+                    <table class="pp-quantity-table">
+                        <thead>
+                            <tr>
+                                <th>생산계획</th>
+                                <th>오늘 계획 수량</th>
+                                <th>실제 작업지시 수량</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="pp in selectedGroup.items" :key="pp.ppId">
+                                <td>{{ pp.ppCode }}</td>
+                                <td>
+                                    {{ formatQuantity(pp.dailyPlannedQuantity) }} {{ pp.baseUnit }}
+                                </td>
+                                <td>
+                                    <input type="number" class="qty-input" v-model.number="pp.workQuantity" min="0"
+                                        @input="recalculateTotal" />
+                                    {{ pp.baseUnit }}
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+
 
                 <div class="modal-metrics">
                     <div>
-                        <span class="label">권장 수량</span>
-                        <span class="value highlight">
-                            {{ formatQuantity(recommendedQuantity) }}
+                        <span class="label">라인 일일 CAPA</span>
+                        <span class="value">
+                            {{ formatQuantity(selectedGroup.dailyCapacity) }}
                         </span>
                     </div>
+
                     <div>
-                        <span class="label">잔여 수량</span>
-                        <span class="value">
-                            {{ formatQuantity(selectedRow.remainingQuantity) }}
+                        <span class="label">총 작업지시 수량</span>
+                        <span class="value" :class="{
+                            danger: createQuantity + selectedGroup.totalWoPlanned > selectedGroup.dailyCapacity
+                        }">
+                            {{ formatQuantity(createQuantity) }}
                         </span>
                     </div>
                 </div>
 
-                <div class="modal-input">
-                    <label>생성 수량</label>
-                    <input type="number" v-model.number="createQuantity" :max="selectedRow.remainingQuantity"
-                        :min="1" />
-                    <small class="hint">
-                        권장 수량 기준으로 자동 설정되며, 필요 시 조정할 수 있습니다.
-                    </small>
-                </div>
 
                 <div class="modal-actions">
                     <button class="btn" @click="showModal = false">
                         취소
                     </button>
-                    <button class="btn primary" :disabled="createQuantity <= 0" @click="createWorkOrder">
+                    <button class="btn primary"
+                        :disabled="createQuantity <= 0 || createQuantity > selectedGroup.dailyCapacity"
+                        @click="createWorkOrder">
                         작업지시 생성
                     </button>
+
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showPrintModal" class="print-modal-backdrop">
+        <div class="print-modal">
+            <div class="print-modal-header">
+                <span>작업지시서 미리보기</span>
+                <button class="close-btn" @click="showPrintModal = false">✕</button>
+            </div>
+            <div class="print-modal-body">
+                <div class="print-area">
+                    <WODocument :group="printData" :workDate="selectedDate" />
+                </div>
+            </div>
+            <div class="print-modal-footer">
+                <button class="btn primary" @click="handlePrint">
+                    출력하기
+                </button>
             </div>
         </div>
     </div>
@@ -170,16 +187,23 @@
 import { ref, onMounted, computed } from 'vue'
 import { getDailyPlanPreview } from '@/api/production/productionPlan.js'
 import { createWorkOrder as createWorkOrderApi } from '@/api/production/workOrder.js'
+import WODocument from '@/components/production/WODocument.vue'
 
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const getKSTDateString = (date = new Date()) => {
+    const kstOffset = 9 * 60 * 60 * 1000
+    const kstDate = new Date(date.getTime() + kstOffset)
+    return kstDate.toISOString().slice(0, 10)
+}
+
+const selectedDate = ref(getKSTDateString())
 const plans = ref([])
 
 const showModal = ref(false)
-const selectedRow = ref(null)
 const createQuantity = ref(0)
 const recommendedQuantity = ref(0)
+const selectedGroup = ref(null)
 
-const today = new Date().toISOString().slice(0, 10)
+const today = getKSTDateString()
 
 const isNotToday = computed(() => selectedDate.value !== today)
 
@@ -189,53 +213,108 @@ const setToday = () => {
 }
 
 const moveDate = (diff) => {
-    const d = new Date(selectedDate.value)
+    const d = new Date(selectedDate.value + 'T00:00:00')
     d.setDate(d.getDate() + diff)
-    selectedDate.value = d.toISOString().slice(0, 10)
+    selectedDate.value = getKSTDateString(d)
     fetchDailyPreview()
 }
 
 const lineGroups = computed(() => {
     const map = {}
+
     plans.value.forEach(row => {
-        const key = row.lineId || 'NO_LINE'
-        if (!map[key]) {
-            map[key] = {
+        if (!map[row.lineId]) {
+            map[row.lineId] = {
                 lineId: row.lineId,
-                lineName: row.lineName || '미지정',
-                items: []
+                lineName: row.lineName,
+                dailyCapacity: row.dailyCapacity,
+                hasWorkOrder: false,
+                items: [],
+                totalWoPlanned: 0
             }
         }
-        map[key].items.push(row)
+
+        map[row.lineId].items.push(row)
+        map[row.lineId].totalWoPlanned += row.woPlannedQuantity
+
+        if (row.hasWorkOrder) {
+            map[row.lineId].hasWorkOrder = true
+        }
     })
+
     return Object.values(map)
 })
+
 
 const fetchDailyPreview = async () => {
     plans.value = await getDailyPlanPreview(selectedDate.value)
 }
 
-const openCreateModal = (row) => {
-    selectedRow.value = row
-    recommendedQuantity.value = row.recommendedQuantity
-    createQuantity.value = row.recommendedQuantity
+const openCreateModal = (group) => {
+    selectedGroup.value = {
+        ...group,
+        items: group.items.map(pp => ({
+            ...pp,
+            workQuantity: pp.recommendedQuantity // 기본값
+        }))
+    }
+
+    recommendedQuantity.value = selectedGroup.value.items.reduce(
+        (sum, r) => sum + r.workQuantity,
+        0
+    )
+
+    createQuantity.value = recommendedQuantity.value
     showModal.value = true
 }
 
+
 const createWorkOrder = async () => {
+    if (!selectedGroup.value) return
+
     await createWorkOrderApi({
-        ppId: selectedRow.value.ppId,
+        lineId: selectedGroup.value.lineId,
         workDate: selectedDate.value,
-        quantity: createQuantity.value
+        items: selectedGroup.value.items.map(pp => ({
+            ppId: pp.ppId,
+            quantity: pp.workQuantity
+        }))
     })
+
     showModal.value = false
-    fetchDailyPreview()
+    await fetchDailyPreview()
 }
+
+
 
 const formatQuantity = (v) =>
     v != null ? v.toLocaleString() : '-'
 
 onMounted(fetchDailyPreview)
+
+const showPrintModal = ref(false)
+const printData = ref(null)
+
+const onPrint = (group) => {
+    printData.value = group
+    showPrintModal.value = true
+}
+
+const handlePrint = () => {
+    window.print();
+    showPrintModal.value = false
+};
+
+const recalculateTotal = () => {
+    const total = selectedGroup.value.items.reduce(
+        (sum, pp) => sum + (pp.workQuantity || 0),
+        0
+    )
+
+    createQuantity.value = total
+}
+
+
 </script>
 
 
@@ -281,23 +360,36 @@ onMounted(fetchDailyPreview)
 .items-table {
     width: 100%;
     border-collapse: collapse;
-}
-
-.items-table thead {
-    background: #f9fafb;
-    border-bottom: 2px solid #e5e7eb;
+    table-layout: fixed;
 }
 
 .items-table th,
 .items-table td {
     padding: 12px 16px;
     font-size: 14px;
-    text-align: center;
     vertical-align: middle;
 }
 
-.items-table tbody tr:hover {
+.items-table th {
+    text-align: center;
     background: #f9fafb;
+}
+
+.items-table td:nth-child(1) {
+    text-align: center;
+}
+
+.items-table td:nth-child(n+2) {
+    text-align: center;
+}
+
+.line-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 32px;
+    box-sizing: border-box;
 }
 
 /* 코드 영역 */
@@ -351,7 +443,7 @@ onMounted(fetchDailyPreview)
     border-color: #4C4CDD;
 }
 
-.btn.disabled {
+.btn.primary:disabled {
     background: #f3f4f6;
     color: #9ca3af;
     cursor: not-allowed;
@@ -371,7 +463,8 @@ onMounted(fetchDailyPreview)
 .modal {
     background: #ffffff;
     padding: 24px;
-    width: 320px;
+    width: 520px;
+    max-width: 90vw;
     border-radius: 8px;
 }
 
@@ -412,6 +505,7 @@ onMounted(fetchDailyPreview)
 .modal-metrics .label {
     font-size: 12px;
     color: #6b7280;
+    margin-right: 10px;
 }
 
 .modal-info .value,
@@ -447,6 +541,42 @@ onMounted(fetchDailyPreview)
     margin-top: 4px;
     font-size: 12px;
     color: #9ca3af;
+}
+
+.pp-quantity-section {
+    margin-bottom: 16px;
+}
+
+.pp-quantity-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pp-quantity-table th,
+.pp-quantity-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.pp-quantity-table th {
+    background: #f9fafb;
+    font-weight: 600;
+}
+
+.qty-input {
+    width: 70px;
+    padding: 4px 6px;
+    font-size: 13px;
+    text-align: right;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+
+.value.danger {
+    color: #dc2626;
+    font-weight: 700;
 }
 
 .date-controls {
@@ -501,5 +631,116 @@ onMounted(fetchDailyPreview)
 
 .sub-row td {
     text-align: center;
+}
+
+.line-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.line-section {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 32px;
+}
+
+.items-table td {
+    text-align: center;
+}
+
+.line-total-row {
+    background: #f9fafb;
+    font-weight: 600;
+    border-top: 2px solid #e5e7eb;
+}
+
+.line-total-row td {
+    text-align: center;
+}
+
+.print-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.print-modal {
+    background: #fff;
+    width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.print-modal-body {
+    overflow: auto;
+    padding: 16px;
+}
+
+.print-modal-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+}
+
+.print-modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #ddd;
+    border-bottom: none;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+@media print {
+
+    body * {
+        visibility: hidden;
+    }
+
+    .print-modal-backdrop,
+    .print-modal-backdrop *,
+    .print-area,
+    .print-area * {
+        visibility: visible;
+    }
+
+    .print-modal-backdrop {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+    }
+
+    .print-modal {
+        box-shadow: none;
+        width: 100%;
+    }
+
+    .print-modal-header,
+    .print-modal-footer {
+        display: none !important;
+    }
+
+    .print-modal-body {
+        padding: 0 !important;
+        background: white !important;
+    }
 }
 </style>

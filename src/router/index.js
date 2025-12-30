@@ -1,5 +1,6 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from "vue-router";
+import { useUserStore } from "@/stores/user";
 import MainLayout from "@/layouts/MainLayout.vue";
 
 // 로그인
@@ -67,122 +68,202 @@ import RoleManagement from "@/views/system/RoleManagement.vue";
 import StockByWarehouse from "@/views/warehouse/StockByWarehouse.vue";
 import DeliveryTracking from "@/views/warehouse/DeliveryTracking.vue";
 
+// 에러
+import Forbidden from "@/views/error/Forbidden.vue";
+import NotFound from "@/views/error/NotFound.vue";
+
 const router = createRouter({
     history: createWebHistory(),
     routes: [
+        // 로그인
+        {
+            path: "/login",
+            component: Login,
+            meta: { public: true, hideLayout: true, noPadding: true },
+        },
+        {
+            path: "/driver/login",
+            component: DriverLogin,
+            meta: { public: true, hideLayout: true, noPadding: true },
+        },
+        {
+            path: "/delivery/login",
+            component: DriverLogin,
+            meta: { public: true, hideLayout: true, noPadding: true },
+        },
+        // 존재하지 않는 페이지 접근
+        {
+            path: "/not-found",
+            component: NotFound,
+            meta: { public: true },
+        },
         {
             path: "/",
-            redirect: "/client-portal/dashboard",
             component: MainLayout,
             children: [
-                // ---------------------
-                // 로그인
-                // ---------------------
                 {
-                    path: "/login",
-                    component: Login,
-                    meta: {
-                        hideLayout: true,
-                        noPadding: true,
-                    },
-                },
-                {
-                    path: "/driver/login",
-                    component: DriverLogin,
-                    meta: {
-                        hideLayout: true,
-                        noPadding: true
-                    }
-                },
-                {
-                    path: "/delivery/login",
-                    component: DriverLogin,
-                    meta: {
-                        hideLayout: true,
-                        noPadding: true
-                    }
+                    path: "forbidden",
+                    component: Forbidden,
                 },
 
-                // ---------------------
                 // 고객포털
-                // ---------------------
                 {
-                    path: "/client-portal/dashboard",
+                    path: "client-portal/dashboard",
                     component: ClientDashboard,
+                    meta: { roles: ["AC_CLI"] },
                 },
                 {
-                    path: "/client-portal/order-create",
+                    path: "client-portal/order-create",
                     component: ClientOrderCreate,
+                    meta: { roles: ["AC_CLI"] },
                 },
-                { path: "/client-portal/orders", component: ClientOrderList },
-                { path: "/client-portal/orders/:orderId", component: ClientOrderDetail },
-                { path: "/client-portal/order-delivery", component: ClientOrderDelivery },
-                { path: "/client-portal/items", component: ClientItemList },
-                { path: "/client-portal/address", component: ClientAddress },
                 {
-                    path: "/client-portal/company",
+                    path: "client-portal/orders",
+                    component: ClientOrderList,
+                    meta: { roles: ["AC_CLI"] },
+                },
+                {
+                    path: "client-portal/orders/:orderId",
+                    component: ClientOrderDetail,
+                    meta: { roles: ["AC_CLI"] },
+                },
+                {
+                    path: "client-portal/order-delivery",
+                    component: ClientOrderDelivery,
+                    meta: { roles: ["AC_CLI"] },
+                },
+                {
+                    path: "client-portal/items",
+                    component: ClientItemList,
+                    meta: { roles: ["AC_CLI"] },
+                },
+                {
+                    path: "client-portal/address",
+                    component: ClientAddress,
+                    meta: { roles: ["AC_CLI"] },
+                },
+                {
+                    path: "client-portal/company",
                     component: ClientCompanyInfo,
+                    meta: { roles: ["AC_CLI"] },
                 },
-                { path: "/client-portal/notices", component: ClientNotices },
+                {
+                    path: "client-portal/notices",
+                    component: ClientNotices,
+                    meta: { roles: ["AC_CLI"] },
+                },
 
-                // ---------------------
                 // 주문
-                // ---------------------
-                { path: "/order/dashboard", component: OrderDashboard },
-                { path: "/order/management", component: OrderManagement },
-                { path: "/order/clients", component: ClientManagement },
-                { path: "/order/management/:orderId", component: OrderDetail },
+                {
+                    path: "order/dashboard",
+                    component: OrderDashboard,
+                    meta: { roles: ["AC_SAL", "AC_SYS"] },
+                },
+                {
+                    path: "order/management",
+                    component: OrderManagement,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "order/clients",
+                    component: ClientManagement,
+                    meta: { roles: ["AC_SAL", "AC_SYS"] },
+                },
+                {
+                    path: "order/management/:orderId",
+                    component: OrderDetail,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
 
-                // ---------------------
                 // 생산
-                // ---------------------
                 {
-                    path: "/production/dashboard",
+                    path: "production/dashboard",
                     component: ProductionDashboard,
+                    meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },
                 {
-                    path: "/production/requests",
+                    path: "production/requests",
                     component: ProductionRequestList,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_SYS"] },
                 },
-                { path: "/production/plans", component: ProductionPlanList },
-                { path: "/production/work-orders", component: WorkOrderList },
                 {
-                    path: "/production/work-results/input",
+                    path: "production/plans",
+                    component: ProductionPlanList,
+                    meta: { roles: ["AC_PRO", "AC_SYS"] },
+                },
+                {
+                    path: "production/work-orders",
+                    component: WorkOrderList,
+                    meta: { roles: ["AC_PRO", "AC_SYS"] },
+                },
+                {
+                    path: "production/work-results/input",
                     component: WorkResultInput,
+                    meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },
                 {
-                    path: "/production/work-results/management",
+                    path: "production/work-results/management",
                     component: WorkResultList,
+                    meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },
                 {
-                    path: "/production/process-flow",
+                    path: "production/process-flow",
                     component: ProcessFlowManagement,
+                    meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },
                 {
-                    path: "/production/requests/drafts/:prId",
+                    path: "production/requests/drafts/:prId",
                     component: PRDraftDetailView,
+                    meta: { roles: ["AC_SAL", "AC_SYS"] },
                 },
-                { path: "/production/requests/:prId", component: PRDetail },
-
-                // ---------------------
-                // 재고·물류
-                // ---------------------
-                { path: "/warehouse/stock", component: StockByWarehouse },
-                { path: "/warehouse/delivery-orders", component: DeliveryOrderList },
-                { path: "/warehouse/goods-issues", component: GoodsIssueList },
-                { path: "/warehouse/goods-issues/create/:doCode", name: "GoodsIssueCreate", component: GoodsIssueCreate },
-                { path: "/warehouse/goods-issues/:giCode", name: "GoodsIssueDetail", component: GoodsIssueDetail },
-                { path: "/warehouse/tracking", component: DeliveryTracking },
                 {
-                    path: "/delivery/management",
+                    path: "production/requests/:prId",
+                    component: PRDetail,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_SYS"] },
+                },
+
+                // 재고·물류
+                {
+                    path: "warehouse/stock",
+                    component: StockByWarehouse,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "warehouse/delivery-orders",
+                    component: DeliveryOrderList,
+                    meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "warehouse/goods-issues",
+                    component: GoodsIssueList,
+                    meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "warehouse/goods-issues/create/:doCode",
+                    name: "GoodsIssueCreate",
+                    component: GoodsIssueCreate,
+                    meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "warehouse/goods-issues/:giCode",
+                    component: GoodsIssueDetail,
+                    meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "warehouse/tracking",
+                    component: DeliveryTracking,
+                    meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "delivery/management",
                     component: DeliveryManagement,
                     meta: {
                         hideLayout: true,
-                        noPadding: true
-                    }
+                        noPadding: true,
+                        roles: ["AC_WHS", "AC_SYS"],
+                    },
                 },
 
-                // ---------------------
                 // 기준정보
                 // ---------------------
                 { path: "/master/bom", component: ItemBomManagement },
@@ -200,32 +281,157 @@ const router = createRouter({
                 { path: "/approval/archived", component: ApprovalArchived },
                 { path: "/approval/received", component: ApprovalReceived },
                 { path: "/approval/referenced", component: ApprovalReferenced },
+
                 {
-                    path: "/approval/create",
-                    component: ApprovalCreate,
+                    path: "master/bom",
+                    component: ItemBomManagement,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
                 },
                 {
-                    path: "/approval/:approvalId",
-                    component: ApprovalDetail,
+                    path: "master/company",
+                    component: MasterCompanyInfo,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
                 },
-
-                // ---------------------
-                // 공지사항
-                // ---------------------
-                { path: "/notices", component: NoticeList },
-
-                // ---------------------
+                {
+                    path: "master/employees",
+                    component: EmployeeList,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "master/common-code",
+                    component: SystemCommonCode,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
                 // 시스템 관리
-                // ---------------------
-                { path: "/system/common-code", component: SystemCommonCode },
                 {
-                    path: "/system/employees",
-                    component: SystemEmployeeManagement,
+                    path: "system/common-code",
+                    component: SystemCommonCode,
+                    meta: { roles: ["AC_SYS"] },
                 },
-                { path: "/system/roles", component: RoleManagement },
+                {
+                    path: "system/employees",
+                    component: SystemEmployeeManagement,
+                    meta: { roles: ["AC_SYS"] },
+                },
+                {
+                    path: "system/roles",
+                    component: RoleManagement,
+                    meta: { roles: ["AC_SYS"] },
+                },
+                // 전자결재
+                {
+                    path: "approval/dashboard",
+                    component: ApprovalDashboard,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "approval/submitted",
+                    component: ApprovalSubmitted,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "approval/requested",
+                    component: ApprovalRequested,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "approval/archived",
+                    component: ApprovalArchived,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "approval/received",
+                    component: ApprovalReceived,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "approval/referenced",
+                    component: ApprovalReferenced,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "approval/create",
+                    component: ApprovalCreate,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+                {
+                    path: "approval/:approvalId",
+                    component: ApprovalDetail,
+                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
+                },
+
+                // 공지사항
+                {
+                    path: "notices",
+                    component: NoticeList,
+                    meta: {
+                        roles: [
+                            "AC_SAL",
+                            "AC_PRO",
+                            "AC_WHS",
+                            "AC_SYS",
+                        ],
+                    },
+                },
             ],
         },
+
+        // ---------------------
+        // Catch All
+        // ---------------------
+        {
+            path: "/:pathMatch(.*)*",
+            component: NotFound,
+        },
     ],
+});
+
+router.beforeEach((to, from, next) => {
+    const userStore = useUserStore();
+    const token = localStorage.getItem("accessToken");
+
+    if (to.meta.public) return next()
+
+    if (!token) return next('/login')
+
+    if (!userStore.authorities.length) {
+        try {
+            userStore.initialize()
+        } catch {
+            localStorage.removeItem('accessToken')
+            return next('/login')
+        }
+    }
+
+    if (to.path === '/') {
+        const roles = userStore.authorities;
+
+        if (roles.includes('AC_CLI')) {
+            return next('/client-portal/dashboard');
+        }
+
+        if (roles.includes('AC_SAL') || roles.includes('AC_SYS')) {
+            return next('/order/dashboard');
+        }
+
+        if (roles.includes('AC_PRO') || roles.includes('AC_WHS')) {
+            return next('/order/management');
+        }
+
+        return next('/forbidden');
+    }
+
+    if (to.meta.roles) {
+        const hasRole = to.meta.roles.some((role) =>
+            userStore.authorities.includes(role)
+        );
+
+        if (!hasRole) {
+            return next("/forbidden");
+        }
+    }
+
+    next();
 });
 
 export default router;

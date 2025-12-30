@@ -34,3 +34,12 @@ export const getDOListByOrderId = (orderId) => {
     return api.get(`/delivery-orders/search/${orderId}`)
         .then(res => res.data);
 };
+
+
+/**
+ * 납품서 생성
+ */
+export const createDO = (data) => {
+    return api.post(`/delivery-orders`, data)
+    .then(res => res.data);
+}
