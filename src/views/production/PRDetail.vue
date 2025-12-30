@@ -112,6 +112,7 @@
                         <div class="cell code">품목코드</div>
                         <div class="cell name">품목명</div>
                         <div class="cell spec">규격</div>
+                        <div class="cell unit">단위</div>
                         <div class="cell qty">생산요청수량</div>
                     </div>
 
@@ -120,6 +121,7 @@
                         <div class="cell code">{{ i.itemCode }}</div>
                         <div class="cell name">{{ i.itemName }}</div>
                         <div class="cell spec">{{ i.spec }}</div>
+                        <div class="cell unit">{{ i.unit }}</div>
                         <div class="cell qty">{{ formatNumber(i.requestedQuantity) }}</div>
                     </div>
 
@@ -128,6 +130,7 @@
                         <div class="cell code"></div>
                         <div class="cell name"></div>
                         <div class="cell spec"></div>
+                        <div class="cell unit"></div>
                         <div class="cell qty sum-value">
                             {{ formatNumber(header.totalQuantity) }}
                         </div>
@@ -136,15 +139,97 @@
                 </div>
 
                 <!-- approvals -->
-                <div class="section-title" style="margin-top: 24px;">
-                    생산요청 결재 진행 상황
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">생산요청 결재 진행 상황</h2>
+                    </div>
+
+                    <!-- 결재 없음 -->
+                    <div v-if="!header.approvalCode" class="approval-status">
+                        <div class="approval-empty">
+                            <img class="empty-character" src="@/assets/새로이새로미.png" alt="결재 없음" />
+                            <div class="ghost">진행 중인 결재 건이 없습니다.</div>
+                        </div>
+                    </div>
+
+                    <!-- 결재 있음 -->
+                    <div v-else class="approval-progress">
+                        <!-- 플로우 -->
+                        <div class="approval-flow">
+                            <div class="flow-step">
+                                <div class="flow-circle completed">기안</div>
+                                <div class="flow-label">{{ header.drafterName }}</div>
+                            </div>
+
+                            <template v-for="(line, idx) in sortedApprovalLines" :key="idx">
+                                <div class="flow-arrow">→</div>
+                                <div class="flow-step">
+                                    <div class="flow-circle"
+                                        :class="{ completed: line.status === 'ALS_APPR', active: line.status === 'ALS_RVW' }">
+                                        {{ getLineTypeLabel(line.lineType) }}
+                                    </div>
+                                    <div class="flow-label">{{ line.approverName }}</div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- 테이블 -->
+                        <table class="approval-table">
+                            <thead>
+                                <tr>
+                                    <th>구분</th>
+                                    <th>이름</th>
+                                    <th>직급/직책</th>
+                                    <th>소속</th>
+                                    <th>상태</th>
+                                    <th>결재일</th>
+                                    <th>비고</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 기안자 -->
+                                <tr>
+                                    <td>기안</td>
+                                    <td>{{ header.drafterName }}</td>
+                                    <td>{{ formatRole(header.drafterRank, header.drafterPosition) }}</td>
+                                    <td>{{ header.drafterDepartment }}</td>
+                                    <td>승인</td>
+                                    <td>{{ header.requestedAt }}</td>
+                                    <td>-</td>
+                                </tr>
+
+                                <tr v-for="(line, idx) in sortedApprovalLines" :key="idx">
+                                    <td>{{ getLineTypeLabel(line.lineType) }}</td>
+                                    <td>{{ line.approverName }}</td>
+                                    <td>{{ formatRole(line.approverRank, line.approverPosition) }}</td>
+                                    <td>{{ line.approverDepartment }}</td>
+                                    <td>{{ getApprovalStatusLabel(line.status) }}</td>
+                                    <td>{{ line.processedAt }}</td>
+                                    <td>{{ line.note || '-' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="section-footer">
+                            <router-link v-if="header.approvalCode" :to="`/approval/${header.approvalId}`"
+                                class="view-approval-link">
+                                결재 바로가기 →
+                            </router-link>
+                        </div>
+                    </div>
+
                 </div>
 
-                <div class="approval-box">
-                    <div class="approval-empty">
-                        <img class="empty-character" src="@/assets/새로이새로미.png" alt="결재 없음" />
-                        <div class="ghost">진행 중인 결재 건이 없습니다.</div>
-                    </div>
+
+                <div v-if="showAssignManagerBtn || showRequestApprovalBtn" class="assign-btn-row">
+                    <button v-if="showAssignManagerBtn" class="assign-btn" @click="openAssignmentModal">
+                        담당자 배정
+                    </button>
+                    <ManagerAssignmentModal v-if="isModalOpen" :departmentData="deptEmployees"
+                        @close="isModalOpen = false" @confirm="onConfirmAssignment" />
+
+                    <button v-if="showRequestApprovalBtn" class="assign-btn" @click="requestApproval">
+                        결재 요청
+                    </button>
                 </div>
 
             </div>
@@ -157,86 +242,178 @@
 
         </div>
     </div>
+
+    <!-- 인쇄 미리보기 모달 -->
+    <div v-if="showPrintModal" class="print-modal-backdrop">
+        <div class="print-modal">
+            <div class="print-modal-header">
+                <span>생산요청서 미리보기</span>
+                <button class="close-btn" @click="closePrint">✕</button>
+            </div>
+
+            <div class="print-modal-body">
+                <div class="print-area">
+                    <PRPrintDocument :header="header" :items="items" />
+                </div>
+            </div>
+
+            <div class="print-modal-footer">
+                <button class="outline-btn primary-fill" @click="handlePrint">
+                    출력하기
+                </button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getPRDetail } from '@/api/production/productionRequest'
+import { getPRDetail, assignPRManager } from '@/api/production/productionRequest'
+import { getEmployees } from '@/api/employee/employee'
+import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 import PlanTab from './PlanTab.vue'
+import PRPrintDocument from '@/components/production/PRPrintDocument.vue'
 
 const route = useRoute()
 const router = useRouter()
 const prId = Number(route.params.prId)
 const activeTab = ref('PR') // PR | PLAN
+const isModalOpen = ref(false)
+const deptEmployees = ref([])
+const approvalLines = ref([])
+
 
 const header = ref({
     prId: null,
+    soId: null,
     prCode: '',
     soCode: '',
     status: '',
+    productionProgress: '',
     requestedAt: '',
     dueAt: '',
+    managerId: null,
     drafterName: '',
+    drafterDepartment: '',
+    drafterPosition: '',
+    drafterRank: '',
     managerName: '',
+    approvalId: null,
+    approvalCode: '',
     totalQuantity: 0
 })
 const items = ref([])
 
 const steps = [
-    { code: 'PR_RVW', label: '생산요청 결재' },
-    { code: 'PR_PLANNED', label: '계획수립' },
-    { code: 'PR_PRODUCING', label: '생산 중' },
-    { code: 'PR_DONE', label: '생산 완료' }
+    { key: 'APPR', label: '생산요청 결재' },
+    { key: 'PLAN', label: '계획수립' },
+    { key: 'PROD', label: '생산 중' },
+    { key: 'DONE', label: '생산 완료' }
 ]
 
 const CURRENT_STEP_MAP = {
-    PR_RVW: null,        // 시작 전
-    PR_APPR: 0,          // 결재중
-    PR_APPR_DONE: 1,     // 결재 완료
-    PR_PLANNED: 1,       // 계획 수립 완료
-    PR_PRODUCING: 2,     // 생산 중
-    PR_DONE: 3,          // 생산 완료
-    PR_RJCT: -1,
-    PR_CANCEL: -1,
+    PR_RVW: 0,
+    PR_APPR_PEND: 0,
+    PR_APPR_DONE: 1,
+    PR_PLANNED: 1,
+    PR_PRODUCING: 2,
+    PR_DONE: 3,
+    PR_APPR_RJCT: -1,
+    PR_CANCEL: -1
 }
 
 const currentStepIndex = computed(() => {
-    return CURRENT_STEP_MAP[header.value.status] ?? null
+    const status = header.value.status
+    const progress = header.value.productionProgress
+
+    if (status === 'PR_RVW' || status === 'PR_TMP') {
+        return -1
+    }
+
+    if (status === 'PR_APPR_PEND') {
+        return 0
+    }
+
+    if (status === 'PR_APPR_DONE') {
+        if (!progress) return 1
+
+        const map = {
+            PLANNING: 1,
+            PLANNED: 1,
+            PRODUCING: 2,
+            COMPLETED: 3
+        }
+
+        return map[progress] ?? 1
+    }
+
+    return -1
 })
+
 
 const getStepState = (idx) => {
     const cur = currentStepIndex.value
-
-    if (cur === null || cur < 0) return 'inactive'
+    if (cur === -1) return 'inactive'
     if (idx < cur) return 'done'
-    if (idx === cur) {
-        // 완료 상태는 current가 아니라 done
-        if (['PR_PLANNED', 'PR_DONE'].includes(header.value.status)) {
-            return 'done'
-        }
-        return 'current'
-    }
+    if (idx === cur) return 'current'
     return 'inactive'
 }
+
 
 const reloadDetail = async () => {
     const res = await getPRDetail(prId)
     header.value = res.header
     items.value = Array.isArray(res.items) ? res.items : []
+    approvalLines.value = Array.isArray(res.approvalLines)
+        ? res.approvalLines
+        : []
 }
+
+const sortedApprovalLines = computed(() => {
+    return [...approvalLines.value].sort(
+        (a, b) => (a.sequence || 0) - (b.sequence || 0)
+    )
+})
+
+const getLineTypeLabel = (lineType) => {
+    const map = {
+        AT_APPR: '결재',
+        AT_RVW: '협조'
+    }
+    return map[lineType] || '결재'
+}
+
+const getApprovalStatusLabel = (status) => {
+    const map = {
+        ALS_APPR: '승인',
+        ALS_RVW: '검토중',
+        ALS_PEND: '대기',
+        ALS_RJCT: '반려'
+    }
+    return map[status] || '-'
+}
+
+const formatRole = (rank, position) => {
+    if (!rank && !position) return '-'
+    if (rank && position) return `${rank}/${position}`
+    return rank || position
+}
+
 
 onMounted(async () => {
     const res = await getPRDetail(prId)
     header.value = res.header
     items.value = Array.isArray(res.items) ? res.items : []
+    await reloadDetail()
 })
 
 const statusLabel = computed(() => ({
     PR_RVW: '요청검토',
-    PR_APPR: '결재중',
+    PR_APPR_PEND: '결재중',
     PR_APPR_DONE: '결재승인',
-    PR_RJCT: '결재반려',
+    PR_APPR_RJCT: '결재반려',
     PR_PLANNED: '계획수립',
     PR_PRODUCING: '생산중',
     PR_DONE: '생산완료',
@@ -245,8 +422,8 @@ const statusLabel = computed(() => ({
 
 const statusClass = computed(() => {
     const s = header.value.status
-    if (s === 'PR_RVW' || s === 'PR_APPR') return 'green'
-    if (s === 'PR_RJCT') return 'red'
+    if (s === 'PR_RVW' || s === 'PR_APPR_PEND') return 'green'
+    if (s === 'PR_APPR_RJCT') return 'red'
     if (s === 'PR_PLANNED') return 'yellow'
     if (s === 'PR_PRODUCING') return 'purple'
     if (s === 'PR_DONE') return 'blue'
@@ -254,9 +431,62 @@ const statusClass = computed(() => {
 })
 
 const stepDateText = (idx) => {
-    if (idx === 0) return header.value.requestedAt?.slice(0, 10) || '-'
-    if (idx === 3) return header.value.completedAt?.slice(0, 10) || '-'
     return '-'
+}
+
+const showAssignManagerBtn = computed(() => {
+    return header.value.status === 'PR_RVW'
+        && !header.value.managerId
+})
+
+const showRequestApprovalBtn = computed(() => {
+    return header.value.status === 'PR_RVW'
+        && !!header.value.managerId
+        && !header.value.approvalCode
+})
+
+
+const requestApproval = () => {
+    if (!header.value.managerId) {
+        alert('담당자를 먼저 배정해주세요.')
+        return
+    }
+
+    if (!confirm('결재를 요청하시겠습니까?')) return
+
+    const routeData = router.resolve({
+        path: '/approval/create',
+        query: {
+            refDocType: 'pr',
+            refDocId: header.value.prId
+        }
+    })
+
+    window.open(routeData.href, '_blank')
+}
+
+
+const openAssignmentModal = async () => {
+    try {
+        const res = await getEmployees('DEPT_PRO') // 생산팀 기준
+        deptEmployees.value = Array.isArray(res[0]) ? res[0] : res
+        isModalOpen.value = true
+    } catch (e) {
+        console.error(e)
+        alert('담당자 목록을 불러오지 못했습니다.')
+    }
+}
+
+const onConfirmAssignment = async (employee) => {
+    try {
+        await assignPRManager(prId, employee.id)
+        alert(`담당자가 ${employee.name}(으)로 배정되었습니다.`)
+        isModalOpen.value = false
+        await reloadDetail()
+    } catch (e) {
+        console.error(e)
+        alert('담당자 배정에 실패했습니다.')
+    }
 }
 
 
@@ -273,10 +503,24 @@ const goList = () => {
     router.push('/production/requests')
 }
 
+const showPrintModal = ref(false)
+
+const onPrint = () => {
+    showPrintModal.value = true
+}
+
+const handlePrint = () => {
+    window.print();
+    showPrintModal.value = false
+};
+
+const closePrint = () => {
+    showPrintModal.value = false
+}
+
 </script>
 
 <style scoped>
-/* 페이지 배경: Figma 스펙 */
 .pr-detail-wrap {
     background: #F9FAFB;
     padding: 24px;
@@ -334,7 +578,7 @@ const goList = () => {
     color: #FF3B30;
 }
 
-/* 상태 pill (Frame 77) */
+/* 상태 pill */
 .status-pill {
     display: inline-flex;
     align-items: center;
@@ -429,7 +673,7 @@ const goList = () => {
     margin-top: 20px;
 }
 
-/* 메인 흰 패널 (Rectangle 663) */
+/* 메인 흰 패널 */
 .panel {
     background: #fff;
     border-radius: 10px;
@@ -474,19 +718,7 @@ const goList = () => {
     height: 3px;
     background: #4C4CDD;
     z-index: 2;
-    /* divider 위 */
 }
-
-/* .tab.active::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: 0px;
-    width: 100%;
-    height: 3px;
-    background: #4C4CDD;
-    border-radius: 2px;
-} */
 
 .divider {
     position: relative;
@@ -496,7 +728,7 @@ const goList = () => {
     margin-bottom: 18px;
 }
 
-/* 공통 아웃라인 버튼 (Frame 100/115) */
+/* 공통 아웃라인 버튼 */
 .outline-btn {
     border: 1px solid #4C4CDD;
     color: #4C4CDD;
@@ -518,6 +750,11 @@ const goList = () => {
     font-size: 16px;
     font-weight: 700;
     margin: 10px 0 12px;
+}
+
+.section-footer {
+    margin-top: 15px;
+    text-align: right;
 }
 
 /* 기본정보 카드 2개 (Rectangle 679/680) */
@@ -571,24 +808,43 @@ const goList = () => {
 
 /* 품목 섹션 타이틀 row */
 .section-row {
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* 품목 테이블 (Frame 63) */
+/* 품목 테이블 */
+.thead,
+.trow,
+.tfoot {
+    display: grid;
+    grid-template-columns:
+        60px minmax(120px, 1.2fr) minmax(200px, 2fr) minmax(140px, 1.2fr) minmax(80px, 0.6fr) minmax(120px, 1fr);
+}
+
+.items-table {
+    width: 100%;
+    max-width: none;
+    overflow-x: auto;
+}
+
+.thead,
+.trow,
+.tfoot {
+    min-width: 900px;
+}
+
 .items-table {
     border-radius: 10px;
     overflow: hidden;
     width: 100%;
-    max-width: 1300px;
     border: 1px solid #D9D9D9;
     margin-top: 10px;
 }
 
 .thead {
     display: grid;
-    grid-template-columns: 120px 140px 1fr 160px 170px;
     background: #F9FAFB;
     border-bottom: 1px solid #D9D9D9;
     height: 47px;
@@ -597,7 +853,6 @@ const goList = () => {
 
 .trow {
     display: grid;
-    grid-template-columns: 120px 140px 1fr 160px 170px;
     background: #fff;
     border-bottom: 1px solid #D9D9D9;
     height: 47px;
@@ -626,7 +881,6 @@ const goList = () => {
 
 .tfoot {
     display: grid;
-    grid-template-columns: 120px 140px 1fr 160px 170px;
     background: #F9FAFB;
     height: 47px;
     align-items: center;
@@ -640,7 +894,7 @@ const goList = () => {
 }
 
 
-/* 결재 진행 박스 (Rectangle 688) */
+/* 결재 진행 박스 */
 .approval-box {
     background: #F9FAFB;
     border-radius: 10px;
@@ -696,5 +950,223 @@ const goList = () => {
 
 .dot.done {
     background: #0FBA81;
+}
+
+.print-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.print-modal {
+    background: #fff;
+    width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.print-modal-body {
+    overflow: auto;
+    padding: 16px;
+}
+
+.print-modal-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+}
+
+.print-modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #ddd;
+    border-bottom: none;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* 담당자 배정 버튼 (PR) */
+.assign-btn-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.assign-btn {
+    background: #4C4CDD;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.assign-btn:hover {
+    background: #3B3BB0;
+}
+
+/* 결재 진행 상황 전체 박스 */
+.approval-progress {
+    background: #F9FAFB;
+    border-radius: 10px;
+    padding: 24px;
+    margin-top: 10px;
+}
+
+/* 시각적 결재 플로우 (원형) */
+.approval-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 80px;
+}
+
+.flow-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #D9D9D9;
+    color: #898989;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.flow-circle.completed {
+    background: #ECFEF6;
+    border-color: #0FBA81;
+    color: #0FBA81;
+}
+
+.flow-circle.active {
+    background: #EDE9FE;
+    border-color: #4C4CDD;
+    color: #4C4CDD;
+}
+
+.flow-arrow {
+    color: #D9D9D9;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* 결재 테이블 스타일 */
+.approval-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    font-size: 13px;
+}
+
+.approval-table th,
+.approval-table td {
+    border: 1px solid #D9D9D9;
+    padding: 10px;
+    text-align: center;
+}
+
+.approval-table th {
+    background: #F3F4F6;
+    color: #4B5563;
+    font-weight: 600;
+}
+
+/* 결재 바로가기 링크 */
+.view-approval-link {
+    font-size: 13px;
+    color: #4C4CDD;
+    text-decoration: none;
+    font-weight: bold;
+}
+</style>
+
+<style>
+@media print {
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    html,
+    body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .pr-detail-wrap,
+    .title-row,
+    .breadcrumb,
+    .stepper,
+    .tabs,
+    .divider,
+    .print-modal-header,
+    .print-modal-footer {
+        display: none !important;
+    }
+
+    .print-modal-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: #fff !important;
+        z-index: 9999 !important;
+    }
+
+    .print-modal {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .print-modal-body {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        /* 스크롤바가 페이지를 생성하는 것 방지 */
+    }
+
+    .print-area {
+        width: 210mm;
+        height: 297mm;
+    }
 }
 </style>

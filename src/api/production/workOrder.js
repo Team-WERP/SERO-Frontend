@@ -21,3 +21,6 @@ export const endWorkOrder = (woId, payload) =>
 
 export const getWorkOrderHistory = (woId) =>
     api.get(`/work-orders/${woId}/history`)
+
+export const previewWorkOrderResult = (woId, payload) =>
+    api.post(`/work-orders/${woId}/result/preview`, payload)

@@ -30,7 +30,7 @@
                         </div>
 
                         <div class="k">라인 일일 Capa</div>
-                        <div class="v strong">{{ formatNumber(selectedLine?.dailyCapa) }} ea/일</div>
+                        <div class="v strong">{{ formatNumber(selectedLine?.dailyCapacity) }} ea/일</div>
                     </div>
                 </div>
 
@@ -38,12 +38,12 @@
                 <div class="date-row">
                     <div class="date-col">
                         <div class="date-label">시작일</div>
-                        <input class="date-input" type="date" v-model="form.startDate" />
+                        <input class="date-input" type="date" v-model="form.startDate" :min="today" />
                     </div>
 
                     <div class="date-col">
                         <div class="date-label">종료일</div>
-                        <input class="date-input" type="date" v-model="form.endDate" />
+                        <input class="date-input" type="date" v-model="form.endDate" :min="form.startDate" />
                     </div>
                 </div>
 
@@ -80,7 +80,8 @@ import {
 
 const props = defineProps({
     prItemId: { type: Number, required: true },
-    month: { type: String, required: true } // 'YYYY-MM' (화면에서 사용)
+    month: { type: String, required: true },
+    defaultLineId: { type: Number, required: false }
 })
 
 const emit = defineEmits(['close', 'created'])
@@ -88,6 +89,12 @@ const emit = defineEmits(['close', 'created'])
 const loading = ref(true)
 const info = ref({})
 const lines = ref([])
+const planningInfo = ref(null)
+
+const toYMD = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const today = toYMD(new Date())
+
 
 const form = reactive({
     lineId: '',
@@ -96,11 +103,18 @@ const form = reactive({
     productionQuantity: null
 })
 
-
+watch(
+    () => form.startDate,
+    (newStart) => {
+        if (form.endDate && form.endDate < newStart) {
+            form.endDate = newStart
+        }
+    }
+)
 
 const validation = reactive({
     ok: false,
-    message: '라인/기간/수량을 입력해주세요.'
+    message: '추천 일정이 자동으로 설정되었습니다.'
 })
 
 const selectedLine = computed(() => {
@@ -129,48 +143,25 @@ const canSubmit = computed(() => {
 })
 
 /**
- * UI용 “일일 생산량” 계산(참고 정보)
- * - 실제 최종 판단은 서버 validate 결과를 신뢰
- */
-const dailyQty = computed(() => {
-    if (!form.productionQuantity || days.value <= 0) return null
-    return Math.ceil(Number(form.productionQuantity) / days.value)
-})
-
-/**
  * debounced validate
  */
 let timer = null
 const runValidate = async () => {
-    // 기본 입력 체크
+
     if (!form.lineId || !form.startDate || !form.endDate || !form.productionQuantity) {
         validation.ok = false
         validation.message = '라인/기간/수량을 입력해주세요.'
         return
     }
+
     if (days.value === -1) {
         validation.ok = false
         validation.message = '시작일이 종료일보다 이후입니다.'
         return
     }
 
-    // UI 선검증(참고)
-    const capa = selectedLine.value?.dailyCapa
-    const dq = dailyQty.value
-    if (capa != null && dq != null) {
-        // 메시지는 서버 검증 전에 먼저 업데이트(UX)
-        if (dq <= capa) {
-            validation.ok = true
-            validation.message = `일일 생산량 ${formatNumber(dq)}ea (Capa 이내)`
-        } else {
-            validation.ok = false
-            validation.message = `일일 생산량 ${formatNumber(dq)}ea (Capa 초과)`
-        }
-    }
-
-    // 서버 validate (정답)
     try {
-        await validatePlan({
+        const res = await validatePlan({
             prItemId: props.prItemId,
             productionLineId: Number(form.lineId),
             startDate: form.startDate,
@@ -178,18 +169,15 @@ const runValidate = async () => {
             productionQuantity: Number(form.productionQuantity)
         })
 
-        // 서버 통과 기준으로 ok 확정
-        validation.ok = true
-        const dq2 = dailyQty.value
-        validation.message = dq2 != null
-            ? `일일 생산량 ${formatNumber(dq2)}ea (Capa 이내)`
-            : '검증 통과'
+        validation.ok = res.valid
+        validation.message = res.message
+
     } catch (e) {
         validation.ok = false
         validation.message =
             e?.response?.data?.message ||
             e?.message ||
-            '검증에 실패했습니다.'
+            '검증 중 오류가 발생했습니다.'
     }
 }
 
@@ -200,6 +188,14 @@ watch(
         timer = setTimeout(runValidate, 180)
     }
 )
+
+watch(lines, () => {
+    if (planningInfo.value?.recommendedLineId && !form.lineId) {
+        form.lineId = Number(planningInfo.value.recommendedLineId)
+    }
+})
+
+
 
 const submit = async () => {
     try {
@@ -226,6 +222,7 @@ onMounted(async () => {
     // 1) planning info (품목명/요청수량 등)
     // - 백엔드에서 내려주는 DTO에 맞춰 아래 매핑만 조정하면 됨
     const planning = await getPRItemPlanning(props.prItemId)
+    planningInfo.value = planning
     info.value = {
         itemName: planning.itemName || planning.materialName || planning.mainItemName || '-'
     }
@@ -233,12 +230,24 @@ onMounted(async () => {
     // 2) lines
     lines.value = await getProductionLines()
 
-    // 3) default inputs
-    // 월의 1일 ~ 말일 기본 세팅(사용자 편의)
-    const [y, m] = props.month.split('-')
-    const last = new Date(Number(y), Number(m), 0).getDate()
-    form.startDate = `${y}-${m}-01`
-    form.endDate = `${y}-${m}-${String(last).padStart(2, '0')}`
+    // 3) default dates : 오늘 ~ 납기일
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // 시작일 = 오늘
+    form.startDate = toYMD(today)
+
+    // 종료일 = 납기일 (없거나 과거면 오늘)
+    if (planning.dueAt) {
+        const due = new Date(planning.dueAt)
+        due.setHours(0, 0, 0, 0)
+
+        form.endDate = due >= today
+            ? toYMD(due)
+            : toYMD(today)
+    } else {
+        form.endDate = toYMD(today)
+    }
 
     // 수량 기본값: planning에 있으면 세팅
     form.productionQuantity =
@@ -247,9 +256,25 @@ onMounted(async () => {
         null
 
     // 라인 자동 선택(첫번째)
-    if (lines.value.length > 0) {
+    if (props.defaultLineId) {
+        form.lineId = Number(props.defaultLineId)
+    } else if (planningInfo.value?.recommendedLineId) {
+        form.lineId = Number(planningInfo.value.recommendedLineId)
+    } else if (lines.value.length > 0) {
         form.lineId = lines.value[0].lineId
     }
+
+
+    console.log(
+        'recommendedLineId:',
+        planning.recommendedLineId,
+        typeof planning.recommendedLineId
+    )
+
+    console.log(
+        'lineIds:',
+        lines.value.map(l => [l.lineId, typeof l.lineId])
+    )
 
     loading.value = false
     await runValidate()

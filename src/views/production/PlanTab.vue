@@ -46,6 +46,7 @@
                         생산계획 보기 →
                     </button>
 
+
                     <span v-else class="muted">-</span>
                 </div>
             </div>
@@ -118,6 +119,8 @@ const statusLabel = (s) => ({
     PIS_WAIT: '대기',
     PIS_TARGET: '계획대상',
     PIS_PLANNED: '계획완료',
+    PIS_PRODUCING: '생산중',
+    PIS_DONE: '생산완료',
     UNKNOWN: '미확인'
 }[s] || s)
 
@@ -125,6 +128,8 @@ const statusBadgeClass = (s) => {
     if (s === 'PIS_WAIT') return 'gray'
     if (s === 'PIS_TARGET') return 'yellow'
     if (s === 'PIS_PLANNED') return 'green'
+    if (s === 'PIS_PRODUCING') return 'blue'
+    if (s === 'PIS_DONE') return 'dark'
     return 'gray'
 }
 </script>
@@ -215,6 +220,16 @@ const statusBadgeClass = (s) => {
 .badge.green {
     background: #ECFEF6;
     color: #278465;
+}
+
+.badge.blue {
+    background: #E0F2FE;
+    color: #0369A1;
+}
+
+.badge.dark {
+    background: #E5E7EB;
+    color: #111827;
 }
 
 .muted {

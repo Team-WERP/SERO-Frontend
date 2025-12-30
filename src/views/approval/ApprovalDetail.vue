@@ -164,7 +164,7 @@
                                             {{ getDocType(approvalData.refDocType) }}
                                         </span>
                                         <span class="text-sm font-bold text-blue-800">{{ approvalData.refDocCode
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -249,7 +249,7 @@
                                     <p class="text-sm font-bold text-slate-700 mb-1">
                                         {{ log.approverName }}
                                         <span class="text-xs font-normal text-slate-500 ml-1">{{ log.approverDepartment
-                                            }}</span>
+                                        }}</span>
                                     </p>
 
                                     <div v-if="log.note" class="bg-slate-50 border border-slate-200 rounded p-2.5 mt-1">
@@ -512,7 +512,7 @@ const goToRefDocDetail = () => {
     } else if (refDocType.toUpperCase() === 'GI') {
         router.push(`/warehouse/goods-issues/${refDocCode}`);
     } else if (refDocType.toUpperCase() === 'PR') {
-        router.push('');
+        router.push(`/production/requests/${refDocId}`);
     } else {
         alert('지원하지 않는 문서 타입입니다.');
     }
