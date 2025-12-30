@@ -332,16 +332,16 @@
             <section v-for="section in docSections" :key="section.title">
               <h3 class="mb-3 text-lg font-bold text-[#4C4CDD]">{{ section.title }}</h3>
               <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <table class="w-full text-sm text-center">
+                <table class="w-full text-sm text-center table-fixed">
                   <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
                     <tr>
-                      <th class="px-4 py-3">No</th>
-                      <th class="px-4 py-3">요청번호</th>
-                      <th class="px-4 py-3">품목명</th> 
-                      <th class="px-4 py-3">상태</th>
-                      <th class="px-4 py-3">작성일</th>
-                      <th class="px-4 py-3">문서</th>
-                      <th class="px-4 py-3">액션</th>
+                      <th class="py-3 w-[6%]">No</th>
+                      <th class="py-3 w-[18%]">요청번호</th>
+                      <th class="py-3 w-[18%]">품목명</th> 
+                      <th class="py-3 w-[14%]">상태</th>
+                      <th class="py-3 w-[14%]">작성일</th>
+                      <th class="py-3 w-[12%]">문서</th>
+                      <th class="py-3 w-[12%]">액션</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -349,33 +349,37 @@
                       <td colspan="7" class="py-12 text-center text-gray-400 font-medium">등록된 문서가 없습니다.</td>
                     </tr>
                     <tr v-for="(doc, dIdx) in section.data" :key="dIdx" class="border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-colors">
-                      <td class="px-4 py-4 text-gray-400">{{ dIdx + 1 }}</td>
-                      <td class="px-4 py-4 font-medium truncate">{{ doc[section.codeField] }}</td>
-                      <td class="px-4 py-4 text-center">
+                      <td class="py-4 text-gray-400">{{ dIdx + 1 }}</td>
+                      <td class="py-4 font-medium truncate px-2">{{ doc[section.codeField] }}</td>
+                      <td class="py-4 truncate">
                         {{ doc[section.nameField] }}
-                        <span v-if="(doc.itemTypeCount || doc.itemCount) > 1">외 {{ (doc.itemTypeCount || doc.itemCount) - 1 }}건</span>
+                        <span v-if="(doc.itemTypeCount || doc.itemCount) > 1" class="text-gray-400 text-xs ml-1">
+                          외 {{ (doc.itemTypeCount || doc.itemCount) - 1 }}건
+                        </span>
                       </td>
-                      <td class="px-4 py-4">
-                        <span :class="section.badgeFn(doc.status)" class="rounded-full px-3 py-1 text-[11px] font-bold whitespace-nowrap">{{ section.labelFn(doc.status) }}</span>
+                      <td class="py-4">
+                        <span :class="section.badgeFn(doc.status)" class="rounded-full px-3 py-1 text-[11px] font-bold whitespace-nowrap">
+                          {{ section.labelFn(doc.status) }}
+                        </span>
                       </td>
-                      <td class="px-4 py-4">{{ doc[section.dateField] }}</td>
-                      <td class="px-4 py-4 text-center">
+                      <td class="py-4 text-gray-600">{{ doc[section.dateField] }}</td>
+                      <td class="py-4 text-center">
                         <button 
                           v-if="!(section.type === 'PRODUCTION' && doc.status === 'PR_TMP')" 
                           @click="openDocument(doc)" 
-                          class="text-[12px] font-medium underline underline-offset-4 text-gray-600 hover:text-gray-400 transition-all"
+                          class="text-gray-400 hover:text-[#4C4CDD] transition-all"
                           title="문서 보기"
                         >
                           <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                           </svg>
                         </button>
-                        <span v-else-if="section.type !== 'PRODUCTION'" class="text-gray-300">-</span>
+                        <span v-else class="text-gray-300">-</span>
                       </td>
-                      <td class="px-4 py-4 text-center">
-                        <div class="flex justify-center flex-row items-center gap-1.5">
-                          <button v-if="section.title === '생산 요청 문서' && doc.status === 'PR_TMP'" @click="openEditPRModal(doc.prId)" class="rounded border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50">수정</button>
-                          <router-link :to="getLinkPath(section.type, doc)" class="h-7 flex items-center justify-center rounded bg-[#4C4CDD] px-2.5 text-[11px] font-bold text-white hover:bg-[#3b3bbb]">바로가기</router-link>
+                      <td class="py-4 text-center">
+                        <div class="flex justify-center items-center gap-1.5 px-2">
+                          <button v-if="section.title === '생산 요청 문서' && doc.status === 'PR_TMP'" @click="openEditPRModal(doc.prId)" class="rounded border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 whitespace-nowrap">수정</button>
+                          <router-link :to="getLinkPath(section.type, doc)" class="h-7 flex items-center justify-center rounded bg-[#4C4CDD] px-2.5 text-[11px] font-bold text-white hover:bg-[#3b3bbb] whitespace-nowrap">바로가기</router-link>
                         </div>
                       </td>
                     </tr>
@@ -698,11 +702,11 @@ const getLinkPath = (type, doc) => {
   
   switch (type) {
     case 'PRODUCTION':
-      return `/production/requests`;
+      return `/production/requests/${doc.id}`;
     case 'DELIVERY': 
       return `/warehouse/delivery-orders`;
     case 'ISSUE':     
-      return `/warehouse/goods-issues`;
+      return `/warehouse/goods-issues/${doc.id}`;
     default:
       return '#';
   }
