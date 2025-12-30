@@ -203,7 +203,18 @@
                     <h2 class="section-title">특이사항</h2>
                     <div class="button-group">
                         <button class="btn-secondary" @click="openDeliveryOrderPreview">납품서 인쇄</button>
-                        <button class="btn-secondary" @click="openGIPreview">출고지시서 인쇄</button>
+
+                        <!-- 출고지시서 인쇄 버튼 (담당자 배정 후 표시) -->
+                        <button
+                            v-if="giDetail.managerName"
+                            class="btn-secondary"
+                            @click="openGIPreview"
+                        >
+                            출고지시서 인쇄
+                        </button>
+                        <span v-else class="text-gray-400" style="padding: 8px 16px; font-size: 14px;">
+                            담당자 배정 후 출고지시서 인쇄 가능
+                        </span>
                     </div>
                 </div>
                 <div class="notes-box">
@@ -625,6 +636,7 @@ const closeGIPreview = () => {
 // 출고지시 상세 데이터
 const giDetail = ref({
     giCode: '',
+    giUrl: '', // PDF URL 추가
     status: '',
     drafterName: '',
     managerName: '',
