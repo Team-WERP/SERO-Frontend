@@ -1,6 +1,6 @@
 <template>
-    <div class="min-h-screen flex flex-col items-center justify-center">
-        <img :src="logo" class="w-120">
+    <div class="min-h-screen flex flex-col items-center justify-start pt-32">
+        <img :src="logo" class="w-80">
 
         <h1 class="text-2xl font-semibold text-gray-800 mb-2">
             페이지를 찾을 수 없습니다.
