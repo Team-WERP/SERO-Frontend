@@ -103,7 +103,7 @@ const emailRef = ref(null);
 const passwordRef = ref(null);
 
 const firstRouteByRole = {
-    AC_SYS: '/client-portal/dashboard',
+    AC_SYS: '/order/dashboard',
     AC_CLI: '/client-portal/dashboard',
     AC_SAL: '/order/dashboard',
     AC_PRO: '/order/management',

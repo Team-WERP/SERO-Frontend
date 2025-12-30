@@ -11,42 +11,42 @@ export const useMenuStore = defineStore("menu", {
                 {
                     name: "대시보드",
                     path: "/client-portal/dashboard",
-                    role: ["AC_CLI", "AC_SYS"],
+                    role: ["AC_CLI"],
                 },
                 {
                     name: "주문등록",
                     path: "/client-portal/order-create",
-                    role: ["AC_CLI", "AC_SYS"],
+                    role: ["AC_CLI"],
                 },
                 {
                     name: "주문조회",
                     path: "/client-portal/orders",
-                    role: ["AC_CLI", "AC_SYS"],
+                    role: ["AC_CLI"],
                 },
                 {
                     name: "주문배송조회",
                     path: "/client-portal/order-delivery",
-                    role: ["AC_CLI", "AC_SYS"],
+                    role: ["AC_CLI"],
                 },
                 {
                     name: "거래품목조회",
                     path: "/client-portal/items",
-                    role: ["AC_CLI", "AC_SYS"],
+                    role: ["AC_CLI"],
                 },
                 {
                     name: "배송지관리",
                     path: "/client-portal/address",
-                    role: ["AC_CLI", "AC_SYS"],
+                    role: ["AC_CLI"],
                 },
                 {
                     name: "기업정보관리",
                     path: "/client-portal/company",
-                    role: ["AC_CLI", "AC_SYS"],
+                    role: ["AC_CLI"],
                 },
                 {
                     name: "공지사항",
                     path: "/client-portal/notices",
-                    role: ["AC_CLI", "AC_SYS"],
+                    role: ["AC_CLI"],
                 },
             ],
 
@@ -191,7 +191,7 @@ export const useMenuStore = defineStore("menu", {
             ],
 
             // 7. 공지사항
-            notices: [{ name: "공지사항", path: "/notices" }],
+            notices: [{ name: "공지사항", path: "/notices", role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] }],
 
             // 8. 시스템 관리
             system: [

@@ -1,14 +1,15 @@
 <template>
     <div class="min-h-screen flex flex-col items-center justify-center">
         <img :src="logo" class="w-55">
-        <div class="text-[72px] mb-4">403</div>
+        <div class="text-[72px] mb-4">404</div>
 
         <h1 class="text-2xl font-semibold text-gray-800 mb-2">
-            접근 권한이 없습니다.
+            페이지를 찾을 수 없습니다.
         </h1>
 
         <p class="text-sm text-gray-500 mb-6 text-center">
-            해당 페이지에 접근할 권한이 없습니다.
+            존재하지 않거나 이동된 페이지입니다.<br />
+            메뉴를 통해 다른 페이지로 이동해 주세요.
         </p>
 
         <div class="flex gap-3">
@@ -26,14 +27,14 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import logo from '@/assets/새로이새로미.png'
+import { useRouter } from "vue-router";
+import logo from "@/assets/새로이새로미.png";
 
-const router = useRouter()
+const router = useRouter();
 
 const goHome = () => {
-    router.push('/')
-}
+    router.push("/");
+};
 
 const goBack = () => {
     router.back();

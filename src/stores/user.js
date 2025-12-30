@@ -32,6 +32,8 @@ export const useUserStore = defineStore("user", {
             if (state.user?.position.includes("JP_SM")) return "과장";
             if (state.user?.position.includes("JP_AM")) return "대리";
             if (state.user?.position.includes("JP_STF")) return "직원";
+
+            return "";
         },
 
         userRank: (state) => {
@@ -84,5 +86,13 @@ export const useUserStore = defineStore("user", {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("name");
         },
+        initialize() {
+            const token = localStorage.getItem("accessToken");
+            if (token) {
+                this.setFromToken(token);
+                return true;
+            }
+            return false;
+        }
     },
 });
