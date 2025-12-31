@@ -94,9 +94,9 @@
             </table>
           </div>
 
-          <div v-if="availabilityResult" class="mb-4">
+          <div v-if="availabilityResult" class="mb-6">
             <div v-if="availabilityResult.deliverable" class="bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl p-5 flex items-center gap-4">
-              <div class="bg-[#22C55E] rounded-full p-2">
+              <div class="bg-[#22C55E] rounded-full p-2 shrink-0">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
               </div>
               <div>
@@ -110,15 +110,17 @@
             </div>
 
             <div v-else class="bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-5 flex items-center gap-4">
-              <div class="bg-[#EF4444] rounded-full p-2">
+              <div class="bg-[#EF4444] rounded-full p-2 shrink-0">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
               </div>
               <div>
                 <h4 class="text-[16px] font-bold text-gray-900">일정 조정이 필요합니다.</h4>
-                <p class="text-[13px] text-gray-600">현재 생산 일정상 희망일 출하가 어렵습니다. 아래 가능한 일정을 참고해주세요.</p>
+                <p class="text-[13px] text-gray-600">현재 생산 일정상 희망일 출하가 어렵습니다. 아래 내용을 참고해주세요.</p>
                 <div class="mt-2 bg-white px-4 py-1.5 rounded-lg inline-block border border-[#FECACA]">
-                  <span class="text-[12px] text-gray-400 mr-2">가장 빠른 출하 가능 기간</span>
-                  <span class="text-[14px] font-bold text-[#DC2626]">{{ availabilityResult.expectedDate }}</span>
+                  <span v-if="!availabilityResult.isCustomMessage" class="text-[12px] text-gray-400 mr-2">가장 빠른 출하 가능 기간</span>
+                  <span class="text-[12px]" :class="availabilityResult.isCustomMessage ? 'text-gray-600' : 'text-[#DC2626]'">
+                    {{ availabilityResult.expectedDate }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -287,19 +289,29 @@ const checkAvailability = async () => {
         quantity: item.quantity
       }))
     };
-    console.log("payload: ", payload);
 
     const responses = await checkDeliveryAvailability(clientId, payload);
-    console.log("납기가능", responses);
+    
     const isAllDeliverable = responses.every(res => res.deliverable);
 
-    const latestExpectedDate = responses.reduce((latest, current) => {
-      return new Date(current.expectedDeliveryDate) > new Date(latest) ? current.expectedDeliveryDate : latest;
-    }, responses[0].expectedDeliveryDate);
+    const hasNullDate = responses.some(res => res.expectedDeliveryDate === null);
+
+    let finalExpectedDate = '';
+
+    if (hasNullDate) {
+     
+      finalExpectedDate = '현재 납기 요청일의 4주 이후의 날짜로 재조정해주세요.';
+    } else {
+      const latestDate = responses.reduce((latest, current) => {
+        return new Date(current.expectedDeliveryDate) > new Date(latest) ? current.expectedDeliveryDate : latest;
+      }, responses[0].expectedDeliveryDate);
+      finalExpectedDate = latestDate.split(' ')[0];
+    }
 
     availabilityResult.value = {
       deliverable: isAllDeliverable,
-      expectedDate: latestExpectedDate.split(' ')[0]
+      expectedDate: finalExpectedDate,
+      isCustomMessage: hasNullDate 
     };
   } catch (error) {
     console.error('납기 조회 실패:', error);
