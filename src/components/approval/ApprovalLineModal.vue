@@ -28,12 +28,12 @@
                         :isOrganizationTreeLoading="isOrganizationTreeLoading"
                         :approvalLineTemplates="approvalLineTemplates" :isTemplateLoading="isTemplateLoading"
                         @selectEmployee="onSelectEmployee" @selectApprovalLineTemplate="onSelectApprovalLineTemplate"
-                        @deleteTemplate="deleteTemplate" />
+                        @deleteTemplate="deleteTemplate" @change-tab="leftActiveTab = $event" />
                 </div>
 
                 <div class="w-16 shrink-0 items-center">
                     <div class="h-full flex flex-col items-center justify-center">
-                        <button :disabled="!selectedEmployee" @click="addToTarget"
+                        <button :disabled="!selectedEmployee || leftActiveTab === 'template'" @click="addToTarget"
                             class="w-10 h-10 bg-white border border-[#efefef] rounded flex items-center justify-center text-[#4C4CDD]
                          enabled:hover:bg-[#efefef] enabled:hover:border-[#4C4CDD]  disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all active:scale-95">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
@@ -111,6 +111,7 @@ const approvalLineTemplates = ref([]);                 // 결재선 템플릿 �
 const selectedEmployee = ref(null);                             // 선택된 직원
 
 const activeRightTab = ref('approval');
+const leftActiveTab = ref('org');
 
 onMounted(() => {
     // 조직도 조회

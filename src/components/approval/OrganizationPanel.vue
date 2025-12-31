@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col h-full bg-white">
         <div class="flex border-b border-[#efefef] text-[13px] font-bold">
-            <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
+            <button v-for="tab in tabs" :key="tab.id" @click="changeTab(tab.id)"
                 class="flex-1 py-2 text-center border-b-2" :class="activeTab === tab.id
                     ? 'border-[#4C4CDD] text-[#4C4CDD]'
                     : 'border-transparent text-gray-500 hover:text-gray-700'">
@@ -154,7 +154,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['selectEmployee', 'selectApprovalLineTemplate', 'deleteTemplate']);
+const emit = defineEmits(['selectEmployee', 'selectApprovalLineTemplate', 'deleteTemplate', 'change-tab']);
 
 // --- 상태 ---
 const activeTab = ref('org');               // 'org' | 'template'
@@ -178,6 +178,11 @@ watch(searchKeyword, (newVal) => {
         debouncedKeyword.value = newVal;    // 타이핑 멈춤 후 값 적용
     }, 500); // 0.5s 디바운스
 });
+
+const changeTab = (tabId) => {
+    activeTab.value = tabId;
+    emit('change-tab', tabId);
+};
 
 const matchKeyword = (text, keyword) => {
     return text?.toLowerCase().includes(keyword);
