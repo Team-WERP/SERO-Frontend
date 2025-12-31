@@ -251,7 +251,7 @@
                         <div class="flow-step">
                             <div class="flow-circle completed">기안</div>
                             <div class="flow-info">
-                                <div class="flow-label">기안</div>
+                                <div class="flow-label">{{ giDetail.managerName || '기안' }} · {{ giDetail.managerDepartment || '-' }}</div>
                             </div>
                         </div>
 
@@ -289,13 +289,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- 기안자 -->
+                            <!-- 기안자 (담당자) -->
                             <tr>
                                 <td><span class="badge-sm green">기안</span></td>
-                                <td>{{ giDetail.drafterName || '-' }}</td>
-                                <td>{{ formatRole(giDetail.drafterRank, giDetail.drafterPosition) }}</td>
-                                <td>{{ giDetail.drafterDepartment || '-' }}</td>
-                                <td><span class="status-text approved">승인</span></td>
+                                <td>{{ giDetail.managerName || '-' }}</td>
+                                <td>{{ formatRole(giDetail.managerRank, giDetail.managerPosition) }}</td>
+                                <td>{{ giDetail.managerDepartment || '-' }}</td>
+                                <td><span class="status-text approved">상신</span></td>
                                 <td>{{ formatDateTime(giDetail.createdAt) }}</td>
                                 <td>-</td>
                             </tr>
@@ -424,9 +424,9 @@
             <button
                 v-if="showApprovalRequestButton"
                 class="btn-primary-large"
-                @click="requestApproval"
+                @click="goToCreateApproval"
             >
-                결재 요청
+                결재 상신하기
             </button>
         </div>
 
@@ -451,9 +451,6 @@
             @close="isManagerModalOpen = false"
             @confirm="onConfirmAssignment"
         />
-
-        <!-- 결재선 지정 모달 -->
-        <ApprovalLineModal v-if="approvalLineStore.isOpen" @apply="submitApproval" />
     </div>
 </template>
 
@@ -464,20 +461,13 @@ import { useUserStore } from '@/stores/user'
 import { getGIDetail, assignGIManager, completeGI } from '@/api/shipping/goodsIssue'
 import { getDODetail } from '@/api/shipping/deliveryOrder'
 import { getEmployees } from '@/api/employee/employee'
-import { submitApproval as submitApprovalAPI } from '@/api/approval'
-import { useApprovalLineStore } from '@/stores/approvalLine'
-import { storeToRefs } from 'pinia'
 import DeliveryOrderPreviewModal from '@/components/modals/DeliveryOrderPreviewModal.vue'
 import GoodsIssuePreviewModal from '@/components/modals/GoodsIssuePreviewModal.vue'
 import ManagerAssignmentModal from '@/views/order/ManagerAssignmentModal.vue'
-import ApprovalLineModal from '@/components/approval/ApprovalLineModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
-const approvalLineStore = useApprovalLineStore()
-
-const { approvalLines, recipientLines, referenceLines } = storeToRefs(approvalLineStore)
 
 // 권한 체크
 const canAssignManager = computed(() => {
@@ -806,71 +796,17 @@ const onConfirmAssignment = async (employee) => {
     }
 }
 
-// 결재 요청
-const requestApproval = () => {
-    // 결재선 모달 열기
-    approvalLineStore.reset() // 초기화
-    approvalLineStore.open('CREATE')
-}
-
-// 결재 상신
-const submitApproval = async () => {
-    // 결재선 검증
-    if (approvalLines.value.length === 0) {
-        alert('결재선에 최소 1명의 결재자를 지정해야 합니다.')
-        return
-    }
-
-    try {
-        // 결재선 데이터 변환
-        const approvalList = approvalLines.value.map(line => ({
-            approverId: line.id,
-            lineType: line.lineType,
-            sequence: line.sequence
-        }))
-
-        const recipientList = recipientLines.value.map(line => ({
-            approverId: line.id,
-            lineType: line.lineType,
-            sequence: null
-        }))
-
-        const referenceList = referenceLines.value.map(line => ({
-            approverId: line.id,
-            lineType: line.lineType,
-            sequence: null
-        }))
-
-        const allLines = [...approvalList, ...recipientList, ...referenceList]
-
-        // RequestDTO 생성
-        const requestDTO = {
-            title: `출고지시 승인 요청 - ${giDetail.value.giCode}`,
-            content: `출고지시번호: ${giDetail.value.giCode}\n고객사: ${giDetail.value.clientName}\n창고: ${giDetail.value.warehouseName}`,
-            refCode: giDetail.value.giCode,
-            approvalTargetType: 'GI',
-            approvalLines: allLines
+// 결재 상신 페이지로 이동
+const goToCreateApproval = () => {
+    const routeData = router.resolve({
+        path: '/approval/create',
+        query: {
+            refDocType: 'gi',
+            refDocId: giDetail.value.giCode
         }
+    })
 
-        // FormData 생성
-        const formData = new FormData()
-        formData.append('requestDTO', new Blob([JSON.stringify(requestDTO)], { type: 'application/json' }))
-
-        // 결재 상신
-        await submitApprovalAPI(formData)
-        alert('결재가 상신되었습니다.')
-
-        // 결재선 모달 닫기 및 초기화
-        approvalLineStore.close()
-        approvalLineStore.reset()
-
-        // 출고지시 상세 재조회 (상태 업데이트)
-        await fetchGIDetail()
-
-    } catch (error) {
-        console.error('결재 상신 실패:', error)
-        alert(error.response?.data?.message || '결재 상신에 실패했습니다.')
-    }
+    window.open(routeData.href, '_blank')
 }
 
 // 주문 상세 페이지로 이동
