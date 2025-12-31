@@ -218,7 +218,7 @@ const devLogin = async (role) => {
             },
             cli: {
                 type: 'client',
-                email: 'sl_buyer@sl.com',
+                email: 'procurement01@hanwha.com',
                 password: 'kang',
             },
         };

@@ -61,6 +61,7 @@
                         <th style="width: 140px;">생산요청일</th>
                         <th style="width: 140px;">생산마감일</th>
                         <th style="width: 110px;">요청자</th>
+                        <th style="width: 110px;">담당자</th>
                         <th style="width: 110px; text-align:center;">상태</th>
                     </tr>
                 </thead>

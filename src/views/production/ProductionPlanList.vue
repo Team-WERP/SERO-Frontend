@@ -49,7 +49,7 @@
                                 <span class="meta-v">제품명: {{ line.materialName || '미지정' }}</span>
                                 <span class="meta-capa">일일 최대 생산량: {{ formatNumber(line.dailyCapacity) }} {{
                                     line.unit
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
 
@@ -404,7 +404,7 @@ function assignPlanLanes(plans) {
 
 
 const reloadAll = async () => {
-    lines.value = await getProductionLines(2)
+    lines.value = await getProductionLines(3)   // 공장 id 고정
     plans.value = await getMonthlyPlans(month.value)
     unassigned.value = await getUnassignedTargets()
     dailySummary.value = await getDailyLineSummary(month.value, 2)
