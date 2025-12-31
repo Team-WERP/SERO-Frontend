@@ -65,9 +65,6 @@
             </div>
             <div class="section-header">
                 <span class="total-count">총 {{ materialList.length }}건</span>
-                <button class="add-btn" @click="openAddMaterialModal">
-                    + 신규 제품
-                </button>
             </div>
 
             <table class="items-table">
@@ -79,7 +76,7 @@
                         <th style="width: 200px;">규격</th>
                         <th style="width: 120px; text-align:right;">생산 소요 시간(분)</th>
                         <th style="width: 120px; text-align:right;">안전재고(AUn)</th>
-                        <th style="width: 120px; text-align:right;">단가(BUn)</th>
+                        <th style="width: 120px; text-align:right;">단가(₩)</th>
                         <th style="width: 100px; text-align:center;">구성 자재 수</th>
                         <th style="width: 100px; text-align:center;">상태</th>
                     </tr>
@@ -114,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getMaterialList } from '@/api/material/material.js'
 
@@ -164,12 +161,6 @@ const fetchMaterialList = async () => {
     }
 }
 
-// 신규 제품 추가 모달 열기
-const openAddMaterialModal = () => {
-    // TODO: 신규 제품 추가 모달 구현
-    alert('신규 제품 추가 기능은 추후 구현 예정입니다.')
-}
-
 // 자재 상세 페이지 이동
 const goDetail = (materialId) => {
     router.push(`/master/bom/${materialId}`)
@@ -177,9 +168,9 @@ const goDetail = (materialId) => {
 
 // 사이클타임 포맷팅 (초 -> 분)
 const formatCycleTime = (seconds) => {
-    if (!seconds) return '-'
+    if (!seconds || seconds === 0) return '-'
     const minutes = Math.floor(seconds / 60)
-    return `${minutes}`
+    return minutes === 0 ? '1분 미만' : `${minutes}`
 }
 
 // 숫자 포맷팅
@@ -203,6 +194,11 @@ const getStatusLabel = (status) => ({
     MAT_STOP: '판매 중단',
     MAT_DISCONTINUED: '단종'
 }[status] || status)
+
+// 필터 변경 시 자동 검색
+watch([materialType, status], () => {
+    fetchMaterialList()
+})
 
 // 초기 로드
 onMounted(() => {

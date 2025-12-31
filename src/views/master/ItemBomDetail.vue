@@ -114,42 +114,28 @@
             <div class="bom-section">
                 <div class="bom-header">
                     <h3 class="section-title">BOM 구성 자재 목록</h3>
-                    <div class="header-actions">
-                        <span class="help-text">
-                            문서에 관련된 사항 참고 모달나다. 작동은 우측 품목 이미지로도 가능합니다.
-                        </span>
-                        <button v-if="material.type === 'MAT_FG'" class="add-btn-small" @click="openBomModal">
-                            추가
-                        </button>
-                    </div>
                 </div>
 
                 <div v-if="material.type === 'MAT_FG'">
                     <table v-if="material.bomList && material.bomList.length > 0" class="bom-table">
                         <thead>
                             <tr>
-                                <th style="width: 50px;">No</th>
-                                <th style="width: 150px;">자재코드</th>
-                                <th style="width: 200px;">자재명</th>
-                                <th style="width: 200px;">규격</th>
-                                <th style="width: 100px; text-align:center;">(BUn)<br/>단위</th>
-                                <th style="width: 100px; text-align:right;">소요량</th>
-                                <th style="width: 200px;">비고</th>
-                                <th style="width: 100px; text-align:center;">작업</th>
+                                <th style="width: 9%; text-align:center; padding-left: 40px;">No</th>
+                                <th style="width: 18%;">자재코드</th>
+                                <th style="width: 23%;">자재명</th>
+                                <th style="width: 23%;">규격</th>
+                                <th style="width: 12%; text-align:center;">(BUn)<br/>단위</th>
+                                <th style="width: 15%; text-align:right; padding-right: 80px;">소요량</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(bom, index) in material.bomList" :key="bom.id">
-                                <td class="text-center">{{ index + 1 }}</td>
+                                <td class="text-center" style="padding-left: 40px;">{{ index + 1 }}</td>
                                 <td>{{ bom.rawMaterial?.materialCode || '-' }}</td>
                                 <td>{{ bom.rawMaterial?.name || '-' }}</td>
                                 <td>{{ bom.rawMaterial?.spec || '-' }}</td>
                                 <td class="text-center">{{ bom.rawMaterial?.baseUnit || '-' }}</td>
-                                <td class="text-right">{{ formatNumber(bom.requirement) }}</td>
-                                <td>{{ bom.note || '메모' }}</td>
-                                <td class="text-center">
-                                    <button class="delete-btn-small" @click="deleteBomItem(bom.id)">삭제</button>
-                                </td>
+                                <td class="text-right" style="padding-right: 80px;">{{ formatNumber(bom.requirement) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -158,7 +144,7 @@
                     </div>
                 </div>
                 <div v-else class="empty-bom-message">
-                    <p>원자재는 BOM 구성이 없습니다.</p>
+                    <p>원부자재는 BOM 구성이 없습니다.</p>
                 </div>
             </div>
         </div>
@@ -197,20 +183,6 @@ const fetchMaterialDetail = async () => {
     }
 }
 
-// BOM 추가 모달 열기
-const openBomModal = () => {
-    // TODO: BOM 추가 모달 구현
-    alert('BOM 추가 기능은 추후 구현 예정입니다.')
-}
-
-// BOM 항목 삭제
-const deleteBomItem = (bomId) => {
-    // TODO: BOM 삭제 기능 구현
-    if (confirm('해당 BOM 항목을 삭제하시겠습니까?')) {
-        alert('BOM 삭제 기능은 추후 구현 예정입니다.')
-    }
-}
-
 // 날짜 포맷팅
 const formatDate = (value) => {
     if (!value) return '-'
@@ -244,7 +216,7 @@ const formatCurrency = (value) => {
 const getMaterialTypeLabel = (type) => {
     const labels = {
         MAT_FG: '완제품',
-        MAT_RM: '원자재'
+        MAT_RM: '원부자재'
     }
     return labels[type] || type || '-'
 }
@@ -550,7 +522,7 @@ onMounted(() => {
 }
 
 .bom-table th {
-    padding: 12px;
+    padding: 12px 24px;
     font-size: 13px;
     font-weight: 600;
     color: #374151;
@@ -558,7 +530,7 @@ onMounted(() => {
 }
 
 .bom-table td {
-    padding: 12px;
+    padding: 12px 24px;
     border-bottom: 1px solid #e5e7eb;
     font-size: 14px;
     color: #111827;
