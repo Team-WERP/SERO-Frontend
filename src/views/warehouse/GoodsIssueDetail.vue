@@ -409,8 +409,8 @@
             </div>
         </div>
 
-        <!-- 하단 고정 버튼 -->
-        <div class="fixed-footer">
+        <!-- 하단 고정 버튼 (담당자 배정 모달이 열렸을 때는 숨김) -->
+        <div v-if="!isManagerModalOpen" class="fixed-footer">
             <!-- 담당자 미배정 시: 담당자 배정 버튼 -->
             <button
                 v-if="showAssignManagerButton"
