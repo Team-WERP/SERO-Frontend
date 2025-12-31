@@ -27,10 +27,10 @@
 
             <section>
                 <label>납기일</label>
-                <input type="date" v-model="dueAt" />
+                <input type="date" v-model="dueAt" @change="isDirty = true" />
 
                 <label>사유</label>
-                <textarea v-model="reason" />
+                <textarea v-model="reason" @input="isDirty = true" />
             </section>
 
             <h2>품목 정보</h2>
@@ -52,7 +52,8 @@
                         <td>{{ i.availableStock }}</td>
                         <td>{{ i.requiredQuantity }}</td>
                         <td>
-                            <input type="number" v-model.number="i.requestedQuantity" @change="normalize(i)"
+                            <input type="number" v-model.number="i.requestedQuantity"
+                                @change="() => { normalize(i); isDirty = true }"
                                 :class="{ over: i.requestedQuantity > i.requiredQuantity }" />
                         </td>
                     </tr>
@@ -60,10 +61,20 @@
             </table>
 
             <div class="footer">
-                <span>총 수량: {{ totalQuantity }}</span>
+                <!-- 왼쪽 그룹 -->
+                <div class="footer-left">
+                    <span class="total">총 수량: {{ totalQuantity }}</span>
+                    <span class="save-status">
+                        <span v-if="isDirty" class="saving">저장 중...</span>
+                        <span v-else class="saved">임시저장됨</span>
+                    </span>
+                </div>
 
+                <!-- 오른쪽 그룹 -->
                 <div class="action-buttons">
-                    <button @click="saveDraft">임시저장</button>
+                    <button @click="router.push('/production/requests')">
+                        취소
+                    </button>
                     <button :disabled="totalQuantity === 0" @click="confirmRequest">
                         생산요청 확정
                     </button>
@@ -75,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
     getPRDraftDetail,
@@ -92,6 +103,7 @@ const clientName = ref('')
 const dueAt = ref('')
 const reason = ref('')
 const items = ref([])
+const isDirty = ref(false)
 
 onMounted(async () => {
     const res = await getPRDraftDetail(prId)
@@ -116,20 +128,51 @@ const normalize = (i) => {
     }
 }
 
-const saveDraft = async () => {
-    await updatePRDraft(prId, {
-        dueAt: dueAt.value,
-        reason: reason.value,
-        items: items.value.map(i => ({
-            soItemId: i.soItemId,
-            quantity: i.requestedQuantity
-        }))
-    })
-    alert('임시저장 완료')
+const debounce = (fn, delay = 800) => {
+    let timer
+    return (...args) => {
+        clearTimeout(timer)
+        timer = setTimeout(() => {
+            fn(...args)
+        }, delay)
+    }
 }
+
+watch(
+    [dueAt, reason, items],
+    debounce(async () => {
+        if (!isDirty.value) return
+
+        await updatePRDraft(prId, {
+            dueAt: dueAt.value,
+            reason: reason.value,
+            items: items.value.map(i => ({
+                soItemId: i.soItemId,
+                quantity: i.requestedQuantity
+            }))
+        })
+
+        isDirty.value = false
+    }, 800),
+    { deep: true }
+)
+
 
 const confirmRequest = async () => {
     if (!confirm('생산요청을 확정하시겠습니까?')) return
+
+    if (isDirty.value) {
+        await updatePRDraft(prId, {
+            dueAt: dueAt.value,
+            reason: reason.value,
+            items: items.value.map(i => ({
+                soItemId: i.soItemId,
+                quantity: i.requestedQuantity
+            }))
+        })
+        isDirty.value = false
+    }
+
     await requestProduction(prId)
     router.push(`/production/requests/${prId}`)
 }
@@ -269,10 +312,21 @@ td input[type="number"]:focus {
     align-items: center;
 }
 
-.footer span {
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.footer-left .total {
     font-size: 16px;
     font-weight: 700;
     color: #111827;
+}
+
+.save-status {
+    font-size: 13px;
+    font-weight: 500;
 }
 
 /* ===== 하단 버튼 그룹 ===== */
@@ -366,5 +420,13 @@ td input.over {
     font-size: 14px;
     font-weight: 600;
     color: #111827;
+}
+
+.save-status .saving {
+    color: #9ca3af;
+}
+
+.save-status .saved {
+    color: #16a34a;
 }
 </style>
