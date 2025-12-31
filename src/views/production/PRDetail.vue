@@ -498,10 +498,16 @@ const onConfirmAssignment = async (employee) => {
 const formatNumber = (v) => (v != null ? Number(v).toLocaleString() : '-')
 
 const goSO = () => {
-    // 네 프로젝트의 SO 상세 라우트에 맞게 수정
-    // 예: router.push(`/orders/${header.value.soId}`)
-    // soId가 응답에 없으면 soCode로 조회 페이지 이동 등으로 처리
-    alert('주문 상세 라우트 연결 필요')
+    if (!header.value.soId) {
+        alert('주문 ID가 없습니다.')
+        return
+    }
+
+    const routeData = router.resolve({
+        path: `/order/management/${header.value.soId}`
+    })
+
+    window.open(routeData.href, '_blank')
 }
 
 const goList = () => {
