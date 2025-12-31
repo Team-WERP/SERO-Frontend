@@ -166,8 +166,8 @@ const submitGoodsIssue = async () => {
         alert(response.message || '출고지시가 등록되었습니다.')
 
         // 생성된 출고지시 상세 페이지로 이동
-        if (response.giCode) {
-            router.push(`/warehouse/goods-issues/${response.giCode}`)
+        if (response.id) {
+            router.push(`/warehouse/goods-issues/${response.id}`)
         } else {
             router.push('/warehouse/goods-issues')
         }

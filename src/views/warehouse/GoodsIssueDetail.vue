@@ -409,8 +409,8 @@
             </div>
         </div>
 
-        <!-- 하단 고정 버튼 -->
-        <div class="fixed-footer">
+        <!-- 하단 고정 버튼 (담당자 배정 모달이 열렸을 때는 숨김) -->
+        <div v-if="!isManagerModalOpen" class="fixed-footer">
             <!-- 담당자 미배정 시: 담당자 배정 버튼 -->
             <button
                 v-if="showAssignManagerButton"
@@ -741,8 +741,18 @@ const formatDateTime = (dateTime) => {
 const fetchGIDetail = async () => {
     try {
         isLoading.value = true
-        const giCode = route.params.giCode
-        const response = await getGIDetail(giCode)
+        const id = route.params.id
+        console.log('Route params:', route.params)
+        console.log('GI ID:', id)
+
+        if (!id) {
+            console.error('ID is undefined!')
+            alert('출고지시 ID가 없습니다.')
+            router.push('/warehouse/goods-issues')
+            return
+        }
+
+        const response = await getGIDetail(id)
         giDetail.value = response
 
         // 디버깅: 담당자 배정 관련 정보 출력

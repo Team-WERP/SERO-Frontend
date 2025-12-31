@@ -18,11 +18,11 @@ export const getGIList = (params = {}) => {
 
 /**
  * 출고지시 상세 조회
- * @param {string} giCode
+ * @param {number} id - 출고지시 ID
  * @returns {Promise<Object>}
  */
-export const getGIDetail = (giCode) => {
-    return api.get(`/goods-issues/${giCode}`)
+export const getGIDetail = (id) => {
+    return api.get(`/goods-issues/${id}`)
         .then(res => res.data);
 };
 
