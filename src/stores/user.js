@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { jwtDecode } from "jwt-decode";
+import { useNotificationStore } from "./notification";
 
 export const useUserStore = defineStore("user", {
     state: () => ({
@@ -47,15 +48,17 @@ export const useUserStore = defineStore("user", {
         },
 
         userDepartment: (state) => {
-            if (state.user?.department.includes("DEPT_SAL")) return "영업부";
-            if (state.user?.department.includes("DEPT_PRO")) return "생산부";
-            if (state.user?.department.includes("DEPT_WHS")) return "물류부";
-            if (state.user?.department.includes("DEPT_SAL_1")) return "영업1팀";
-            if (state.user?.department.includes("DEPT_SAL_2")) return "영업1팀";
-            if (state.user?.department.includes("DEPT_PRO_1")) return "생산1팀";
-            if (state.user?.department.includes("DEPT_PRO_2")) return "생산2팀";
-            if (state.user?.department.includes("DEPT_WHS_1")) return "물류1팀";
-            if (state.user?.department.includes("DEPT_WHS_2")) return "물류2팀";
+            if (state.user?.department?.includes("DEPT_SAL")) return "영업부";
+            if (state.user?.department?.includes("DEPT_PRO")) return "생산부";
+            if (state.user?.department?.includes("DEPT_WHS")) return "물류부";
+            if (state.user?.department?.includes("DEPT_SAL_1")) return "영업1팀";
+            if (state.user?.department?.includes("DEPT_SAL_2")) return "영업1팀";
+            if (state.user?.department?.includes("DEPT_PRO_1")) return "생산1팀";
+            if (state.user?.department?.includes("DEPT_PRO_2")) return "생산2팀";
+            if (state.user?.department?.includes("DEPT_WHS_1")) return "물류1팀";
+            if (state.user?.department?.includes("DEPT_WHS_2")) return "물류2팀";
+
+            return "";
         },
 
         remainingTimeMs(state) {
@@ -105,6 +108,10 @@ export const useUserStore = defineStore("user", {
             this.isAuthenticated = false;
 
             localStorage.removeItem("accessToken");
+
+            // SSE 연결 종료 및 알림 초기화
+            const notificationStore = useNotificationStore();
+            notificationStore.reset();
             localStorage.removeItem("name");
         },
         initialize() {

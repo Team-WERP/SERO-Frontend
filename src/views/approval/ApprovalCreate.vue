@@ -687,12 +687,14 @@ const getApprovalType = (lineType) => {
 };
 
 const approvalFlow = computed(() => {
+    if (!user.value) return [];
+
     return [
         {
             lineType: 'drafter',
             name: userName,
             status: 'approved',
-            rank: user.value.rank,
+            rank: user.value.rank || "",
             deptName: userDepartment.value,
             position: user.value.position
         },

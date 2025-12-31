@@ -79,6 +79,11 @@
 
                             <div class="k">생산마감일시</div>
                             <div class="v">{{ header.dueAt || '-' }}</div>
+
+                            <div class="k">요청 사유</div>
+                            <div class="v reason-text">
+                                {{ header.reason || '-' }}
+                            </div>
                         </div>
                     </div>
 
@@ -139,96 +144,137 @@
                 </div>
 
                 <!-- approvals -->
-                <div class="section">
-                    <div class="section-header">
-                        <h2 class="section-title">생산요청 결재 진행 상황</h2>
+                <div class="section mt-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-[#4C4CDD]">생산요청 결재 진행 상황</h3>
                     </div>
 
-                    <!-- 결재 없음 -->
-                    <div v-if="!header.approvalCode" class="approval-status">
-                        <div class="approval-empty">
-                            <img class="empty-character" src="@/assets/새로이새로미.png" alt="결재 없음" />
-                            <div class="ghost">진행 중인 결재 건이 없습니다.</div>
+                    <div class="relative rounded-xl border border-gray-200 bg-white min-h-[300px] overflow-hidden">
+                        <div v-if="isApprovalLoading"
+                            class="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
+                            <svg class="animate-spin h-10 w-10 text-[#4C4CDD]" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+                                </path>
+                            </svg>
                         </div>
-                    </div>
 
-                    <!-- 결재 있음 -->
-                    <div v-else class="approval-progress">
-                        <!-- 플로우 -->
-                        <div class="approval-flow">
-                            <div class="flow-step">
-                                <div class="flow-circle completed">기안</div>
-                                <div class="flow-label">{{ header.drafterName }}</div>
+                        <template v-if="approvalData">
+                            <div
+                                class="flex items-center justify-center gap-4 py-12 px-6 bg-white border-b border-gray-50">
+                                <div class="flex flex-col items-center">
+                                    <div
+                                        class="flex h-16 w-16 items-center justify-center rounded-full bg-[#D1FAE5] text-sm font-bold text-[#238869] mb-3">
+                                        기안
+                                    </div>
+                                    <div class="text-sm font-bold text-gray-900">{{ approvalData.drafterName }}</div>
+                                    <div class="text-[11px] text-gray-500 text-center leading-tight">
+                                        {{ getPositionLabel(approvalData.drafterPositionCode) }} / {{
+                                            approvalData.drafterDepartment }}
+                                    </div>
+                                </div>
+
+                                <div v-for="(appr, index) in approvalData.approvers" :key="appr.approvalLineId"
+                                    class="flex items-center">
+                                    <div :class="[
+                                        'h-[3px] w-24 mx-4 mb-10 transition-colors duration-300',
+                                        (index === 0 || approvalData.approvers[index - 1].status === 'ALS_APPR')
+                                            ? 'bg-[#D1FAE5]' : 'bg-gray-200'
+                                    ]"></div>
+
+                                    <div class="flex flex-col items-center">
+                                        <div :class="[
+                                            'flex h-16 w-16 items-center justify-center rounded-full text-sm font-bold mb-3 transition-all border-2',
+                                            appr.status === 'ALS_APPR' ? 'bg-[#D1FAE5] text-[#238869] border-[#A7F3D0]' :
+                                                appr.status === 'ALS_RVW' ? 'bg-[#DBEAFE] text-[#3223DD] border-[#BFDBFE]' :
+                                                    'bg-gray-100 text-gray-400 border-gray-200'
+                                        ]">
+                                            {{ getLineTypeLabel(appr.lineType) }}
+                                        </div>
+                                        <div class="text-sm font-bold text-gray-900">{{ appr.approverName }}</div>
+                                        <div class="text-[11px] text-gray-500 text-center leading-tight">
+                                            {{ getPositionLabel(appr.approverPositionCode) }} / {{
+                                                appr.approverDepartment }}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <template v-for="(line, idx) in sortedApprovalLines" :key="idx">
-                                <div class="flow-arrow">→</div>
-                                <div class="flow-step">
-                                    <div class="flow-circle"
-                                        :class="{ completed: line.status === 'ALS_APPR', active: line.status === 'ALS_RVW' }">
-                                        {{ getLineTypeLabel(line.lineType) }}
-                                    </div>
-                                    <div class="flow-label">{{ line.approverName }}</div>
+                            <div class="overflow-x-auto m-6">
+                                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                    <table class="w-full text-[13px] text-center table-fixed border-collapse">
+                                        <thead class="bg-gray-50 border-b border-gray-200">
+                                            <tr>
+                                                <th class="w-20 px-2 py-3 text-gray-600 font-bold">구분</th>
+                                                <th class="w-24 px-2 py-3 text-gray-600 font-bold">이름</th>
+                                                <th class="w-32 px-2 py-3 text-gray-600 font-bold">직위/직책</th>
+                                                <th class="w-40 px-2 py-3 text-gray-600 font-bold">소속</th>
+                                                <th class="w-24 px-2 py-3 text-gray-600 font-bold">상태</th>
+                                                <th class="w-44 px-2 py-3 text-gray-600 font-bold">결재일</th>
+                                                <th class="w-64 px-4 py-3 text-gray-600 font-bold">비고</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200">
+                                            <tr class="hover:bg-gray-50 transition-colors text-center">
+                                                <td class="py-4">기안</td>
+                                                <td class="py-4 font-bold text-gray-900">{{ approvalData.drafterName }}
+                                                </td>
+                                                <td class="py-4">{{ getPositionLabel(approvalData.drafterPositionCode)
+                                                    }}</td>
+                                                <td class="py-4">{{ approvalData.drafterDepartment }}</td>
+                                                <td class="py-4 text-[#10B981] font-bold">승인</td>
+                                                <td class="py-4">{{ approvalData.draftedAt }}</td>
+                                                <td class="px-4 py-4 text-gray-400">-</td>
+                                            </tr>
+                                            <tr v-for="appr in approvalData.approvers" :key="appr.approvalLineId"
+                                                class="hover:bg-gray-50 transition-colors text-center">
+                                                <td class="py-4">{{ getLineTypeLabel(appr.lineType) }}</td>
+                                                <td class="py-4 font-bold text-gray-900">{{ appr.approverName }}</td>
+                                                <td class="py-4">{{ getPositionLabel(appr.approverPositionCode) }}</td>
+                                                <td class="py-4">{{ appr.approverDepartment }}</td>
+                                                <td :class="['py-4 font-bold', getLineStatusClass(appr.status)]">
+                                                    {{ getLineStatusLabel(appr.status) }}
+                                                </td>
+                                                <td class="py-4">{{ appr.processedAt || '-' }}</td>
+                                                <td class="px-4 py-4 truncate text-gray-400" :title="appr.note">
+                                                    {{ appr.note || '-' }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
-                            </template>
-                        </div>
+                                <div class="flex justify-end mt-4">
+                                    <router-link :to="`/approval/${approvalData.approvalId}`"
+                                        class="text-[13px] font-bold text-[#4C4CDD] hover:underline flex items-center gap-1">
+                                        결재 바로가기 <span class="text-lg">→</span>
+                                    </router-link>
+                                </div>
+                            </div>
+                        </template>
 
-                        <!-- 테이블 -->
-                        <table class="approval-table">
-                            <thead>
-                                <tr>
-                                    <th>구분</th>
-                                    <th>이름</th>
-                                    <th>직급/직책</th>
-                                    <th>소속</th>
-                                    <th>상태</th>
-                                    <th>결재일</th>
-                                    <th>비고</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- 기안자 -->
-                                <tr>
-                                    <td>기안</td>
-                                    <td>{{ header.drafterName }}</td>
-                                    <td>{{ formatRole(header.drafterRank, header.drafterPosition) }}</td>
-                                    <td>{{ header.drafterDepartment }}</td>
-                                    <td>승인</td>
-                                    <td>{{ header.requestedAt }}</td>
-                                    <td>-</td>
-                                </tr>
-
-                                <tr v-for="(line, idx) in sortedApprovalLines" :key="idx">
-                                    <td>{{ getLineTypeLabel(line.lineType) }}</td>
-                                    <td>{{ line.approverName }}</td>
-                                    <td>{{ formatRole(line.approverRank, line.approverPosition) }}</td>
-                                    <td>{{ line.approverDepartment }}</td>
-                                    <td>{{ getApprovalStatusLabel(line.status) }}</td>
-                                    <td>{{ line.processedAt }}</td>
-                                    <td>{{ line.note || '-' }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="section-footer">
-                            <router-link v-if="header.approvalCode" :to="`/approval/${header.approvalId}`"
-                                class="view-approval-link">
-                                결재 바로가기 →
-                            </router-link>
+                        <div v-else-if="!isApprovalLoading"
+                            class="flex flex-col items-center justify-center py-16 px-4">
+                            <img src="@/assets/새로이새로미.png" alt="No Approval" class="mb-4 h-24 w-auto opacity-40" />
+                            <p class="text-gray-400 font-medium mb-6">진행 중인 결재 건이 없습니다.</p>
                         </div>
                     </div>
-
                 </div>
 
 
-                <div v-if="showAssignManagerBtn || showRequestApprovalBtn" class="assign-btn-row">
-                    <button v-if="showAssignManagerBtn" class="assign-btn" @click="openAssignmentModal">
+                <div class="flex justify-end gap-1 pt-6 ">
+
+                    <button v-if="showAssignManagerBtn" @click="openAssignmentModal"
+                        class="px-6 py-2 text-sm font-bold rounded-lg bg-[#4C4CDD] text-white hover:bg-[#3b3bbb] shadow-md transition-all active:scale-95">
                         담당자 배정
                     </button>
                     <ManagerAssignmentModal v-if="isModalOpen" :departmentData="deptEmployees"
                         @close="isModalOpen = false" @confirm="onConfirmAssignment" />
 
-                    <button v-if="showRequestApprovalBtn" class="assign-btn" @click="requestApproval">
-                        결재 요청
+                    <button v-if="showRequestApprovalBtn" @click="requestApproval"
+                        class="px-6 py-2.5 rounded-lg bg-[#4C4CDD] text-sm font-bold text-white hover:bg-[#3b3bbb] shadow-md transition-all active:scale-95">
+                        결재 상신하기
                     </button>
                 </div>
 
@@ -275,6 +321,7 @@ import { getEmployees } from '@/api/employee/employee'
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 import PlanTab from './PlanTab.vue'
 import PRPrintDocument from '@/components/production/PRPrintDocument.vue'
+import { getApprovalSummary } from '@/api/approval/approval'; // API 임포트 확인
 
 const route = useRoute()
 const router = useRouter()
@@ -312,17 +359,6 @@ const steps = [
     { key: 'PROD', label: '생산 중' },
     { key: 'DONE', label: '생산 완료' }
 ]
-
-const CURRENT_STEP_MAP = {
-    PR_RVW: 0,
-    PR_APPR_PEND: 0,
-    PR_APPR_DONE: 1,
-    PR_PLANNED: 1,
-    PR_PRODUCING: 2,
-    PR_DONE: 3,
-    PR_APPR_RJCT: -1,
-    PR_CANCEL: -1
-}
 
 const currentStepIndex = computed(() => {
     const status = header.value.status
@@ -371,36 +407,65 @@ const reloadDetail = async () => {
         : []
 }
 
-const sortedApprovalLines = computed(() => {
-    return [...approvalLines.value].sort(
-        (a, b) => (a.sequence || 0) - (b.sequence || 0)
-    )
-})
 
-const getLineTypeLabel = (lineType) => {
-    const map = {
-        AT_APPR: '결재',
-        AT_RVW: '협조'
+const approvalData = ref(null);
+const isApprovalLoading = ref(false);
+
+// 결재 정보 가져오기
+const fetchApprovalSummary = async () => {
+    if (!header.value?.approvalCode) {
+        approvalData.value = null;
+        return;
     }
-    return map[lineType] || '결재'
-}
 
-const getApprovalStatusLabel = (status) => {
-    const map = {
-        ALS_APPR: '승인',
-        ALS_RVW: '검토중',
-        ALS_PEND: '대기',
-        ALS_RJCT: '반려'
+    isApprovalLoading.value = true;
+    try {
+        const data = await getApprovalSummary(header.value.approvalCode);
+        approvalData.value = data;
+    } catch (err) {
+        console.error('결재 현황 로드 실패:', err);
+        approvalData.value = null;
+    } finally {
+        isApprovalLoading.value = false;
     }
-    return map[status] || '-'
-}
+};
 
-const formatRole = (rank, position) => {
-    if (!rank && !position) return '-'
-    if (rank && position) return `${rank}/${position}`
-    return rank || position
-}
+// 직위 라벨
+const getPositionLabel = (code) => {
+    const map = { JP_CEO: '사장', JP_DIR: '이사', JP_MGR: '부장', JP_SM: '과장', JP_AM: '대리', JP_STF: '사원' };
+    return map[code] || code;
+};
 
+// 결재 타입 라벨
+const getLineTypeLabel = (type) => {
+    const map = { AT_APPR: '결재', AT_RVW: '협조', AT_REF: '참조', AT_RCPT: '수신' };
+    return map[type] || '결재';
+};
+
+// 결재 상태 라벨 및 클래스
+const getLineStatusLabel = (status) => {
+    const map = { ALS_PEND: '대기', ALS_RVW: '검토중', ALS_APPR: '승인', ALS_RJCT: '반려' };
+    return map[status] || status;
+};
+
+const getLineStatusClass = (status) => {
+    if (status === 'ALS_APPR') return 'text-[#10B981]';
+    if (status === 'ALS_RJCT') return 'text-red-600';
+    if (status === 'ALS_RVW') return 'text-blue-600';
+    return 'text-gray-400';
+};
+
+// onMounted 수정
+onMounted(async () => {
+    const res = await getPRDetail(prId);
+    header.value = res.header;
+    items.value = Array.isArray(res.items) ? res.items : [];
+
+    // 헤더 정보 로드 후 결재 요약정보 별도 호출
+    if (header.value.approvalCode) {
+        fetchApprovalSummary();
+    }
+});
 
 onMounted(async () => {
     const res = await getPRDetail(prId)
@@ -435,15 +500,15 @@ const stepDateText = (idx) => {
 }
 
 const showAssignManagerBtn = computed(() => {
-    return header.value.status === 'PR_RVW'
-        && !header.value.managerId
-})
+    return header.value.status === 'PR_RVW' && !header.value.managerId;
+});
 
 const showRequestApprovalBtn = computed(() => {
     return header.value.status === 'PR_RVW'
         && !!header.value.managerId
         && !header.value.approvalCode
-})
+        && !approvalData.value;
+});
 
 
 const requestApproval = () => {
@@ -493,10 +558,16 @@ const onConfirmAssignment = async (employee) => {
 const formatNumber = (v) => (v != null ? Number(v).toLocaleString() : '-')
 
 const goSO = () => {
-    // 네 프로젝트의 SO 상세 라우트에 맞게 수정
-    // 예: router.push(`/orders/${header.value.soId}`)
-    // soId가 응답에 없으면 soCode로 조회 페이지 이동 등으로 처리
-    alert('주문 상세 라우트 연결 필요')
+    if (!header.value.soId) {
+        alert('주문 ID가 없습니다.')
+        return
+    }
+
+    const routeData = router.resolve({
+        path: `/order/management/${header.value.soId}`
+    })
+
+    window.open(routeData.href, '_blank')
 }
 
 const goList = () => {
@@ -893,51 +964,10 @@ const closePrint = () => {
     color: #000;
 }
 
-
-/* 결재 진행 박스 */
-.approval-box {
-    background: #F9FAFB;
-    border-radius: 10px;
-    height: 256px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.approval-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-}
-
-.empty-character {
-    width: 120px;
-    height: auto;
-    opacity: 0.5;
-}
-
 .ghost {
     font-size: 15px;
     font-weight: 400;
     color: #7B808D;
-}
-
-/* 결재 진행 박스 (Rectangle 688) */
-.plan-box {
-    background: #F9FAFB;
-    border-radius: 10px;
-    height: 256px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.plan-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
 }
 
 .dot {
@@ -997,28 +1027,6 @@ const closePrint = () => {
     cursor: pointer;
 }
 
-/* 담당자 배정 버튼 (PR) */
-.assign-btn-row {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 12px;
-}
-
-.assign-btn {
-    background: #4C4CDD;
-    color: #FFFFFF;
-    border: none;
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.assign-btn:hover {
-    background: #3B3BB0;
-}
-
 /* 결재 진행 상황 전체 박스 */
 .approval-progress {
     background: #F9FAFB;
@@ -1074,27 +1082,6 @@ const closePrint = () => {
     color: #D9D9D9;
     font-weight: bold;
     margin-bottom: 20px;
-}
-
-/* 결재 테이블 스타일 */
-.approval-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    font-size: 13px;
-}
-
-.approval-table th,
-.approval-table td {
-    border: 1px solid #D9D9D9;
-    padding: 10px;
-    text-align: center;
-}
-
-.approval-table th {
-    background: #F3F4F6;
-    color: #4B5563;
-    font-weight: 600;
 }
 
 /* 결재 바로가기 링크 */

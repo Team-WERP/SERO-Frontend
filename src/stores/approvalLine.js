@@ -36,6 +36,11 @@ export const useApprovalLineStore = defineStore("approvalLine", {
             this.mode = "CREATE";
             this.originalSnapshot = null;
         },
+        clearLines() {
+            this.approvalLines = [];
+            this.referenceLines = [];
+            this.recipientLines = [];
+        },
         // 스냅샷으로 되돌리기
         revert() {
             if (this.originalSnapshot) {

@@ -21,6 +21,7 @@
 
             <!-- 우측 유저 -->
             <div class="top-nav__right">
+                <NotificationBell />
                 <UserProfile />
             </div>
         </div>
@@ -49,6 +50,7 @@ import { useUserStore } from '@/stores/user'
 import AppLogo from '@/components/common/AppLogo.vue'
 import UserProfile from '@/components/common/UserProfile.vue'
 import MobileMenuDrawer from '@/components/layout/MobileMenuDrawer.vue'
+import NotificationBell from '@/components/notification/NotificationBell.vue'
 import { getDefaultPathByModule, getFirstAccessibleMenuPath } from '@/utils/navigation'
 
 const { isMobile } = useResponsive()
@@ -166,6 +168,7 @@ const filteredNavItems = computed(() =>
     margin-left: auto;
     display: flex;
     align-items: center;
+    gap: 16px;
 }
 
 /* Drawer */
