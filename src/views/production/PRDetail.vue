@@ -79,6 +79,11 @@
 
                             <div class="k">생산마감일시</div>
                             <div class="v">{{ header.dueAt || '-' }}</div>
+
+                            <div class="k">요청 사유</div>
+                            <div class="v reason-text">
+                                {{ header.reason || '-' }}
+                            </div>
                         </div>
                     </div>
 
