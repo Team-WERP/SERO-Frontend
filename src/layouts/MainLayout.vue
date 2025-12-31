@@ -30,9 +30,12 @@ import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useResponsive } from '@/composables/useResponsive'
 import { useMenuStore } from '@/stores/menu'
+import { useNotificationSSE } from '@/composables/useNotificationSSE'
 
 import TopNavBar from '@/components/layout/TopNavBar.vue'
 import SideNavBar from '@/components/layout/SideNavBar.vue'
+
+useNotificationSSE()
 
 const route = useRoute()
 const { isMobile } = useResponsive()

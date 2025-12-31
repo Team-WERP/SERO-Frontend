@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { jwtDecode } from "jwt-decode";
+import { useNotificationStore } from "./notification";
 
 export const useUserStore = defineStore("user", {
     state: () => ({
@@ -86,6 +87,10 @@ export const useUserStore = defineStore("user", {
             this.isAuthenticated = false;
 
             localStorage.removeItem("accessToken");
+
+            // SSE 연결 종료 및 알림 초기화
+            const notificationStore = useNotificationStore();
+            notificationStore.reset();
             localStorage.removeItem("name");
         },
         initialize() {
