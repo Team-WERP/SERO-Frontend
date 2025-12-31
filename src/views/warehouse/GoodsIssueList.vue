@@ -106,7 +106,7 @@
                     <tr v-for="(gi, index) in giList" :key="gi.id">
                         <td class="text-center">{{ index + 1 }}</td>
 
-                        <td class="link" @click="goDetail(gi.giCode)">
+                        <td class="link" @click="goDetail(gi.id)">
                             {{ gi.giCode }}
                         </td>
 
@@ -302,8 +302,8 @@ const closeModal = () => {
 }
 
 // 상세 페이지 이동
-const goDetail = (giCode) => {
-    router.push(`/warehouse/goods-issues/${giCode}`)
+const goDetail = (id) => {
+    router.push(`/warehouse/goods-issues/${id}`)
 }
 
 // 날짜 포맷팅 (YYYY-MM-DD HH:MM)
