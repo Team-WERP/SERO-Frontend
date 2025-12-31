@@ -53,7 +53,7 @@
                 </div>
 
                 <div class="filter-item keyword">
-                    <label>출고설정번호</label>
+                    <label>출고지시번호</label>
                     <input type="text" v-model="searchKeyword" placeholder="검색하세요" @keyup.enter="fetchGIList" />
                 </div>
 
@@ -172,9 +172,8 @@ const canManage = computed(() => {
     return userStore.hasAuthority('AC_WHS')
 })
 
-// 현재 월 설정 (YYYY-MM 형식)
-const now = new Date()
-const selectedMonth = ref(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+// 현재 월 설정 (YYYY-MM 형식) - 기본값은 빈 문자열로 설정하여 전체 조회
+const selectedMonth = ref('')
 
 // 필터 상태
 const startDate = ref('')
@@ -274,16 +273,10 @@ const onMonthChange = () => {
 
 // 필터 초기화
 const resetFilters = () => {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-
-    selectedMonth.value = `${year}-${month}`
-    startDate.value = `${year}-${month}-01`
-
-    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate()
-    endDate.value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
-
+    // 모든 필터를 초기 상태로 (날짜 필터 없이 전체 조회)
+    selectedMonth.value = ''
+    startDate.value = ''
+    endDate.value = ''
     warehouseId.value = ''
     selectedStatus.value = ''
     searchKeyword.value = ''
@@ -338,15 +331,7 @@ const getStatusLabel = (status) => ({
 
 // 초기 로드
 onMounted(() => {
-    // 현재 월의 시작일과 종료일 설정
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-    startDate.value = `${year}-${month}-01`
-
-    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate()
-    endDate.value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
-
-    // 창고 목록과 출고지시 목록 동시 조회
+    // 창고 목록과 출고지시 목록 동시 조회 (날짜 필터 없이 전체 조회)
     fetchWarehouses()
     fetchGIList()
 })
