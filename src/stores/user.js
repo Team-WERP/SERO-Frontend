@@ -9,7 +9,9 @@ export const useUserStore = defineStore("user", {
         isAuthenticated: false,
         authorities: [],
         tokenExp: null,
-        now: Date.now(),
+        heartbeat: 0,
+        isExpireModalOpen: false,
+        modalShownInTab: false,
     }),
 
     getters: {
@@ -61,9 +63,18 @@ export const useUserStore = defineStore("user", {
             return "";
         },
 
+        remainingSeconds(state) {
+            state.heartbeat;
+
+            if (!state.tokenExp || !state.isAuthenticated) return 0;
+            return Math.floor((state.tokenExp - Date.now()) / 1000);
+        },
+
         remainingTimeMs(state) {
+            state.heartbeat;
+
             if (!state.tokenExp) return 0;
-            return Math.max(state.tokenExp - state.now, 0);
+            return Math.max(state.tokenExp - Date.now(), 0);
         },
 
         remainingTimeText() {
@@ -75,6 +86,7 @@ export const useUserStore = defineStore("user", {
 
             return `${m}분 ${s}초`;
         },
+
         isExpiringSoon() {
             return this.remainingTimeMs <= 5 * 60 * 1000;
         },
@@ -98,7 +110,16 @@ export const useUserStore = defineStore("user", {
             this.tokenExp = payload.exp * 1000;
             this.isAuthenticated = true;
         },
-
+        async reissueToken() {
+            // TODO 토큰 재발급
+            const res = await api.reissue(); // { accessToken, accessTokenExp }
+            this.tokenExp = res.accessTokenExp;
+            localStorage.setItem("accessToken", res.accessToken);
+            this.heartbeat++; // 즉시 반영
+            this.isExpireModalOpen = false;
+            this.modalShownInTab = false;
+            localStorage.setItem("tokenReissuedAt", Date.now()); // 다른 탭 알림
+        },
         /** 로그아웃 */
         logout() {
             this.user = null;
@@ -106,8 +127,11 @@ export const useUserStore = defineStore("user", {
             this.authorities = [];
             this.tokenExp = null;
             this.isAuthenticated = false;
+            this.isExpireModalOpen = false;
+            this.modalShownInTab = false;
 
             localStorage.removeItem("accessToken");
+            localStorage.removeItem("tokenReissuedAt");
 
             // SSE 연결 종료 및 알림 초기화
             const notificationStore = useNotificationStore();
@@ -121,9 +145,6 @@ export const useUserStore = defineStore("user", {
                 return true;
             }
             return false;
-        },
-        tick() {
-            this.now = Date.now();
         },
         setTokenExp(exp) {
             this.tokenExp = exp;
