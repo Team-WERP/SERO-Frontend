@@ -51,7 +51,7 @@
                         recipient: recipientLines,
                         reference: referenceLines
                     }" v-model:activeTab="activeRightTab" @remove="handleRemove" @move="handleMove"
-                        @register-template="openTemplateSaveModal" />
+                        @register-template="openTemplateSaveModal" @reset-lines="resetLines" />
                 </div>
 
                 <ApprovalTemplateNameModal v-if="isTemplateNameModalOpen" @cancel="isTemplateNameModalOpen = false"
@@ -262,8 +262,13 @@ const registerTemplate = async ({ name, description }) => {
 
         alert('결재선 템플릿이 저장되었습니다.');
     } catch (e) {
-        console.error(e);
-        alert('결재선 템플릿 저장 실패');
+        const status = e.response?.status;
+
+        if (status === 409) {
+            alert('동일한 이름의 결재선 템플릿이 이미 존재합니다.');
+        } else {
+            alert('결재선 템플릿 저장에 실패했습니다.');
+        }
     }
 };
 
@@ -282,6 +287,11 @@ const onSelectApprovalLineTemplate = (template) => {
         // 불러온 후 조직도 탭으로 돌아가거나 유지
     }
 };
+
+const resetLines = () => {
+    if (!confirm('결재선을 모두 초기화하시겠습니까?')) return;
+    approvalLineStore.clearLines();
+}
 
 // 직원 추가
 const addToTarget = () => {

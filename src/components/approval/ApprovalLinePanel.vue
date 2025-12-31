@@ -15,9 +15,9 @@
         </div>
 
         <div class="h-8 flex items-center justify-end px-4 border-b border-[#efefef] bg-white shrink-0">
-            <button @click="resetTab"
+            <button @click="$emit('reset-lines')"
                 class="flex items-center gap-1 text-[11px] text-gray-500 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 transition-colors"
-                title="현재 탭 목록 초기화">
+                title="현재 결재선 목록 초기화">
                 초기화
             </button>
         </div>
@@ -142,7 +142,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['update:activeTab', 'remove', 'move', 'register-template']);
+const emit = defineEmits(['update:activeTab', 'remove', 'move', 'register-template', 'reset-lines']);
 
 const tabs = [
     { id: 'approval', label: '결재자' },
