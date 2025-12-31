@@ -70,29 +70,36 @@
             <table class="items-table">
                 <thead>
                     <tr>
-                        <th style="width: 50px; text-align:center;">No</th>
-                        <th style="width: 140px;">품목 코드</th>
-                        <th style="width: 200px;">품명</th>
-                        <th style="width: 200px;">규격</th>
-                        <th style="width: 120px; text-align:right;">생산 소요 시간(분)</th>
-                        <th style="width: 120px; text-align:right;">안전재고(AUn)</th>
-                        <th style="width: 120px; text-align:right;">단가(₩)</th>
-                        <th style="width: 100px; text-align:center;">구성 자재 수</th>
+                        <th style="width: 60px; text-align:center;">No</th>
+                        <th style="width: 180px; text-align:left; padding-left: 12px;">품목 코드</th>
+                        <th style="width: 220px; text-align:left; padding-left: 12px;">품명</th>
+                        <th style="width: 250px; text-align:left; padding-left: 12px;">규격</th>
+                        <th style="width: 140px; text-align:right; padding-right: 12px;">생산 소요 시간(분)</th>
+                        <th style="width: 120px; text-align:right; padding-right: 12px;">안전재고(AUn)</th>
+                        <th style="width: 120px; text-align:right; padding-right: 12px;">단가(₩)</th>
+                        <th style="width: 110px; text-align:center;">구성 자재 수</th>
                         <th style="width: 100px; text-align:center;">상태</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     <tr v-for="(material, index) in materialList" :key="material.id" @click="goDetail(material.id)" class="clickable-row">
-                        <td class="text-center">{{ index + 1 }}</td>
-                        <td class="link">{{ material.materialCode }}</td>
-                        <td class="material-name" :title="material.name">{{ material.name }}</td>
-                        <td>{{ material.spec || '-' }}</td>
-                        <td class="text-right">{{ formatCycleTime(material.cycleTime) }}</td>
-                        <td class="text-right">{{ formatNumber(material.safetyStock) }}</td>
-                        <td class="text-right">{{ formatNumber(material.unitPrice) }}</td>
-                        <td class="text-center">{{ material.type === 'MAT_RM' ? '-' : (material.rawMaterialCount || 0) }}</td>
-                        <td class="text-center">
+                        <td style="text-align:center; padding-left: 12px; padding-right: 12px;">{{ index + 1 }}</td>
+                        <td style="text-align:left; padding-left: 12px;">
+                            <div class="code-with-badge">
+                                <span :class="getMaterialTypeClass(material.type)">
+                                    {{ getMaterialTypeLabel(material.type) }}
+                                </span>
+                                <span class="material-code">{{ material.materialCode }}</span>
+                            </div>
+                        </td>
+                        <td class="material-name" style="text-align:left; padding-left: 12px;" :title="material.name">{{ material.name }}</td>
+                        <td style="text-align:left; padding-left: 12px;">{{ material.spec || '-' }}</td>
+                        <td style="text-align:right; padding-right: 12px;">{{ formatCycleTime(material.cycleTime) }}</td>
+                        <td style="text-align:right; padding-right: 12px;">{{ formatNumber(material.safetyStock) }}</td>
+                        <td style="text-align:right; padding-right: 12px;">{{ formatNumber(material.unitPrice) }}</td>
+                        <td style="text-align:center; padding-left: 12px; padding-right: 12px;">{{ material.type === 'MAT_RM' ? '-' : (material.rawMaterialCount || 0) }}</td>
+                        <td style="text-align:center; padding-left: 12px; padding-right: 12px;">
                             <span :class="getStatusClass(material.status)">
                                 {{ getStatusLabel(material.status) }}
                             </span>
@@ -145,7 +152,12 @@ const fetchMaterialList = async () => {
         const result = await getMaterialList(params)
 
         if (Array.isArray(result)) {
-            materialList.value = [...result]
+            // 완제품(MAT_FG)이 상단에 오도록 정렬
+            materialList.value = [...result].sort((a, b) => {
+                if (a.type === 'MAT_FG' && b.type !== 'MAT_FG') return -1
+                if (a.type !== 'MAT_FG' && b.type === 'MAT_FG') return 1
+                return 0
+            })
         } else {
             console.error('예상치 못한 응답 형식:', result)
             materialList.value = []
@@ -194,6 +206,18 @@ const getStatusLabel = (status) => ({
     MAT_STOP: '판매 중단',
     MAT_DISCONTINUED: '단종'
 }[status] || status)
+
+// 자재 유형 클래스 매핑
+const getMaterialTypeClass = (type) => ({
+    MAT_FG: 'type-badge type-fg',
+    MAT_RM: 'type-badge type-rm'
+}[type] || 'type-badge')
+
+// 자재 유형 라벨 매핑
+const getMaterialTypeLabel = (type) => ({
+    MAT_FG: '완제품',
+    MAT_RM: '원부자재'
+}[type] || type)
 
 // 필터 변경 시 자동 검색
 watch([materialType, status], () => {
@@ -432,6 +456,40 @@ onMounted(() => {
 .status-discontinued {
     background: #f3f4f6;
     color: #374151;
+}
+
+/* ===== 자재 유형 배지 ===== */
+.code-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.material-code {
+    color: #4C4CDD;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.type-fg {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.type-rm {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
 }
 
 /* ===== 링크 ===== */
