@@ -91,7 +91,7 @@
                         <td class="text-right">{{ formatCycleTime(material.cycleTime) }}</td>
                         <td class="text-right">{{ formatNumber(material.safetyStock) }}</td>
                         <td class="text-right">{{ formatNumber(material.unitPrice) }}</td>
-                        <td class="text-center">{{ material.rawMaterialCount || 0 }}</td>
+                        <td class="text-center">{{ material.type === 'MAT_RM' ? '-' : (material.rawMaterialCount || 0) }}</td>
                         <td class="text-center">
                             <span :class="getStatusClass(material.status)">
                                 {{ getStatusLabel(material.status) }}
