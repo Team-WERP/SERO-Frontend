@@ -118,11 +118,11 @@
 
                         <div class="text-[11px] text-gray-500 flex gap-2">
                             <span class="bg-red-50 px-1.5 py-0.5 rounded">결재·협조 {{ (tpl.data.approval || []).length
-                                }}</span>
+                            }}</span>
                             <span class="bg-blue-50 px-1.5 py-0.5 rounded">수신 {{ (tpl.data.recipient || []).length
-                                }}</span>
+                            }}</span>
                             <span class="bg-gray-50 px-1.5 py-0.5 rounded">참조 {{ (tpl.data.reference || []).length
-                                }}</span>
+                            }}</span>
                         </div>
                     </div>
                 </div>
@@ -222,7 +222,6 @@ const filterDept = (dept, keyword) => {
 
 // 조직도 필터링
 const filteredTree = computed(() => {
-    console.log(searchKeyword.value);
     if (!debouncedKeyword.value) return props.organizationTree;
 
     const keyword = debouncedKeyword.value.toLowerCase();

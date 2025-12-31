@@ -12,7 +12,7 @@
                     <h2 class="font-bold">결재선 지정</h2>
                 </div>
                 <button @click="closeModal"
-                    class="text-gray-500 rounded cursor-pointer bg-[#efefef] p-1 flex items-center justify-center hover:shadow-sm">
+                    class="text-gray-500 rounded cursor-pointer p-1 flex items-center justify-center hover:shadow-sm">
                     <svg fill="#4C4CDD" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
                         <path
                             d="M23.954 21.03l-9.184-9.095 9.092-9.174-2.832-2.807-9.09 9.179-9.176-9.088-2.81 2.81 9.186 9.105-9.095 9.184 2.81 2.81 9.112-9.192 9.18 9.1z" />
@@ -27,7 +27,8 @@
                     <OrganizationPanel :organizationTree="organizationTree"
                         :isOrganizationTreeLoading="isOrganizationTreeLoading"
                         :approvalLineTemplates="approvalLineTemplates" :isTemplateLoading="isTemplateLoading"
-                        @selectEmployee="onSelectEmployee" @selectApprovalLineTemplate="onSelectApprovalLineTemplate" />
+                        @selectEmployee="onSelectEmployee" @selectApprovalLineTemplate="onSelectApprovalLineTemplate"
+                        @deleteTemplate="deleteTemplate" />
                 </div>
 
                 <div class="w-16 shrink-0 items-center">
@@ -49,17 +50,16 @@
                         approval: approvalLines,
                         recipient: recipientLines,
                         reference: referenceLines
-                    }" v-model:activeTab="activeRightTab" @remove="handleRemove" @move="handleMove" />
+                    }" v-model:activeTab="activeRightTab" @remove="handleRemove" @move="handleMove"
+                        @register-template="openTemplateSaveModal" />
                 </div>
-            </div>
 
+                <ApprovalTemplateNameModal v-if="isTemplateNameModalOpen" @cancel="isTemplateNameModalOpen = false"
+                    @confirm="registerTemplate" />
+            </div>
 
             <!-- 푸터 -->
             <div class="px-5 flex flex-col gap-1 border-t border-gray-300 shrink-0">
-                <!-- 기안자 정보 -->
-
-                <!-- 결재선 전체 요약 -->
-
                 <div class="h-12.5 flex justify-between items-center">
                     <div class="text-[13px] text-gray-500">
                         <span class="text-[red] font-bold">*</span> 결재선은 <span class="font-bold text-gray-800">최대
@@ -87,11 +87,14 @@ import { useApprovalLineStore } from '@/stores/approvalLine';
 import { storeToRefs } from 'pinia';
 import { ref, onMounted } from 'vue';
 import { getEmployees } from '@/api/employee.js';
-import { getApprovalTemplates } from '@/api/approval.js';
+import { getApprovalTemplates, registerApprovalTemplate, deleteApprovalTemplate } from '@/api/approval.js';
 import OrganizationPanel from './OrganizationPanel.vue';
 import ApprovalLinePanel from './ApprovalLinePanel.vue';
+import ApprovalTemplateNameModal from './ApprovalTemplateNameModal.vue';
 
 const approvalLineStore = useApprovalLineStore();
+const isTemplateNameModalOpen = ref(false);
+
 const {
     approvalLines,
     referenceLines,
@@ -116,6 +119,10 @@ onMounted(() => {
     // 결재선 템플릿 조회
     fetchApprovalTemplates();
 });
+
+const openTemplateSaveModal = () => {
+    isTemplateNameModalOpen.value = true;
+};
 
 const fetchEmployeeData = async () => {
     isOrganizationTreeLoading.value = true;
@@ -199,6 +206,64 @@ const fetchApprovalTemplates = async () => {
         console.error('결재 템플릿 조회 실패:', error);
     } finally {
         isTemplateLoading.value = false;
+    }
+};
+
+const deleteTemplate = async (template) => {
+    try {
+        const templateId = template.id;
+
+        await deleteApprovalTemplate(templateId);
+
+        await fetchApprovalTemplates();
+
+        alert('결재선 템플릿이 삭제되었습니다.');
+    } catch (e) {
+        console.error(e);
+        alert('결재선 템플릿 삭제 실패');
+    }
+}
+
+const registerTemplate = async ({ name, description }) => {
+    try {
+        const lines = [];
+
+        approvalLines.value.forEach((line, index) => {
+            lines.push({
+                lineType: line.lineType,
+                sequence: index + 1,
+                approverId: line.id
+            });
+        });
+
+        recipientLines.value.forEach(line => {
+            lines.push({
+                lineType: 'AT_RCPT',
+                approverId: line.id
+            });
+        });
+
+        referenceLines.value.forEach(line => {
+            lines.push({
+                lineType: 'AT_REF',
+                approverId: line.id
+            });
+        });
+
+        await registerApprovalTemplate({
+            name,
+            description,
+            lines
+        });
+
+        isTemplateNameModalOpen.value = false;
+
+        await fetchApprovalTemplates();
+
+        alert('결재선 템플릿이 저장되었습니다.');
+    } catch (e) {
+        console.error(e);
+        alert('결재선 템플릿 저장 실패');
     }
 };
 

@@ -117,7 +117,7 @@
         </div>
 
         <div class="border-t border-[#efefef] p-2 flex justify-end">
-            <button @click="closeModal"
+            <button @click="$emit('register-template')"
                 class=" h-7 px-4 rounded-sm border border-[#4C4CDD] text-[#4C4CDD] font-medium hover:bg-gray-50 hover:shadow-sm text-[12px] cursor-pointer">
                 나의 결재선으로 등록
             </button>
@@ -142,7 +142,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['update:activeTab', 'remove', 'move']);
+const emit = defineEmits(['update:activeTab', 'remove', 'move', 'register-template']);
 
 const tabs = [
     { id: 'approval', label: '결재자' },
