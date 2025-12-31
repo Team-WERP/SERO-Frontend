@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col h-full bg-white">
         <div class="flex border-b border-[#efefef] text-[13px] font-bold">
-            <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
+            <button v-for="tab in tabs" :key="tab.id" @click="changeTab(tab.id)"
                 class="flex-1 py-2 text-center border-b-2" :class="activeTab === tab.id
                     ? 'border-[#4C4CDD] text-[#4C4CDD]'
                     : 'border-transparent text-gray-500 hover:text-gray-700'">
@@ -118,11 +118,11 @@
 
                         <div class="text-[11px] text-gray-500 flex gap-2">
                             <span class="bg-red-50 px-1.5 py-0.5 rounded">결재·협조 {{ (tpl.data.approval || []).length
-                                }}</span>
+                            }}</span>
                             <span class="bg-blue-50 px-1.5 py-0.5 rounded">수신 {{ (tpl.data.recipient || []).length
-                                }}</span>
+                            }}</span>
                             <span class="bg-gray-50 px-1.5 py-0.5 rounded">참조 {{ (tpl.data.reference || []).length
-                                }}</span>
+                            }}</span>
                         </div>
                     </div>
                 </div>
@@ -154,7 +154,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['selectEmployee', 'selectApprovalLineTemplate', 'deleteTemplate']);
+const emit = defineEmits(['selectEmployee', 'selectApprovalLineTemplate', 'deleteTemplate', 'change-tab']);
 
 // --- 상태 ---
 const activeTab = ref('org');               // 'org' | 'template'
@@ -178,6 +178,11 @@ watch(searchKeyword, (newVal) => {
         debouncedKeyword.value = newVal;    // 타이핑 멈춤 후 값 적용
     }, 500); // 0.5s 디바운스
 });
+
+const changeTab = (tabId) => {
+    activeTab.value = tabId;
+    emit('change-tab', tabId);
+};
 
 const matchKeyword = (text, keyword) => {
     return text?.toLowerCase().includes(keyword);
@@ -222,7 +227,6 @@ const filterDept = (dept, keyword) => {
 
 // 조직도 필터링
 const filteredTree = computed(() => {
-    console.log(searchKeyword.value);
     if (!debouncedKeyword.value) return props.organizationTree;
 
     const keyword = debouncedKeyword.value.toLowerCase();

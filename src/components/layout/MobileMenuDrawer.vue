@@ -102,7 +102,7 @@ watch(
     { immediate: true }
 )
 
-const onClickMenu = () => {
+const onClickMenu = (path, moduleKey) => {
     const roles = userStore.authorities
     const menus = menuStore.menus[moduleKey] || []
 
