@@ -15,9 +15,9 @@
         </div>
 
         <div class="h-8 flex items-center justify-end px-4 border-b border-[#efefef] bg-white shrink-0">
-            <button @click="$emit('reset-lines')"
-                class="flex items-center gap-1 text-[11px] text-gray-500 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 transition-colors"
-                title="현재 결재선 목록 초기화">
+            <button @click="$emit('reset-lines')" class="flex items-center gap-1 text-gray-600 bg-gray-200 hover:bg-gray-300 hover:text-gray-800
+            px-2 py-0.5 rounded transition-colors text-[12px] font-semibold cursor-pointer">
+                <img :src="REFRESH_ICON" class="w-4" />
                 초기화
             </button>
         </div>
@@ -128,6 +128,7 @@
 <script setup>
 import { computed } from 'vue';
 import IMAGE from '@/assets/새로이새로미.png';
+import REFRESH_ICON from '@/assets/icons/refresh-icon.svg';
 import { EMPLOYEE_RANK, EMPLOYEE_POSITION } from '@/constants/approval.js';
 
 const props = defineProps({
