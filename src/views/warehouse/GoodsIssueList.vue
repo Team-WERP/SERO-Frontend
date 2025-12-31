@@ -2,26 +2,24 @@
     <div class="gi-page">
         <!-- 상단 헤더 -->
         <div class="page-header">
-            <div>
+            <div class="header-left">
                 <h1 class="page-title">출고지시 관리</h1>
                 <p class="page-description">
                     확정된 출고지시서를 조회합니다.
                 </p>
             </div>
             <div class="header-actions">
-                <div class="period-selector">
-                    <label>기준월(납기일)</label>
-                    <input type="month" v-model="selectedMonth" @change="onMonthChange" />
-                </div>
                 <button v-if="canCreate" class="create-btn" @click="openCreateModal">
                     + 출고지시 등록
                 </button>
             </div>
         </div>
+        
 
         <!-- 필터 및 검색 -->
         <div class="search-section">
             <h2 class="filter-title">필터 및 검색</h2>
+
             <div class="filter-row">
                 <div class="filter-item">
                     <label>납기일</label>
@@ -55,6 +53,16 @@
                 <div class="filter-item keyword">
                     <label>출고지시번호</label>
                     <input type="text" v-model="searchKeyword" placeholder="검색하세요" @keyup.enter="fetchGIList" />
+                </div>
+
+                <div class="filter-item">
+                    <label>작성자</label>
+                    <button
+                        class="my-gi-btn"
+                        :class="{ active: showOnlyMyGI }"
+                        @click="toggleMyGI">
+                        {{ showOnlyMyGI ? '전체 출고지시' : '내 출고지시 목록' }}
+                    </button>
                 </div>
 
                 <div class="button-group">
@@ -172,15 +180,13 @@ const canManage = computed(() => {
     return userStore.hasAuthority('AC_WHS')
 })
 
-// 현재 월 설정 (YYYY-MM 형식) - 기본값은 빈 문자열로 설정하여 전체 조회
-const selectedMonth = ref('')
-
 // 필터 상태
 const startDate = ref('')
 const endDate = ref('')
 const warehouseId = ref('')
 const searchKeyword = ref('')
 const selectedStatus = ref('')
+const showOnlyMyGI = ref(false) // 내가 작성한 출고지시만 조회
 const giList = ref([])
 const warehouseList = ref([])
 const isModalOpen = ref(false)
@@ -224,6 +230,13 @@ const fetchGIList = async () => {
             params.endDate = endDate.value
         }
 
+        // 내가 작성한 출고지시만 조회
+        if (showOnlyMyGI.value) {
+            params.drafterId = userStore.user?.id
+            console.log('🔍 showOnlyMyGI 활성화! userStore.user:', userStore.user)
+            console.log('🔍 drafterId:', params.drafterId)
+        }
+
         console.log('API 호출 파라미터:', params)
         const result = await getGIList(params)
         console.log('API 응답:', result)
@@ -255,34 +268,43 @@ const fetchGIList = async () => {
     }
 }
 
-// 기준월 변경 시
-const onMonthChange = () => {
-    if (!selectedMonth.value) return
-
-    const [year, month] = selectedMonth.value.split('-')
-
-    // 해당 월의 시작일과 마지막일 계산
-    startDate.value = `${year}-${month}-01`
-
-    const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate()
-    endDate.value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
-
-    // 자동 검색
-    fetchGIList()
-}
-
 // 필터 초기화
 const resetFilters = () => {
     // 모든 필터를 초기 상태로 (날짜 필터 없이 전체 조회)
-    selectedMonth.value = ''
     startDate.value = ''
     endDate.value = ''
     warehouseId.value = ''
     selectedStatus.value = ''
     searchKeyword.value = ''
+    showOnlyMyGI.value = false
 
     // 초기화 후 목록 재조회
     fetchGIList()
+}
+
+// 내가 작성한 출고지시 토글
+const toggleMyGI = async () => {
+    // 이미 활성화된 상태면 비활성화
+    if (showOnlyMyGI.value) {
+        showOnlyMyGI.value = false
+        await fetchGIList()
+        return
+    }
+
+    // 비활성화 상태에서 활성화 시도
+    const previousValue = showOnlyMyGI.value
+    showOnlyMyGI.value = true
+
+    // fetchGIList를 호출하여 필터링
+    await fetchGIList()
+
+    // 내가 작성한 출고지시가 없으면 버튼 상태 되돌리기
+    if (!giList.value || giList.value.length === 0) {
+        alert('작성한 출고지시가 없습니다.')
+        showOnlyMyGI.value = previousValue
+        // 전체 목록 다시 조회
+        await fetchGIList()
+    }
 }
 
 // 출고지시 등록 모달
@@ -643,7 +665,38 @@ onMounted(() => {
     font-size: 14px;
 }
 
-/* ===== 버튼 ===== */
+/* ===== 작성자 필터 버튼 ===== */
+.filter-item .my-gi-btn {
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    min-width: 140px;
+    background: #ffffff;
+    color: #374151;
+}
+
+.filter-item .my-gi-btn:hover {
+    border-color: #9ca3af;
+    background: #f9fafb;
+}
+
+.filter-item .my-gi-btn.active {
+    background: #4C4CDD;
+    color: #ffffff;
+    border-color: #4C4CDD;
+}
+
+.filter-item .my-gi-btn.active:hover {
+    background: #3d3dbb;
+    border-color: #3d3dbb;
+}
+
 .create-btn {
     background: #4C4CDD;
     color: #ffffff;
