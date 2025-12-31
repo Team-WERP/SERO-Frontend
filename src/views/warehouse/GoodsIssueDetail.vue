@@ -494,11 +494,18 @@ const showAssignManagerButton = computed(() => {
 
 // 결재 요청 버튼 표시 여부
 const showApprovalRequestButton = computed(() => {
+    const currentUserId = userStore.userId
+    const isManager = giDetail.value.managerId === currentUserId
+
     const result = giDetail.value.managerName &&
            giDetail.value.status === 'GI_RVW' &&
-           !giDetail.value.approvalId
+           !giDetail.value.approvalId &&
+           isManager
 
     console.log('showApprovalRequestButton:', {
+        currentUserId: currentUserId,
+        managerId: giDetail.value.managerId,
+        isManager: isManager,
         managerName: giDetail.value.managerName,
         status: giDetail.value.status,
         approvalId: giDetail.value.approvalId,
@@ -630,6 +637,7 @@ const giDetail = ref({
     status: '',
     drafterName: '',
     managerName: '',
+    managerId: null, // 담당자 ID 추가
     createdAt: '',
     scheduledAt: '',
     companyName: '',
