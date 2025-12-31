@@ -32,3 +32,39 @@ export const getItemHistory = (orderId, itemId) => {
   return api.get(`/orders/${orderId}/item-history/${itemId}`) 
       .then(res => res.data);
 };
+
+// 주문 취소
+export const cancelOrder = (orderId, cancelData) => {
+  return api.put(`/orders/${orderId}/cancel`, cancelData)
+    .then(res => res.data);
+};
+
+
+// ====================== 고객사 =============================
+
+// 고객사 주문
+export const createClientOrder = (orderData) => {
+  return api.post('/clients/orders', orderData)
+    .then(res => res.data);
+};
+
+// 최근 주문 이력 목록 조회
+export const getOrderHistory = () => {
+  return api.get('/clients/orders/history').then(res => res.data);
+};
+
+// 특정 주문 정보 복사 조회
+export const getOrderCopyInfo = (orderId) => {
+  return api.get(`/clients/orders/${orderId}/copy-info`).then(res => res.data);
+};
+
+// 고객 주문 목록 조회
+export const getClientOrderList = (filter) => {
+  return api.get('/clients/orders', { params: filter })
+    .then(res => res.data);
+};
+
+// 고객 주문 상세 조회
+export const getClientOrderDetail = (orderId) => {
+  return api.get(`/clients/orders/${orderId}`).then(res => res.data);
+};

@@ -25,9 +25,9 @@
                     <tr>
                         <th>No</th>
                         <th>작업지시번호</th>
-                        <th>생산요청번호</th>
                         <th>라인</th>
                         <th>품목명</th>
+                        <th>규격</th>
                         <th>계획수량</th>
                         <th>상태</th>
                         <th>작업제어</th>
@@ -38,12 +38,11 @@
                 <tbody>
                     <tr v-for="(wo, idx) in list" :key="wo.woId">
                         <td>{{ idx + 1 }}</td>
-                        <td class="code-text">{{ wo.woCode }}</td>
-                        <td class="code-text">{{ wo.prCode }}</td>
+                        <td>{{ wo.woCode }}</td>
                         <td>{{ wo.lineName }}</td>
-                        <td class="material-text">{{ wo.materialName }}</td>
-                        <td class="qty-text">{{ wo.quantity?.toLocaleString() }}</td>
-
+                        <td>{{ wo.materialName }}</td>
+                        <td>{{ wo.materialSpec }}</td>
+                        <td>{{ wo.plannedQuantity.toLocaleString() }} {{ wo.baseUnit }}</td>
                         <td>
                             <span class="status-badge" :class="wo.woStatus">
                                 {{ statusLabel(wo.woStatus) }}
@@ -92,21 +91,24 @@
                     {{ activeModal === 'START' ? '▶' : activeModal === 'PAUSE' ? '⏸' : '■' }}
                 </div>
 
-                <h3>
+                <h3 class="h3">
                     {{ activeModal === 'START' ? '작업 시작' : activeModal === 'PAUSE' ? '일시 중지' : '작업 종료' }}
                 </h3>
 
                 <p v-if="activeModal === 'START'">
                     <strong>{{ selectedWO?.materialName }}</strong> 작업을 시작하시겠습니까?
                 </p>
-                <p v-else-if="activeModal === 'PAUSE'">작업을 잠시 중단하시겠습니까?</p>
-                <p v-else>작업을 종료하고 실적을 등록하시겠습니까?</p>
+                <p v-else-if="activeModal === 'PAUSE'">
+                    현재 작업을 일시 중지하시겠습니까?
+                </p>
+                <p v-else>
+                    작업을 종료하고 생산 실적을 등록합니다.
+                </p>
 
                 <div class="confirm-actions">
                     <button class="btn ghost" @click="closeModal">아니오</button>
-                    <button class="btn primary" :class="{ danger: activeModal === 'END_CONFIRM' }"
-                        @click="activeModal === 'START' ? start() : activeModal === 'PAUSE' ? pause() : openResult()">
-                        네, 실행합니다
+                    <button v-if="confirmMeta" class="btn" :class="confirmMeta.class" @click="confirmMeta.action">
+                        {{ confirmMeta.label }}
                     </button>
                 </div>
             </div>
@@ -132,12 +134,6 @@
                     </div>
 
                     <div class="form-grid">
-                        <div class="form-group full">
-                            <label>공정 선택</label>
-                            <select class="full-select">
-                                <option>1공정 - 권선/절연</option>
-                            </select>
-                        </div>
 
                         <div class="form-group">
                             <label>양품 수량</label>
@@ -164,6 +160,32 @@
                             <textarea v-model="endForm.note" placeholder="특이사항을 입력하세요"></textarea>
                         </div>
                     </div>
+
+                    <!-- 아이템별 생산 수량 -->
+                    <div class="form-group full" style="margin-top: 20px">
+                        <label>아이템별 생산 수량</label>
+
+                        <table class="wo-table">
+                            <thead>
+                                <tr>
+                                    <th>품목명</th>
+                                    <th>계획 수량</th>
+                                    <th>생산 수량</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in previewItems" :key="item.workOrderItemId">
+                                    <td>{{ item.itemName }}</td>
+                                    <td>{{ item.plannedQuantity }}</td>
+                                    <td>
+                                        <input type="number" v-model.number="item.producedQuantity" min="0"
+                                            style="width: 100px; text-align: right;" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
 
                 <footer class="modal-footer">
@@ -205,22 +227,31 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import {
     getWorkOrdersByDate,
     startWorkOrder,
     pauseWorkOrder,
     resumeWorkOrder,
     endWorkOrder,
-    getWorkOrderHistory
+    getWorkOrderHistory,
+    previewWorkOrderResult
 } from '@/api/production/workOrder.js'
 
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const getTodayKST = () => {
+    const now = new Date()
+    const kstOffset = 9 * 60 * 60 * 1000
+    const kst = new Date(now.getTime() + kstOffset)
+    return kst.toISOString().slice(0, 10)
+}
+
+const selectedDate = ref(getTodayKST())
 const list = ref([])
 
 const activeModal = ref(null)
 const selectedWO = ref(null)
 const historyList = ref([])
+const previewItems = ref([])
 
 const endForm = ref({
     goodQuantity: 0,
@@ -256,7 +287,7 @@ const calcElapsedFromHistory = (history) => {
     let open = null
 
     for (const h of history) {
-        const t = parseDT(h.actedAt) // ✅ actedAt 사용 (핵심)
+        const t = parseDT(h.actedAt)
         if (!t) continue
 
         if (isStart(h.action) || isResume(h.action)) {
@@ -359,11 +390,46 @@ const openEndConfirm = (wo) => {
     activeModal.value = 'END_CONFIRM'
 }
 
-const openResult = () => {
-    // 실적 폼 기본값
-    endForm.value.goodQuantity = selectedWO.value?.quantity ?? 0
+const toHHMM = (d) => {
+    if (!(d instanceof Date)) return ''
+    const h = String(d.getHours()).padStart(2, '0')
+    const m = String(d.getMinutes()).padStart(2, '0')
+    return `${h}:${m}`
+}
+
+const getFirstStartTime = (history) => {
+    if (!Array.isArray(history)) return null
+
+    const first = history
+        .filter(h => isStart(h.action))
+        .map(h => parseDT(h.actedAt))
+        .filter(d => d instanceof Date)
+        .sort((a, b) => a - b)[0]
+
+    return first || null
+}
+
+const openResult = async () => {
+    const woId = selectedWO.value.woId
+
+    // 1. 기본 값 세팅
+    endForm.value.goodQuantity =
+        selectedWO.value?.plannedQuantity ?? 0
     endForm.value.defectiveQuantity = 0
     endForm.value.note = ''
+
+    const { data: history } = await getWorkOrderHistory(woId)
+    const firstStart = getFirstStartTime(history)
+
+    endForm.value.startTime = firstStart ? toHHMM(firstStart) : ''
+    endForm.value.endTime = toHHMM(new Date())
+
+    const { data } = await previewWorkOrderResult(woId, {
+        goodQuantity: endForm.value.goodQuantity
+    })
+
+    previewItems.value = data.items
+
     activeModal.value = 'RESULT'
 }
 
@@ -404,11 +470,42 @@ const end = async () => {
         defectiveQuantity: endForm.value.defectiveQuantity,
         startTime: `${selectedDate.value} ${endForm.value.startTime}:00`,
         endTime: `${selectedDate.value} ${endForm.value.endTime}:00`,
-        note: endForm.value.note
+        note: endForm.value.note,
+
+        items: previewItems.value.map(i => ({
+            workOrderItemId: i.workOrderItemId,
+            producedQuantity: i.producedQuantity
+        }))
     })
     closeModal()
     await fetchList()
 }
+
+const confirmMeta = computed(() => {
+    switch (activeModal.value) {
+        case 'START':
+            return {
+                label: '작업 시작',
+                action: start,
+                class: 'primary'
+            }
+        case 'PAUSE':
+            return {
+                label: '일시 중지',
+                action: pause,
+                class: 'warning'
+            }
+        case 'END_CONFIRM':
+            return {
+                label: '종료 후 실적 등록',
+                action: openResult,
+                class: 'danger'
+            }
+        default:
+            return null
+    }
+})
+
 
 /* ---------- LABELS / FORMAT ---------- */
 const statusLabel = (s) => ({
@@ -433,6 +530,17 @@ const formatHMS = (sec) => {
     return `${h}:${m}:${ss}`
 }
 
+watch(() => endForm.value.goodQuantity, async (qty) => {
+    if (!selectedWO.value) return
+
+    const { data } = await previewWorkOrderResult(
+        selectedWO.value.woId,
+        { goodQuantity: qty }
+    )
+
+    previewItems.value = data.items
+})
+
 onMounted(fetchList)
 onBeforeUnmount(stopTick)
 </script>
@@ -441,30 +549,25 @@ onBeforeUnmount(stopTick)
 <style scoped>
 /* 1. 기본 레이아웃 및 텍스트 스타일 */
 .wo-page {
-    background-color: #f4f6f9;
-    padding: 24px;
-    color: #333;
-    min-height: 100vh;
+    padding: 5px;
 }
 
 .page-header {
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24px;
+    align-items: flex-end;
 }
 
 .page-title {
-    font-size: 22px;
-    font-weight: 800;
-    margin: 0;
-    color: #1a1a1a;
+    font-size: 28px;
+    font-weight: 700;
+    color: #111827;
 }
 
 .page-desc {
-    color: #666;
     font-size: 14px;
-    margin: 4px 0 0;
+    color: #6b7280;
 }
 
 .date-picker {
@@ -472,6 +575,12 @@ onBeforeUnmount(stopTick)
     border: 1px solid #d1d5db;
     border-radius: 6px;
     font-weight: 600;
+}
+
+.h3 {
+    font-size: 21px;
+    font-weight: 700;
+    margin-bottom: 12px;
 }
 
 /* 2. 테이블 디자인 */
@@ -913,7 +1022,7 @@ textarea {
 .btn {
     padding: 10px 20px;
     border-radius: 8px;
-    font-weight: 900;
+    font-weight: 600;
     cursor: pointer;
     border: none;
 }
@@ -938,5 +1047,22 @@ textarea {
     gap: 8px;
     margin-top: 20px;
     justify-content: center;
+}
+
+.btn.warning {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn.warning:hover {
+    background: #d97706;
+}
+
+.btn.primary:hover {
+    background: #2563eb;
+}
+
+.btn.danger:hover {
+    background: #dc2626;
 }
 </style>

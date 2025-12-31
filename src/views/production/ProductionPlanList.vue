@@ -1,683 +1,977 @@
-<!-- src/views/production/plan/ProductionPlanPage.vue -->
 <template>
     <div class="pp-wrap">
-        <!-- header -->
-        <div class="pp-header">
-            <div class="pp-title">생산계획 관리</div>
-
+        <!-- 상단 헤더 -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">생산계획 관리</h1>
+                <p class="page-description">
+                    생산요청 품목에 대해 월별로 생산계획을 수립합니다.
+                </p>
+            </div>
             <div class="pp-controls">
-                <div class="month-nav">
-                    <button class="month-btn" @click="prevMonth">◀</button>
-                    <button class="month-label" @click="openMonthPicker">
-                        {{ displayMonth }}
-                    </button>
+                <div class="date-box">
+                    <div class="date-controls">
+                        <button class="date-btn" @click="setThisMonth">이번 달</button>
+                        <button class="date-btn" @click="prevMonth">◀</button>
 
-                    <input ref="monthInput" type="month" v-model="month" class="hidden-month-input" />
-                    <button class="month-btn" @click="nextMonth">▶</button>
+                        <input type="month" v-model="month" class="date-input" />
+
+                        <button class="date-btn" @click="nextMonth">▶</button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <div class="panel gantt-panel">
+            <div class="gantt-container">
+                <div class="gantt-header-row">
+                    <div class="gantt-label-column">라인 / 날짜</div>
+                    <div class="gantt-timeline-column" ref="ganttHeaderRef">
+                        <div class="days-row" :style="{ width: '100%' }">
+                            <div v-for="d in daysInMonth" :key="d" class="day-cell"
+                                :class="{ today: isToday(d), weekend: isWeekend(d) }">
+                                <span class="day-num">{{ d }}</span>
+                                <span v-if="isToday(d)" class="today-tag">TODAY</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gantt-body">
+                    <div v-for="(line, idx) in lines" :key="line.lineId" class="gantt-row"
+                        :class="{ alt: idx % 2 === 1 }">
+
+                        <div class="gantt-label-column line-info">
+                            <div class="line-name">{{ line.lineName }}</div>
+                            <div class="line-meta">
+                                <span class="meta-v">제품명: {{ line.materialName || '미지정' }}</span>
+                                <span class="meta-capa">일일 최대 생산량: {{ formatNumber(line.dailyCapacity) }} {{
+                                    line.unit
+                                    }}</span>
+                            </div>
+                        </div>
+
+                        <div class="gantt-timeline-column body-grid" @scroll="syncScroll">
+                            <div class="grid-row" :style="{
+                                width: '100%',
+                                height: (maxLaneCount(line.lineId) * 44 + 12) + 'px'
+                            }">
+
+                                <div v-for="d in daysInMonth" :key="d" class="grid-cell" :class="[
+                                    { today: isToday(d), weekend: isWeekend(d) },
+                                    getLoadClass(line.lineId, d)
+                                ]" />
+
+                                <div class="bars-layer" style="width: 100%; position: absolute; left: 0; top: 0;">
+                                    <div v-for="plan in plansByLine[line.lineId] || []" :key="plan.ppId"
+                                        class="plan-bar" :class="plan.status" :style="barStyle(plan)"
+                                        @click="openPlan(plan)" @mouseenter="showTooltip($event, plan)"
+                                        @mouseleave="hideTooltip">
+                                        <div class="bar-content">
+                                            <span class="bar-title">{{ plan.prCode }}</span>
+                                            <span class="bar-qty">
+                                                총 {{ formatNumber(plan.productionQuantity) }} {{ plan.unit }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="lines.length === 0" class="empty-state">
+                        데이터가 없습니다.
+                    </div>
+                </div>
+            </div>
+            <div class="load-info-area">
+                <div class="load-legend">
+                    <span class="lg-item">라인 부하율 :</span>
+                    <span class="lg-item"><i class="dot mid"></i> 보통 (50~80%)</span>
+                    <span class="lg-item"><i class="dot warn"></i> 주의 (80~100%)</span>
+                    <span class="lg-item"><i class="dot over"></i> 초과 (100% 초과)</span>
                 </div>
             </div>
         </div>
 
-        <!-- gantt panel -->
-        <div class="panel">
-            <div class="gantt">
-                <!-- left header -->
-                <div class="gantt-left head">
-                    <div class="left-head">
-                        <div class="left-head__title">라인 / 날짜</div>
-                    </div>
-                </div>
-
-                <!-- right header -->
-                <div class="gantt-right head" ref="ganttHeaderRef">
-                    <div class="days-row" :style="{ width: gridWidthPx + 'px' }">
-                        <div v-for="d in daysInMonth" :key="d" class="day-cell" :class="{ today: isToday(d) }">
-                            <div class="day-num">{{ d }}</div>
-                            <div v-if="isToday(d)" class="today-pill">Today</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- body -->
-                <div class="gantt-left body">
-                    <div v-for="line in lines" :key="line.lineId" class="line-cell">
-                        <div class="line-name">{{ line.lineName }}</div>
-                        <div class="line-meta">
-                            <div class="meta-row">
-                                <span class="meta-k">제품:</span>
-                                <span class="meta-v">{{ line.productName || '-' }}</span>
-                            </div>
-                            <div class="meta-row">
-                                <span class="meta-k">Max:</span>
-                                <span class="meta-v">{{ formatNumber(line.dailyCapa) }}ea/일</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="gantt-right body" ref="ganttBodyRef" @scroll="syncScroll">
-                    <div v-for="line in lines" :key="`${line.lineId}-${month}`" class="grid-row"
-                        :style="{ width: gridWidthPx + 'px' }">
-                        <!-- vertical grid -->
-                        <div v-for="d in daysInMonth" :key="d" class="grid-cell" :class="{ today: isToday(d) }" />
-
-                        <!-- plan bars -->
-                        <div class="bars-layer">
-                            <div v-for="plan in plansByLine[line.lineId] || []" :key="plan.ppId" class="plan-bar"
-                                :class="{ draft: plan.status === 'PP_DRAFT' }" :style="barStyle(plan)"
-                                @click="openPlan(plan)" title="클릭하여 상세보기">
-                                <div class="bar-title">{{ plan.itemName }}</div>
-                                <div class="bar-sub">{{ formatNumber(plan.productionQuantity) }}ea</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- empty state -->
-                    <div v-if="lines.length === 0" class="empty-box">
-                        등록된 생산라인이 없습니다.
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- unassigned panel -->
-        <div class="panel" style="margin-top: 14px;">
+        <div class="panel unassigned-panel">
             <div class="sub-head">
                 <div class="sub-title">
-                    <span class="warn">⚠</span> 미편성 생산요청 목록
+                    미편성 생산요청
+                    <span class="count-badge">{{ unassigned.length }}</span>
                 </div>
-                <div class="sub-desc">아이템을 클릭하여 일정을 잡아주세요.</div>
+                <div class="sub-desc">항목을 클릭하여 생산 일정을 등록하세요.</div>
             </div>
 
-            <div v-if="unassigned.length === 0" class="empty-row">
-                미편성 생산요청이 없습니다.
-            </div>
+            <div class="unassigned-grid">
+                <div v-for="u in unassigned" :key="u.prItemId" class="ua-card" @click="openCreate(u)">
+                    <!-- 상단: PR + D-Day -->
+                    <div class="ua-top">
+                        <span class="ua-pr">{{ u.prCode }}</span>
+                        <span class="ua-dday" :class="ddayClass(u.dueAt)">
+                            D-{{ calcDday(u.dueAt) }}
+                        </span>
+                    </div>
 
-            <div class="unassigned-list">
-                <div v-for="u in unassigned" :key="u.prItemId" class="unassigned-item" @click="openCreate(u.prItemId)">
-                    <!-- header -->
-                    <div class="ua-head">
-                        <div class="ua-title">{{ u.itemName }}</div>
-                        <div class="ua-line">
-                            {{ u.productionLineName }}
+                    <!-- 제품명 -->
+                    <div class="ua-item-name">
+                        {{ u.itemName }}
+                    </div>
+
+                    <!-- 상세 정보 -->
+                    <div class="ua-details">
+                        <div class="ua-row">
+                            <span>규격</span>
+                            <strong>{{ u.spec }}</strong>
+                        </div>
+
+                        <div class="ua-row">
+                            <span>요청 수량</span>
+                            <strong>{{ formatNumber(u.requestedQuantity) }} ea</strong>
+                        </div>
+
+                        <div class="ua-row">
+                            <span>납기일</span>
+                            <strong>{{ formatDate(u.dueAt) }}</strong>
+                        </div>
+
+                        <div class="ua-row">
+                            <span>생산 라인</span>
+                            <strong class="line">{{ u.productionLineName }}</strong>
                         </div>
                     </div>
+                </div>
 
-                    <!-- body -->
-                    <div class="ua-body kv">
-                        <div class="k">규격</div>
-                        <div class="v">{{ u.spec }}</div>
-
-                        <div class="k">요청수량</div>
-                        <div class="v">{{ formatNumber(u.requestedQuantity) }}</div>
-
-                        <div class="k">납기일</div>
-                        <div class="v">{{ u.dueAt?.slice(0, 10) }}</div>
-                    </div>
-
-                    <!-- footer -->
-                    <div class="ua-foot">
-                        계획 수립 →
-                    </div>
+                <div v-if="unassigned.length === 0" class="empty-inline">
+                    미편성 목록이 비어있습니다.
                 </div>
             </div>
 
         </div>
 
-        <!-- modal -->
-        <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :month="month" @close="showPlanModal = false"
-            @created="onCreated" />
+        <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :defaultLineId="selectedLineId"
+            :month="month" @close="showPlanModal = false" @created="onCreated" />
+
+        <PPDetailModal v-if="showDetailModal && selectedPpId !== null" :ppId="selectedPpId"
+            @close="showDetailModal = false" />
     </div>
+
+    <Teleport to="body">
+        <div v-show="tooltip.visible" class="global-tooltip" :style="{
+            left: tooltip.x + 'px',
+            top: tooltip.y + 'px',
+            transform: 'translateX(-50%)'
+        }">
+            {{ tooltip.text }}
+        </div>
+    </Teleport>
+
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import PlanCreateModal from '@/components/production/PlanCreateModal.vue'
-import {
-    getProductionLines,
-    getMonthlyPlans,
-    getUnassignedTargets
-} from '@/api/production/productionPlan'
+import PPDetailModal from '@/components/production/PPDetailModal.vue'
+import { getProductionLines, getMonthlyPlans, getUnassignedTargets, getDailyLineSummary } from '@/api/production/productionPlan'
 
-const DAY_WIDTH = 34 // screenshot 느낌(촘촘) 유지
-const ROW_HEIGHT = 56
-
-const month = ref(toMonthValue(new Date())) // 'YYYY-MM'
+// --- Constants & Refs ---
+const month = ref(toMonthValue(new Date()))
 const lines = ref([])
 const plans = ref([])
 const unassigned = ref([])
-
+const dailySummary = ref([])
 const showPlanModal = ref(false)
 const selectedPrItemId = ref(null)
+const ganttHeaderRef = ref(null)
+const BAR_HEIGHT = 40
+const BAR_GAP = 6
+const BAR_TOP_PADDING = 10
+const selectedPpId = ref(null)
+const showDetailModal = ref(false)
+const selectedLineId = ref(null)
 
-/**
- * 날짜 계산
- */
+const tooltip = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    text: ''
+})
+
+const showTooltip = (e, plan) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const dailyQty = calcDailyQuantity(plan)
+
+    const text = `기간: ${plan.startDate} ~ ${plan.endDate} (${plan.durationDays}일)\n총 수량: ${formatNumber(plan.productionQuantity)} ${plan.unit}\n예상 일일 생산량: ${formatNumber(dailyQty)} ${plan.unit}`
+
+    let x = rect.left + rect.width / 2
+    let y = rect.bottom + 8
+
+    const tooltipExpectedWidth = 220
+    const padding = 20
+
+    if (x + tooltipExpectedWidth / 2 > window.innerWidth - padding) {
+        x = window.innerWidth - tooltipExpectedWidth / 2 - padding
+    } else if (x - tooltipExpectedWidth / 2 < padding) {
+        x = tooltipExpectedWidth / 2 + padding
+    }
+
+    tooltip.value = {
+        visible: true,
+        x: x,
+        y: y,
+        text: text
+    }
+}
+
+const hideTooltip = () => {
+    tooltip.value.visible = false
+}
+
 const daysInMonth = computed(() => {
     const [y, m] = month.value.split('-').map(Number)
     return new Date(y, m, 0).getDate()
 })
 
-const gridWidthPx = computed(() => daysInMonth.value * DAY_WIDTH)
+const plansByLine = computed(() => {
+    const map = {}
+
+    for (const p of plans.value) {
+        const key = p.productionLineId
+        if (!map[key]) map[key] = []
+        map[key].push(p)
+    }
+
+    for (const key of Object.keys(map)) {
+        const list = map[key]
+
+        list.sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+
+        for (const plan of list) {
+            const s = new Date(plan.startDate)
+            const e = new Date(plan.endDate)
+            const days =
+                Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1
+
+            plan.durationDays = days > 0 ? days : 1
+            plan.dailyQuantity = Math.ceil(
+                plan.productionQuantity / plan.durationDays
+            )
+        }
+
+        assignPlanLanes(list)
+    }
+
+    return map
+})
+
+const calcDurationDays = (start, end) => {
+    const s = new Date(start)
+    const e = new Date(end)
+    s.setHours(0, 0, 0, 0)
+    e.setHours(0, 0, 0, 0)
+
+    return Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1
+}
+
+const calcDailyQuantity = (plan) => {
+    const days = calcDurationDays(plan.startDate, plan.endDate)
+    if (!days || days <= 0) return 0
+    return Math.ceil(plan.productionQuantity / days)
+}
+
+const setThisMonth = () => {
+    month.value = toMonthValue(new Date());
+};
+
+const dailySummaryMap = computed(() => {
+    const map = {}
+    dailySummary.value.forEach(s => { map[s.productionLineId] = s })
+    return map
+})
 
 const isToday = (day) => {
     const now = new Date()
     const [y, m] = month.value.split('-').map(Number)
-    return (
-        now.getFullYear() === y &&
-        now.getMonth() + 1 === m &&
-        now.getDate() === day
-    )
+    return now.getFullYear() === y && now.getMonth() + 1 === m && now.getDate() === day
 }
 
-/**
- * Gantt scroll sync (header <-> body)
- */
-const ganttHeaderRef = ref(null)
-const ganttBodyRef = ref(null)
-const syncScroll = (e) => {
-    if (ganttHeaderRef.value) {
-        ganttHeaderRef.value.scrollLeft = e.target.scrollLeft
+const isWeekend = (day) => {
+    const [y, m] = month.value.split('-').map(Number)
+    const dayOfWeek = new Date(y, m - 1, day).getDay()
+    return dayOfWeek === 0 || dayOfWeek === 6 // 0:일, 6:토
+}
+
+const getLoadClass = (lineId, day) => {
+    const summary = dailySummaryMap.value[lineId]
+    if (!summary || !summary.dailyPlannedQtyMap) return ''
+    const planned = summary.dailyPlannedQtyMap[day] || 0
+    const capa = summary.dailyCapacity || 0
+    if (capa === 0) return ''
+    const rate = planned / capa
+    if (rate > 1) return 'load-over'
+    if (rate >= 0.8) return 'load-warn'
+    if (rate >= 0.5) return 'load-mid'
+}
+
+const barStyle = (plan) => {
+    const [y, m] = month.value.split('-').map(Number)
+    const monthStart = new Date(y, m - 1, 1)
+    const monthEnd = new Date(y, m, 0)
+    const totalDays = daysInMonth.value // 이번 달 전체 일수 (예: 31)
+
+    const start = new Date(plan.startDate); start.setHours(0, 0, 0, 0)
+    const end = new Date(plan.endDate); end.setHours(0, 0, 0, 0)
+
+    const s = start < monthStart ? monthStart : start
+    const e = end > monthEnd ? monthEnd : end
+    if (s > e) return { display: 'none' }
+
+    // 시작 위치(left): (시작일 - 1) / 전체일수 * 100
+    const leftPercent = ((s.getDate() - 1) / totalDays) * 100
+
+    // 너비(width): (표시일수) / 전체일수 * 100
+    const durationDays = (e.getDate() - s.getDate() + 1)
+    const widthPercent = (durationDays / totalDays) * 100
+
+    const laneIndex = plan._laneIndex ?? 0
+
+    return {
+        left: `${leftPercent}%`,
+        width: `${widthPercent}%`,
+        top: `${BAR_TOP_PADDING + laneIndex * (BAR_HEIGHT + BAR_GAP)}px`,
+        height: `${BAR_HEIGHT}px`,
+        padding: '0 4px'
     }
 }
-const displayMonth = computed(() => {
-    const [y, m] = month.value.split('-').map(Number)
-    return `${y}년 ${m}월`
-})
+
+const maxLaneCount = (lineId) => {
+    const list = plansByLine.value[lineId] || []
+    return Math.max(1, ...list.map(p => p._laneIndex + 1))
+}
+
+const syncScroll = (e) => {
+    if (ganttHeaderRef.value) ganttHeaderRef.value.scrollLeft = e.target.scrollLeft
+}
 
 const prevMonth = () => {
     const [y, m] = month.value.split('-').map(Number)
-    const d = new Date(y, m - 2, 1)
-    month.value = toMonthValue(d)
+    month.value = toMonthValue(new Date(y, m - 2, 1))
 }
 
 const nextMonth = () => {
     const [y, m] = month.value.split('-').map(Number)
-    const d = new Date(y, m, 1)
-    month.value = toMonthValue(d)
+    month.value = toMonthValue(new Date(y, m, 1))
 }
 
-const monthInput = ref(null)
-
-const openMonthPicker = () => {
-    monthInput.value?.showPicker()
-}
-
-
-/**
- * plans grouping by line
- */
-const plansByLine = computed(() => {
-    const map = {}
-    for (const p of plans.value) {
-        const lineId = p.productionLineId
-        if (!map[lineId]) map[lineId] = []
-        map[lineId].push(p)
-    }
-    return map
-})
-
-/**
- * bar position
- * plan: { startDate, endDate } assumed 'YYYY-MM-DD'
- */
-const barStyle = (plan) => {
-    const [y, m] = month.value.split('-').map(Number)
-
-    const monthStart = new Date(y, m - 1, 1)
-    const monthEnd = new Date(y, m, 0)
-
-    const start = new Date(plan.startDate)
-    const end = new Date(plan.endDate)
-
-    // 월 범위로 clamp
-    const s = start < monthStart ? monthStart : start
-    const e = end > monthEnd ? monthEnd : end
-
-    if (s > e) return { display: 'none' }
-
-    const startDay = s.getDate()
-    const endDay = e.getDate()
-
-    return {
-        left: (startDay - 1) * DAY_WIDTH + 'px',
-        width: (endDay - startDay + 1) * DAY_WIDTH + 'px',
-        height: '38px',
-        top: '9px'
-    }
-}
-
-/**
- * navigation actions
- */
-const openCreate = (prItemId) => {
-    selectedPrItemId.value = prItemId
+const openCreate = (u) => {
+    selectedPrItemId.value = u.prItemId
+    selectedLineId.value = u.productionLineId
     showPlanModal.value = true
 }
-
 const openPlan = (plan) => {
-    // TODO: 상세/수정 모달 열기 (원하면 바로 만들어줄게)
-    // 지금은 우선 클릭 시 콘솔만
-    console.log('plan clicked', plan)
+    selectedPpId.value = plan.ppId
+    showDetailModal.value = true
 }
 
-const onCreated = async () => {
-    showPlanModal.value = false
-    selectedPrItemId.value = null
-    await reloadAll()
+function assignPlanLanes(plans) {
+    const lanes = []
+
+    for (const plan of plans) {
+        let placed = false
+
+        for (let i = 0; i < lanes.length; i++) {
+            const last = lanes[i][lanes[i].length - 1]
+
+            // 겹치지 않으면 같은 lane 사용
+            if (new Date(last.endDate) < new Date(plan.startDate)) {
+                lanes[i].push(plan)
+                plan._laneIndex = i
+                placed = true
+                break
+            }
+        }
+
+        if (!placed) {
+            plan._laneIndex = lanes.length
+            lanes.push([plan])
+        }
+    }
+
+    return plans
 }
+
 
 const reloadAll = async () => {
-    lines.value = await getProductionLines(2)
+    lines.value = await getProductionLines(3)   // 공장 id 고정
     plans.value = await getMonthlyPlans(month.value)
     unassigned.value = await getUnassignedTargets()
+    dailySummary.value = await getDailyLineSummary(month.value, 2)
 }
-watch(month, async () => {
-    await reloadAll()
-})
 
+const onCreated = () => { showPlanModal.value = false; reloadAll() }
+
+watch(month, reloadAll)
 onMounted(reloadAll)
 
-/**
- * utils
- */
 function toMonthValue(d) {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    return `${y}-${m}`
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+const formatNumber = (v) => v?.toLocaleString() || '0'
+
+const calcDday = (dueAt) => {
+    if (!dueAt) return '-'
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const due = new Date(dueAt)
+    due.setHours(0, 0, 0, 0)
+
+    return Math.max(
+        0,
+        Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+    )
 }
 
-const formatNumber = (v) => (v != null ? Number(v).toLocaleString() : '-')
+const ddayClass = (dueAt) => {
+    const d = calcDday(dueAt)
+    if (d <= 3) return 'danger'
+    if (d <= 7) return 'warn'
+    return 'safe'
+}
+
+const formatDate = (d) => {
+    if (!d) return '-'
+    return d.slice(0, 10) // YYYY-MM-DD
+}
+
 </script>
 
 <style scoped>
 .pp-wrap {
-    background: #F9FAFB;
-    padding: 24px;
-    min-height: calc(100vh - 70px);
+    padding: 5px;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
 }
 
-.pp-header {
+/* ===== 헤더 ===== */
+.page-header {
+    margin-bottom: 20px;
     display: flex;
-    align-items: flex-end;
     justify-content: space-between;
-    margin-bottom: 12px;
+    align-items: flex-end;
 }
 
-.pp-title {
-    font-size: 22px;
-    font-weight: 800;
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
     color: #111827;
+    margin-bottom: 8px;
 }
 
-.pp-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.page-description {
+    font-size: 14px;
+    color: #6b7280;
 }
 
-.month-box input[type="month"] {
-    height: 34px;
-    border: 1px solid #D9D9D9;
-    border-radius: 10px;
-    padding: 0 10px;
-    font-size: 13px;
-    font-weight: 600;
-    background: #fff;
-}
-
+/* Gantt Layout */
 .panel {
-    background: #fff;
-    border: 1px solid #E5E7EB;
-    border-radius: 10px;
-    padding: 14px;
-}
-
-.gantt {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    grid-template-rows: 44px auto;
-    border: 1px solid #D9D9D9;
-    border-radius: 10px;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
     overflow: hidden;
 }
 
-.gantt-left.head {
-    background: #F9FAFB;
-    border-right: 1px solid #D9D9D9;
-    border-bottom: 1px solid #D9D9D9;
-}
-
-.gantt-right.head {
-    background: #F9FAFB;
-    border-bottom: 1px solid #D9D9D9;
-    overflow: visible;
-}
-
-.left-head {
+.gantt-container {
     display: flex;
-    align-items: center;
-    height: 44px;
-    padding: 0 12px;
+    flex-direction: column;
 }
 
-.left-head__title {
-    color: #6B7280;
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.gantt-left.body {
-    border-right: 1px solid #D9D9D9;
-    background: #fff;
-}
-
-.line-cell {
-    height: 56px;
-    padding: 10px 12px;
-    border-bottom: 1px solid #EEF2F7;
-}
-
-.line-cell:last-child {
-    border-bottom: none;
-}
-
-.line-name {
-    font-size: 13px;
-    font-weight: 800;
-    color: #111827;
-}
-
-.line-meta {
-    margin-top: 4px;
-    font-size: 11px;
-    color: #6B7280;
-    display: grid;
-    gap: 2px;
-}
-
-.meta-row {
+.gantt-header-row {
     display: flex;
-    gap: 6px;
-}
-
-.meta-k {
-    color: #9CA3AF;
-    font-weight: 700;
-}
-
-.meta-v {
-    font-weight: 700;
-}
-
-.gantt-right.body {
-    overflow: auto;
-    background: #fff;
-}
-
-.days-row {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 34px;
-    height: 44px;
-    overflow: hidden;
-}
-
-.day-cell {
-    position: relative;
-    border-right: 1px solid #EEF2F7;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #6B7280;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.day-cell.today {
-    background: rgba(244, 63, 94, 0.06);
-    border-right: 1px solid rgba(244, 63, 94, 0.12);
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
 }
 
 .day-num {
-    transform: translateY(1px);
-    margin-top: 14px;
+    font-size: 14px;
 }
 
-.today-pill {
+.gantt-label-column {
+    width: 220px;
+    flex-shrink: 0;
+    padding: 12px 20px;
+    border-right: 1px solid #e2e8f0;
+}
+
+.gantt-timeline-column {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+/* Timeline Header */
+.days-row {
+    display: flex;
+    height: 50px;
+}
+
+.day-cell,
+.grid-cell {
+    width: 0;
+    flex: 1 0 0;
+    padding-bottom: 5px;
+    min-width: 30px;
+    border-right: 1px solid #f1f5f9;
+}
+
+.day-cell {
+    width: 40px;
+    flex-grow: 1;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    border-right: 1px solid #f1f5f9;
+    position: relative;
+}
+
+/* 
+.day-cell.weekend {
+    background: #f1f5f9;
+} */
+
+.day-cell.today {
+    background: #fff1f2;
+    color: #e11d48;
+}
+
+.today-tag {
     position: absolute;
     top: 2px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #EF4444;
-    color: #fff;
-    font-size: 10px;
-    font-weight: 800;
-    padding: 2px 6px;
-    border-radius: 999px;
+    font-size: 8px;
+    font-weight: 900;
+    background: #e11d48;
+    color: white;
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+
+/* Gantt Body */
+.gantt-row {
+    display: flex;
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+.line-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: white;
+    z-index: 10;
+}
+
+.line-name {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 16px;
+}
+
+.line-meta {
+    font-size: 13px;
+    color: #94a3b8;
+    display: flex;
+    flex-direction: column;
+}
+
+.body-grid {
+    overflow-x: auto;
+    position: relative;
 }
 
 .grid-row {
+    display: flex;
+    height: 60px;
     position: relative;
-    height: 56px;
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 34px;
-    border-bottom: 1px solid #EEF2F7;
-}
-
-.grid-row:last-child {
-    border-bottom: none;
 }
 
 .grid-cell {
-    border-right: 1px solid #EEF2F7;
+    width: 40px;
+    flex-grow: 1;
+    flex-shrink: 0;
+    border-right: 1px solid #f1f5f9;
+    position: relative;
 }
 
-.grid-cell.today {
-    background: rgba(244, 63, 94, 0.06);
+/* Load Indicators (Top Bar) */
+.grid-cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    opacity: 0.8;
 }
 
+.load-over::before {
+    background: #ef4444;
+}
+
+.load-warn::before {
+    background: #f59e0b;
+}
+
+.load-mid::before {
+    background: #3b82f6;
+}
+
+/* Plan Bars */
 .bars-layer {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     pointer-events: none;
 }
 
 .plan-bar {
     position: absolute;
-    border-radius: 8px;
-    background: rgba(76, 76, 221, 0.12);
-    border: 1px solid rgba(76, 76, 221, 0.35);
-    padding: 6px 8px;
     pointer-events: auto;
     cursor: pointer;
-    overflow: hidden;
+    border-radius: 8px;
+    background: #6366f1;
+    color: white;
+    z-index: 20;
+    box-sizing: border-box;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.plan-bar.draft {
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.35);
+.plan-bar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    z-index: 50;
+}
+
+.plan-bar {
+    background: #6366f1;
+    color: white;
+}
+
+/* Default confirmed style */
+.plan-bar.PP_DRAFT {
+    background: #10b981;
+}
+
+.bar-content {
+    padding: 4px 8px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
 }
 
 .bar-title {
-    font-size: 12px;
-    font-weight: 800;
-    color: #111827;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.bar-sub {
-    font-size: 11px;
-    font-weight: 700;
-    color: #4C4CDD;
-    margin-top: 1px;
-}
-
-.empty-box {
-    padding: 16px;
-    color: #6B7280;
     font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bar-qty {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+/* Unassigned Cards */
+.unassigned-panel {
+    margin-top: 12px;
+    padding: 20px;
 }
 
 .sub-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 16px;
 }
 
 .sub-title {
-    font-size: 13px;
-    font-weight: 800;
-    color: #111827;
+    font-size: 18px;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.warn {
-    color: #F59E0B;
-    font-weight: 900;
-}
-
 .sub-desc {
+    font-size: 15px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.count-badge {
+    background: #e11d48;
+    color: white;
     font-size: 12px;
-    color: #9CA3AF;
-    font-weight: 700;
-}
-
-.empty-row {
-    padding: 14px;
-    color: #6B7280;
-    font-size: 13px;
-}
-
-
-.unassigned-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(clamp(300px, 23vw, 340px), 1fr));
-    gap: 14px;
-}
-
-.unassigned-item {
-    width: 100%;
-}
-
-.unassigned-item {
-    border: 1px solid #D9D9D9;
+    padding: 2px 8px;
     border-radius: 12px;
+}
+
+/* ===== Unassigned Cards ===== */
+
+.unassigned-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+/* 카드 */
+.ua-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
     padding: 16px 18px;
-    background: #fff;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
 }
 
-.unassigned-item:hover {
-    border-color: #4C4CDD;
-    background: #F9FAFB;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-    transform: translateY(-1px);
+.ua-card:hover {
+    border-color: #4c4cdd;
+    box-shadow: 0 8px 18px rgba(76, 76, 221, 0.12);
+    transform: translateY(-2px);
 }
 
-.ua-head {
+/* 상단 영역 */
+.ua-top {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* PR 코드 */
+.ua-pr {
+    font-size: 13px;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: 0.2px;
+}
+
+/* D-Day */
+.ua-dday {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+/* D-Day 색상 */
+.ua-dday.safe {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.ua-dday.warn {
+    background: #fff7ed;
+    color: #b45309;
+}
+
+.ua-dday.danger {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+/* 제품명 */
+.ua-item-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: #1e293b;
     margin-bottom: 14px;
 }
 
-.ua-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #000;
-}
-
-.ua-line {
-    font-size: 13px;
-    font-weight: 500;
-    color: #4C4CDD;
-}
-
-.ua-body.kv {
-    display: grid;
-    grid-template-columns: 100px 1fr;
-    row-gap: 10px;
-    column-gap: 12px;
-}
-
-.ua-body .k {
-    font-size: 13px;
-    font-weight: 500;
-    color: #898989;
-}
-
-.ua-body .v {
+/* 상세 정보 */
+.ua-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     font-size: 14px;
-    font-weight: 400;
-    color: #000;
+    color: #475569;
 }
 
-.ua-foot {
-    margin-top: 14px;
-    text-align: right;
-    font-size: 13px;
-    font-weight: 600;
-    color: #4C4CDD;
+.ua-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
 }
 
-.month-nav {
+.ua-row span {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.ua-row strong {
+    font-weight: 700;
+    color: #111827;
+}
+
+.ua-row strong.line {
+    color: #4c4cdd;
+}
+
+/* Empty */
+.empty-inline {
+    padding: 24px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+
+.gantt-row.alt {
+    background: #fafafa;
+}
+
+.global-tooltip {
+    position: fixed;
+    background: rgba(17, 24, 39, 0.95);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px 14px;
+    border-radius: 8px;
+    white-space: pre-line;
+    z-index: 99999;
+    pointer-events: none;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    width: max-content;
+    max-width: 300px;
+}
+
+.global-tooltip::before {
+    display: none;
+}
+
+/* ===== 날짜 컨트롤 ===== */
+.pp-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.date-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.date-controls {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
 }
 
-.month-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    border: 1px solid #D9D9D9;
-    background: #fff;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.month-btn:hover {
-    background: #F3F4F6;
-}
-
-.month-label {
-    min-width: 110px;
-    text-align: center;
+/* 연월 선택 인풋 스타일 */
+.date-input {
+    padding: 6px 10px;
     font-size: 14px;
-    font-weight: 700;
-    color: #111827;
-}
-
-.month-picker {
-    position: relative;
-}
-
-.month-label {
-    font-size: 15px;
-    font-weight: 700;
-    color: #111827;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 4px 8px;
+    font-weight: 600;
+    border: 1px solid #d1d5db;
     border-radius: 6px;
+    background: #ffffff;
+    color: #111827;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
 }
 
-.month-label:hover {
-    background: #F3F4F6;
+.date-input:hover {
+    border-color: #4C4CDD;
 }
 
-.hidden-month-input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
+/* 버튼 스타일 */
+.date-btn {
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.date-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+/* 부하율 안내 영역 */
+.load-info-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    padding-right: 12px;
+
+}
+
+/* 범례 아이템 배열 */
+.load-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    margin: 8px 0 12px;
+}
+
+.lg-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* 동그란 점 아이콘 */
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot.low {
+    background-color: #10b981;
+    opacity: 0.8;
+}
+
+.dot.mid {
+    background-color: #3b82f6;
+    opacity: 0.8;
+}
+
+.dot.warn {
+    background-color: #f59e0b;
+    opacity: 0.8;
+}
+
+.dot.over {
+    background-color: #ef4444;
+    opacity: 0.8;
+}
+
+.pp-controls {
+    align-items: flex-start;
 }
 </style>

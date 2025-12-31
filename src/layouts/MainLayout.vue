@@ -47,6 +47,7 @@ const showLayout = computed(() => {
 
 const showSidebar = computed(() => {
     if (route.meta.hideLayout) return false
+    if (route.path === '/forbidden') return false
     return !isMobile.value
 })
 

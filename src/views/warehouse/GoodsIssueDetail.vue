@@ -1,5 +1,18 @@
 <template>
     <div class="gi-detail-page">
+        <!-- 로딩 스피너 -->
+        <div
+            v-if="isLoading"
+            class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
+        >
+            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+                </path>
+            </svg>
+        </div>
+
         <!-- 상단 헤더 -->
         <div class="page-header">
             <div class="breadcrumb">
@@ -121,7 +134,7 @@
                     <div class="card-content">
                         <div class="info-row">
                             <span class="label">주문번호</span>
-                            <span class="value link" @click="goToOrder(giDetail.soCode)">
+                            <span class="value link" @click="goToOrder">
                                 {{ giDetail.soCode }}
                             </span>
                         </div>
@@ -134,9 +147,9 @@
                             <span class="value">{{ formatDateTime(giDetail.shippedAt) }}</span>
                         </div>
                     </div>
-                    <router-link :to="`/orders/${giDetail.soCode}`" class="view-order-link">
+                    <div class="view-order-link" @click="goToOrder">
                         주문상세 바로가기 →
-                    </router-link>
+                    </div>
                 </div>
             </div>
 
@@ -190,7 +203,18 @@
                     <h2 class="section-title">특이사항</h2>
                     <div class="button-group">
                         <button class="btn-secondary" @click="openDeliveryOrderPreview">납품서 인쇄</button>
-                        <button class="btn-secondary" @click="openGIPreview">출고지시서 인쇄</button>
+
+                        <!-- 출고지시서 인쇄 버튼 (담당자 배정 후 표시) -->
+                        <button
+                            v-if="giDetail.managerName"
+                            class="btn-secondary"
+                            @click="openGIPreview"
+                        >
+                            출고지시서 인쇄
+                        </button>
+                        <span v-else class="text-gray-400" style="padding: 8px 16px; font-size: 14px;">
+                            담당자 배정 후 출고지시서 인쇄 가능
+                        </span>
                     </div>
                 </div>
                 <div class="notes-box">
@@ -203,8 +227,8 @@
                 <div class="section-header">
                     <h2 class="section-title">출고 지시 결재 진행 상황</h2>
                     <router-link
-                        v-if="giDetail.approvalCode"
-                        :to="`/approvals/${giDetail.approvalCode}`"
+                        v-if="giDetail.approvalId"
+                        :to="`/approval/${giDetail.approvalId}`"
                         class="view-approval-link"
                     >
                         결재 바로가기 →
@@ -212,7 +236,7 @@
                 </div>
 
                 <!-- 결재가 없는 경우 -->
-                <div v-if="!giDetail.approvalCode" class="approval-status">
+                <div v-if="!giDetail.approvalId" class="approval-status">
                     <div class="empty-state">
                         <img src="@/assets/새로이새로미.png" alt="결재 없음" class="empty-icon" />
                         <p class="empty-message">진행 중인 결재가 없습니다.</p>
@@ -227,7 +251,7 @@
                         <div class="flow-step">
                             <div class="flow-circle completed">기안</div>
                             <div class="flow-info">
-                                <div class="flow-label">기안</div>
+                                <div class="flow-label">{{ giDetail.managerName || '기안' }} · {{ giDetail.managerDepartment || '-' }}</div>
                             </div>
                         </div>
 
@@ -265,13 +289,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- 기안자 -->
+                            <!-- 기안자 (담당자) -->
                             <tr>
                                 <td><span class="badge-sm green">기안</span></td>
-                                <td>{{ giDetail.drafterName || '-' }}</td>
-                                <td>{{ formatRole(giDetail.drafterRank, giDetail.drafterPosition) }}</td>
-                                <td>{{ giDetail.drafterDepartment || '-' }}</td>
-                                <td><span class="status-text approved">승인</span></td>
+                                <td>{{ giDetail.managerName || '-' }}</td>
+                                <td>{{ formatRole(giDetail.managerRank, giDetail.managerPosition) }}</td>
+                                <td>{{ giDetail.managerDepartment || '-' }}</td>
+                                <td><span class="status-text approved">상신</span></td>
                                 <td>{{ formatDateTime(giDetail.createdAt) }}</td>
                                 <td>-</td>
                             </tr>
@@ -309,8 +333,79 @@
 
         <!-- 배송 관리 탭 -->
         <div v-if="activeTab === 'delivery'" class="tab-content">
-            <div class="empty-state">
-                <p>배송 관리 기능은 준비 중입니다.</p>
+            <!-- 출고 정보 -->
+            <div class="section">
+                <h3 class="card-title">출고 정보</h3>
+                <div class="delivery-info-box">
+                    <div class="delivery-info-row">
+                        <span class="label">주문 번호</span>
+                        <span class="value">{{ giDetail.soCode || '-' }}</span>
+                    </div>
+                    <div class="delivery-info-row">
+                        <span class="label">고객사</span>
+                        <span class="value">{{ giDetail.companyName || '-' }}</span>
+                    </div>
+                    <div class="delivery-info-row">
+                        <span class="label">배송 상태</span>
+                        <span class="value">
+                            <span :class="getDeliveryStatusClass(giDetail.status)">
+                                {{ getDeliveryStatusText(giDetail.status) }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배송 현황 -->
+            <div class="section">
+                <h3 class="card-title">배송 현황</h3>
+                <div class="delivery-timeline">
+                    <!-- 출고 완료 -->
+                    <div class="timeline-item" :class="{ active: deliveryStep >= 1, completed: deliveryStep > 1 }">
+                        <div class="timeline-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
+                            </svg>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">출고 완료</div>
+                            <div class="timeline-date">{{ formatDateTime(giDetail.shippedAt) }}</div>
+                            <div class="timeline-detail">출고지시가 완료되어 배송 준비가 시작되었습니다.</div>
+                        </div>
+                    </div>
+
+                    <!-- 배송 중 -->
+                    <div class="timeline-item" :class="{ active: deliveryStep >= 2, completed: deliveryStep > 2 }">
+                        <div class="timeline-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z"/>
+                            </svg>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">배송중</div>
+                            <div class="timeline-date">{{ giDetail.status === 'GI_SHIP_ING' || giDetail.status === 'GI_SHIP_DONE' ? '배송 진행 중' : '대기' }}</div>
+                            <div class="timeline-detail" v-if="giDetail.status === 'GI_SHIP_ING' || giDetail.status === 'GI_SHIP_DONE'">
+                                상품이 배송 중입니다.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 도착 완료 -->
+                    <div class="timeline-item" :class="{ active: deliveryStep >= 3, completed: deliveryStep === 3 }">
+                        <div class="timeline-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">도착 완료</div>
+                            <div class="timeline-date">{{ giDetail.status === 'GI_SHIP_DONE' ? '배송 완료' : '대기' }}</div>
+                            <div class="timeline-detail" v-if="giDetail.status === 'GI_SHIP_DONE'">
+                                고객에게 성공적으로 배송되었습니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -329,9 +424,9 @@
             <button
                 v-if="showApprovalRequestButton"
                 class="btn-primary-large"
-                @click="requestApproval"
+                @click="goToCreateApproval"
             >
-                결재 요청
+                결재 상신하기
             </button>
         </div>
 
@@ -348,17 +443,28 @@
             :goods-issue="giDetail"
             @close="closeGIPreview"
         />
+
+        <!-- 담당자 배정 모달 -->
+        <ManagerAssignmentModal
+            v-if="isManagerModalOpen"
+            :departmentData="deptEmployees"
+            @close="isManagerModalOpen = false"
+            @confirm="onConfirmAssignment"
+        />
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getGIDetail, assignGIManager, completeGI } from '@/api/shipping/goodsIssue'
 import { getDODetail } from '@/api/shipping/deliveryOrder'
+import { getEmployees } from '@/api/employee/employee'
 import DeliveryOrderPreviewModal from '@/components/modals/DeliveryOrderPreviewModal.vue'
 import GoodsIssuePreviewModal from '@/components/modals/GoodsIssuePreviewModal.vue'
+import ManagerAssignmentModal from '@/views/order/ManagerAssignmentModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -391,12 +497,12 @@ const showAssignManagerButton = computed(() => {
 const showApprovalRequestButton = computed(() => {
     const result = giDetail.value.managerName &&
            giDetail.value.status === 'GI_RVW' &&
-           !giDetail.value.approvalCode
+           !giDetail.value.approvalId
 
     console.log('showApprovalRequestButton:', {
         managerName: giDetail.value.managerName,
         status: giDetail.value.status,
-        approvalCode: giDetail.value.approvalCode,
+        approvalId: giDetail.value.approvalId,
         result: result
     })
 
@@ -406,11 +512,48 @@ const showApprovalRequestButton = computed(() => {
 // 탭 상태
 const activeTab = ref('issue')
 
+// 배송 단계 계산 (타임라인용)
+const deliveryStep = computed(() => {
+    const status = giDetail.value.status
+    if (status === 'GI_ISSUED' || status === 'GI_SHIP_ISSUED') return 1
+    if (status === 'GI_SHIP_ING') return 2
+    if (status === 'GI_SHIP_DONE') return 3
+    return 0
+})
+
+// 배송 상태 텍스트
+const getDeliveryStatusText = (status) => {
+    const statusMap = {
+        'GI_ISSUED': '출고 완료',
+        'GI_SHIP_ISSUED': '출고 완료',
+        'GI_SHIP_ING': '배송 중',
+        'GI_SHIP_DONE': '배송 완료'
+    }
+    return statusMap[status] || '-'
+}
+
+// 배송 상태 클래스
+const getDeliveryStatusClass = (status) => {
+    if (status === 'GI_SHIP_DONE') return 'delivery-status-badge delivery-completed'
+    if (status === 'GI_SHIP_ING') return 'delivery-status-badge delivery-shipping'
+    if (status === 'GI_ISSUED' || status === 'GI_SHIP_ISSUED') return 'delivery-status-badge delivery-issued'
+    return 'delivery-status-badge'
+}
+
 // 납품서 미리보기 모달 상태
 const isDeliveryOrderModalOpen = ref(false)
 
 // 출고지시서 미리보기 모달 상태
 const isGoodsIssueModalOpen = ref(false)
+
+// 담당자 배정 모달 상태
+const isManagerModalOpen = ref(false)
+
+// 직원 목록 데이터
+const deptEmployees = ref([])
+
+// 로딩 상태
+const isLoading = ref(true)
 
 // 납품서 데이터 (실제 API에서 가져온 데이터)
 const deliveryOrderData = ref({
@@ -484,6 +627,7 @@ const closeGIPreview = () => {
 // 출고지시 상세 데이터
 const giDetail = ref({
     giCode: '',
+    giUrl: '', // PDF URL 추가
     status: '',
     drafterName: '',
     managerName: '',
@@ -493,6 +637,7 @@ const giDetail = ref({
     address: '',
     recipientName: '',
     recipientContact: '',
+    soId: null,
     soCode: '',
     doCode: '',
     clientName: '',
@@ -500,6 +645,7 @@ const giDetail = ref({
     warehouseName: '',
     note: '',
     approvalCode: '',
+    approvalId: null,
     items: [],
     approvalLines: []
 })
@@ -527,19 +673,6 @@ const sortedApprovalLines = computed(() => {
     return [...giDetail.value.approvalLines].sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
 })
 
-// 결재 진행 상태 확인
-const hasApprovedLine = computed(() => {
-    return sortedApprovalLines.value.some(line => line.status === 'ALS_APPR')
-})
-
-const hasReviewingLine = computed(() => {
-    return sortedApprovalLines.value.some(line => line.status === 'ALS_RVW')
-})
-
-const allApproved = computed(() => {
-    if (sortedApprovalLines.value.length === 0) return false
-    return sortedApprovalLines.value.every(line => line.status === 'ALS_APPR')
-})
 
 // 결재 구분 라벨
 const getLineTypeLabel = (lineType) => {
@@ -600,6 +733,7 @@ const formatDateTime = (dateTime) => {
 // 출고지시 상세 조회
 const fetchGIDetail = async () => {
     try {
+        isLoading.value = true
         const giCode = route.params.giCode
         const response = await getGIDetail(giCode)
         giDetail.value = response
@@ -610,7 +744,7 @@ const fetchGIDetail = async () => {
             doCode: giDetail.value.doCode,
             status: giDetail.value.status,
             managerName: giDetail.value.managerName,
-            approvalCode: giDetail.value.approvalCode,
+            approvalId: giDetail.value.approvalId,
             canAssignManager: canAssignManager.value,
             buttonShouldShow: canAssignManager.value && !giDetail.value.managerName && giDetail.value.status === 'GI_RVW'
         })
@@ -622,34 +756,68 @@ const fetchGIDetail = async () => {
         } else if (error.response?.status !== 401) {
             alert('출고지시 상세를 불러오는데 실패했습니다.')
         }
+    } finally {
+        isLoading.value = false
     }
 }
 
-// 담당자 배정
-const assignManager = async () => {
-    if (!confirm('담당자로 배정하시겠습니까?')) return
-
+// 직원 목록 조회 (물류부만 필터링)
+const fetchEmployees = async () => {
     try {
-        await assignGIManager(giDetail.value.giCode)
-        alert('담당자로 배정되었습니다.')
-        fetchGIDetail() // 새로고침
+        const response = await getEmployees()
+        // 물류부(DEPT_WHS) 소속 직원만 필터링
+        deptEmployees.value = response
+            .filter(dept => dept.deptCode === 'DEPT_WHS')
+            .map(dept => ({
+                ...dept,
+                teams: dept.teams || []
+            }))
+    } catch (error) {
+        console.error('직원 목록 조회 실패:', error)
+        alert('직원 목록을 불러오는데 실패했습니다.')
+    }
+}
+
+// 담당자 배정 모달 열기
+const assignManager = async () => {
+    await fetchEmployees()
+    isManagerModalOpen.value = true
+}
+
+// 담당자 배정 확정
+const onConfirmAssignment = async (employee) => {
+    try {
+        await assignGIManager(giDetail.value.giCode, employee.id)
+        alert(`담당자가 ${employee.name}(으)로 배정되었습니다.`)
+        isManagerModalOpen.value = false
+        await fetchGIDetail()
     } catch (error) {
         console.error('담당자 배정 실패:', error)
         alert(error.response?.data?.message || '담당자 배정에 실패했습니다.')
     }
 }
 
-// 결재 요청
-const requestApproval = () => {
-    // TODO: 결재 요청 모달 구현 필요
-    // 현재는 임시로 알림만 표시
-    alert('결재 요청 기능은 준비 중입니다.\n결재선 선택 모달을 구현해야 합니다.')
+// 결재 상신 페이지로 이동
+const goToCreateApproval = () => {
+    const routeData = router.resolve({
+        path: '/approval/create',
+        query: {
+            refDocType: 'gi',
+            refDocId: giDetail.value.giCode
+        }
+    })
+
+    window.open(routeData.href, '_blank')
 }
 
 // 주문 상세 페이지로 이동
-const goToOrder = (soCode) => {
-    if (soCode) {
-        router.push(`/orders/${soCode}`)
+const goToOrder = async () => {
+    if (giDetail.value.soId) {
+        isLoading.value = true
+        // DOM 업데이트를 기다린 후 페이지 전환
+        await nextTick()
+        await new Promise(resolve => setTimeout(resolve, 200))
+        router.push(`/order/management/${giDetail.value.soId}`)
     }
 }
 
@@ -724,6 +892,7 @@ watch(
 <style scoped>
 /* ===== 페이지 전체 ===== */
 .gi-detail-page {
+    position: relative;
     padding: 20px;
     max-width: 1400px;
     margin: 0 auto;
@@ -1372,5 +1541,240 @@ watch(
     background: #3d3dbb;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(76, 76, 221, 0.3);
+}
+
+/* ===== 배송 관리 탭 스타일 ===== */
+.delivery-info-box {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.delivery-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.delivery-info-row .label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.delivery-info-row .value {
+    color: #111827;
+    font-weight: 600;
+}
+
+/* 배송 상태 뱃지 */
+.delivery-status-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.delivery-issued {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.delivery-shipping {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.delivery-completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* 배송 타임라인 */
+.delivery-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 16px;
+    padding: 20px 0;
+    position: relative;
+    opacity: 0.4;
+}
+
+.timeline-item.active {
+    opacity: 1;
+}
+
+.timeline-item.completed {
+    opacity: 0.7;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 60px;
+    bottom: -20px;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-item.active:not(:last-child)::before,
+.timeline-item.completed:not(:last-child)::before {
+    background: #10b981;
+}
+
+.timeline-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.timeline-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.timeline-item.active .timeline-icon {
+    background: #dbeafe;
+    color: #3b82f6;
+}
+
+.timeline-item.completed .timeline-icon {
+    background: #d1fae5;
+    color: #10b981;
+}
+
+.timeline-content {
+    flex: 1;
+    padding-top: 4px;
+}
+
+.timeline-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.timeline-date {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.timeline-detail {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.5;
+}
+
+/* 이력 정보 */
+.history-box {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 150px;
+}
+
+.empty-history {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+}
+
+.empty-history p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.history-item {
+    display: flex;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.history-time {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 140px;
+}
+
+.history-content {
+    flex: 1;
+}
+
+.history-status {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.history-detail {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .delivery-timeline {
+        padding-left: 8px;
+    }
+
+    .timeline-item {
+        gap: 12px;
+    }
+
+    .timeline-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .timeline-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .history-item {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .history-time {
+        min-width: auto;
+    }
 }
 </style>

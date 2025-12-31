@@ -164,7 +164,13 @@ const submitGoodsIssue = async () => {
         })
 
         alert(response.message || '출고지시가 등록되었습니다.')
-        router.push('/warehouse/goods-issues')
+
+        // 생성된 출고지시 상세 페이지로 이동
+        if (response.giCode) {
+            router.push(`/warehouse/goods-issues/${response.giCode}`)
+        } else {
+            router.push('/warehouse/goods-issues')
+        }
     } catch (err) {
         console.error('출고지시 등록 실패:', err)
         const errorMessage = err.response?.data?.message || '출고지시 등록에 실패했습니다.'

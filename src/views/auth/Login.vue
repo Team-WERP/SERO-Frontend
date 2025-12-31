@@ -52,12 +52,27 @@
                 </button>
             </form>
 
-            <button @click="devLogin('hq')"
+            <button @click="devLogin('sys')"
                 class="mt-8 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
                 본사 직원(시스템 관리자)로 로그인
             </button>
 
-            <button @click="devLogin('client')"
+            <button @click="devLogin('sal')"
+                class="mt-4 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
+                본사 직원(영업팀)로 로그인
+            </button>
+
+            <button @click="devLogin('pro')"
+                class="mt-4 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
+                본사 직원(생산팀)로 로그인
+            </button>
+
+            <button @click="devLogin('whs')"
+                class="mt-4 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
+                본사 직원(물류팀)로 로그인
+            </button>
+
+            <button @click="devLogin('cli')"
                 class="mt-4 h-10 w-full rounded-xl  text-[14px] border border-[#4C4CDD] text-[#4C4CDD] font-semibold hover:opacity-95 transition cursor-pointer">
                 고객사 직원으로 로그인
             </button>
@@ -87,11 +102,28 @@ const isLoggingIn = ref(false);
 const emailRef = ref(null);
 const passwordRef = ref(null);
 
+const firstRouteByRole = {
+    AC_SYS: '/order/dashboard',
+    AC_CLI: '/client-portal/dashboard',
+    AC_SAL: '/order/dashboard',
+    AC_PRO: '/order/management',
+    AC_WHS: '/order/management',
+};
+
 const errors = reactive({
     email: '',
     password: '',
     common: ''
 });
+
+const redirectByRole = (router, roles) => {
+    const target =
+        roles.find(role => firstRouteByRole[role]);
+
+    router.replace(
+        target ? firstRouteByRole[target] : '/'
+    );
+};
 
 const inputClass = (hasError) => [
     'w-full h-10 rounded-[11px] border px-4 text-sm outline-none transition-all',
@@ -133,15 +165,7 @@ const handleLogin = async () => {
             password: password.value
         });
 
-        const { accessToken } = res.data;
-
-        // 토큰만 저장 (Bearer는 axios.js에서 자동으로 추가됨)
-        localStorage.setItem('accessToken', accessToken);
-
-        const userStore = useUserStore();
-        userStore.setFromToken(accessToken);
-
-        router.replace('/');
+        afterLogin(res);
     } catch (e) {
         if (e.response?.status === 401) {
             errors.common =
@@ -169,26 +193,62 @@ const shakeAll = () => {
     }, 300);
 }
 
-const devLogin = async (type) => {
+const devLogin = async (role) => {
     try {
-        const data =
-            type === 'hq'
-                ? { email: 'admin@werp.com', password: 'kang' }
-                : { email: 'sl_buyer@sl.com', password: 'kang' };
+        const accountConfigByRole = {
+            sys: {
+                type: 'hq',
+                email: 'admin@werp.com',
+                password: 'kang',
+            },
+            sal: {
+                type: 'hq',
+                email: 'jihyepark@werp.com',
+                password: 'kang',
+            },
+            pro: {
+                type: 'hq',
+                email: 'jaehyun.choi@werp.com',
+                password: 'kang',
+            },
+            whs: {
+                type: 'hq',
+                email: 'zxc@werp.com',
+                password: 'kang',
+            },
+            cli: {
+                type: 'client',
+                email: 'procurement01@hanwha.com',
+                password: 'kang',
+            },
+        };
 
-        const res = await login(type, data);
+        const config = accountConfigByRole[role];
 
-        const { accessToken } = res.data;
+        if (!config) {
+            throw new Error(`지원하지 않는 role: ${role}`);
+        }
 
-        localStorage.setItem('accessToken', accessToken);
+        const { type, email, password } = config;
 
-        const userStore = useUserStore();
-        userStore.setFromToken(accessToken);
+        const res = await login(type, { email, password });
 
-        router.replace('/');
+        afterLogin(res);
     } catch (e) {
         console.error('개발용 로그인 실패', e);
     }
+};
+
+const afterLogin = (res) => {
+    const { accessToken, name } = res.data;
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('name', name);
+
+    const userStore = useUserStore();
+    userStore.setFromToken(accessToken);
+
+    redirectByRole(router, userStore.authorities);
 };
 </script>
 

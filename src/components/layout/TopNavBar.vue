@@ -13,7 +13,7 @@
 
             <!-- 데스크탑 상단 메뉴 -->
             <nav v-if="!isMobile" class="top-nav__menu">
-                <button v-for="item in navItems" :key="item.key" class="top-nav__item"
+                <button v-for="item in filteredNavItems" :key="item.key" class="top-nav__item"
                     :class="{ 'top-nav__item--active': isActive(item.key) }" @click="change(item.key)">
                     {{ item.label }}
                 </button>
@@ -41,50 +41,73 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMenuStore } from '@/stores/menu'
 import { useResponsive } from '@/composables/useResponsive'
+import { useUserStore } from '@/stores/user'
 
 import AppLogo from '@/components/common/AppLogo.vue'
 import UserProfile from '@/components/common/UserProfile.vue'
 import MobileMenuDrawer from '@/components/layout/MobileMenuDrawer.vue'
 import NotificationBell from '@/components/notification/NotificationBell.vue'
+import { getDefaultPathByModule, getFirstAccessibleMenuPath } from '@/utils/navigation'
 
 const { isMobile } = useResponsive()
 const open = ref(false)
 
 const menuStore = useMenuStore()
+const userStore = useUserStore()
 const router = useRouter()
 
 const navItems = [
-    { key: 'clientPortal', label: '고객포털' },
-    { key: 'order', label: '주문' },
-    { key: 'production', label: '생산' },
-    { key: 'warehouse', label: '재고·물류' },
-    { key: 'master', label: '기준정보' },
-    { key: 'approval', label: '전자결재' },
-    { key: 'notices', label: '공지사항' },
-    { key: 'system', label: '관리자' }
+    { key: 'clientPortal', label: '고객포털', roles: ['AC_CLI'] },
+    { key: 'order', label: '주문', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
+    { key: 'production', label: '생산', roles: ['AC_SAL', 'AC_PRO', 'AC_SYS'] },
+    { key: 'warehouse', label: '재고·물류', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
+    { key: 'master', label: '기준정보', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
+    { key: 'approval', label: '전자결재', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
+    { key: 'notices', label: '공지사항', roles: ['AC_SAL', 'AC_PRO', 'AC_WHS', 'AC_SYS'] },
+    { key: 'system', label: '관리자', roles: ['AC_SYS'] },
 ]
-
-const defaultPath = {
-    clientPortal: '/client-portal/dashboard',
-    order: '/order/dashboard',
-    production: '/production/dashboard',
-    warehouse: '/warehouse/stock',
-    master: '/master/bom',
-    approval: '/approval/dashboard',
-    notices: '/notices',
-    system: '/system/common-code'
-}
 
 const isActive = (key) => menuStore.activeModule === key
 
-const change = (key) => {
-    menuStore.setActiveModule(key)
-    router.push(defaultPath[key])
+const change = async (key) => {
+    const roles = userStore.authorities
+    const menus = menuStore.menus[key] || []
+
+    // 1. 기본 경로
+    const defaultPath = getDefaultPathByModule(key, roles)
+
+    // 2. fallback (첫 접근 가능한 하위 메뉴)
+    const fallbackPath = getFirstAccessibleMenuPath(menus, roles)
+
+    const targetPath = fallbackPath || defaultPath
+
+    if (!targetPath) {
+        return router.push('/forbidden')
+    }
+
+    try {
+        await router.push(targetPath)
+        menuStore.setActiveModule(key)
+    } catch (e) {
+        console.error('메뉴 이동 실패:', e)
+        router.push('/forbidden')
+    }
 }
+
+const filteredNavItems = computed(() =>
+    navItems.filter(item =>
+        (!item.roles ||
+            item.roles.some(role => userStore.authorities.includes(role)))
+        && menuStore.menus[item.key]?.some(menu =>
+            !menu.role ||
+            menu.role.some(r => userStore.authorities.includes(r))
+        )
+    )
+)
 </script>
 
 <style scoped>
