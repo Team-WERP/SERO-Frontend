@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { getMyNotifications, getUnreadCount, markAsRead } from '@/api/notification';
+import { getMyNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification } from '@/api/notification';
 
 export const useNotificationStore = defineStore('notification', {
     state: () => ({
@@ -11,7 +11,7 @@ export const useNotificationStore = defineStore('notification', {
 
     getters: {
         unreadNotifications: (state) =>
-            state.notifications.filter(n => !n.isRead),
+            state.notifications.filter(n => !n.read),
 
         hasUnread: (state) => state.unreadCount > 0
     },
@@ -49,8 +49,8 @@ export const useNotificationStore = defineStore('notification', {
                 await markAsRead(notificationId);
 
                 const notification = this.notifications.find(n => n.id === notificationId);
-                if (notification && !notification.isRead) {
-                    notification.isRead = true;
+                if (notification && !notification.read) {
+                    notification.read = true;
                     this.unreadCount = Math.max(0, this.unreadCount - 1);
                 }
             } catch (error) {
@@ -64,7 +64,7 @@ export const useNotificationStore = defineStore('notification', {
         addNotification(notification) {
             this.notifications.unshift(notification);
 
-            if (!notification.isRead) {
+            if (!notification.read) {
                 this.unreadCount++;
             }
 
@@ -96,6 +96,43 @@ export const useNotificationStore = defineStore('notification', {
                 this.eventSource = null;
             }
             this.isConnected = false;
+        },
+
+        /**
+         * 모든 알림 읽음 처리
+         */
+        async markAllNotificationsAsRead() {
+            try {
+                await markAllAsRead();
+
+                // 모든 알림을 읽음 상태로 변경
+                this.notifications.forEach(n => {
+                    n.read = true;
+                });
+                this.unreadCount = 0;
+            } catch (error) {
+                console.error('모든 알림 읽음 처리 실패:', error);
+            }
+        },
+
+        /**
+         * 알림 삭제
+         */
+        async removeNotification(notificationId) {
+            try {
+                await deleteNotification(notificationId);
+
+                // 삭제할 알림이 읽지 않은 상태였다면 개수 감소
+                const notification = this.notifications.find(n => n.id === notificationId);
+                if (notification && !notification.read) {
+                    this.unreadCount = Math.max(0, this.unreadCount - 1);
+                }
+
+                // 목록에서 제거
+                this.notifications = this.notifications.filter(n => n.id !== notificationId);
+            } catch (error) {
+                console.error('알림 삭제 실패:', error);
+            }
         },
 
         /**

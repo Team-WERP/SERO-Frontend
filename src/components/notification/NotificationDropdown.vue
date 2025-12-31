@@ -1,8 +1,18 @@
 <template>
     <div class="notification-dropdown">
         <div class="dropdown-header">
-            <h3 class="dropdown-title">알림</h3>
-            <span class="unread-count">{{ unreadCount }}개의 새 알림</span>
+            <div class="header-left">
+                <h3 class="dropdown-title">알림</h3>
+                <span class="unread-count">{{ unreadCount }}개의 새 알림</span>
+            </div>
+            <button
+                v-if="notifications.length > 0"
+                class="mark-all-read-btn"
+                @click.stop="handleMarkAllAsRead"
+                :disabled="unreadCount === 0"
+            >
+                모두 읽음
+            </button>
         </div>
 
         <div class="notification-list">
@@ -11,20 +21,27 @@
                     v-for="notification in notifications"
                     :key="notification.id"
                     class="notification-item"
-                    :class="{ 'notification-item--unread': !notification.isRead }"
-                    @click="handleNotificationClick(notification)"
+                    :class="{ 'notification-item--unread': !notification.read }"
                 >
                     <div class="notification-icon" :class="`notification-icon--${notification.type.toLowerCase()}`">
                         <component :is="getNotificationIcon(notification.type)" />
                     </div>
 
-                    <div class="notification-content">
+                    <div class="notification-content" @click="handleNotificationClick(notification)">
                         <div class="notification-title">{{ notification.title }}</div>
                         <div class="notification-message">{{ notification.content }}</div>
                         <div class="notification-time">{{ formatTime(notification.createdAt) }}</div>
                     </div>
 
-                    <div v-if="!notification.isRead" class="unread-dot"></div>
+                    <button
+                        class="delete-btn"
+                        @click.stop="handleDelete(notification.id)"
+                        title="삭제"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
             </template>
 
@@ -126,7 +143,7 @@ const formatTime = (timestamp) => {
 };
 
 const handleNotificationClick = async (notification) => {
-    if (!notification.isRead) {
+    if (!notification.read) {
         await notificationStore.markNotificationAsRead(notification.id);
     }
 
@@ -140,6 +157,14 @@ const handleNotificationClick = async (notification) => {
     }
 
     emit('close');
+};
+
+const handleMarkAllAsRead = async () => {
+    await notificationStore.markAllNotificationsAsRead();
+};
+
+const handleDelete = async (notificationId) => {
+    await notificationStore.removeNotification(notificationId);
 };
 </script>
 
@@ -170,10 +195,18 @@ const handleNotificationClick = async (notification) => {
 }
 
 .dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 20px;
     border-bottom: 1px solid #e5e7eb;
     background: linear-gradient(135deg, #4C4CDD 0%, #6366f1 100%);
     color: white;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
 }
 
 .dropdown-title {
@@ -187,6 +220,27 @@ const handleNotificationClick = async (notification) => {
     opacity: 0.9;
 }
 
+.mark-all-read-btn {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mark-all-read-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.mark-all-read-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .notification-list {
     max-height: 500px;
     overflow-y: auto;
@@ -198,7 +252,6 @@ const handleNotificationClick = async (notification) => {
     gap: 12px;
     padding: 16px 20px;
     border-bottom: 1px solid #f3f4f6;
-    cursor: pointer;
     transition: background-color 0.2s;
     position: relative;
 }
@@ -206,6 +259,7 @@ const handleNotificationClick = async (notification) => {
 .notification-item:hover {
     background-color: #f9fafb;
 }
+
 
 .notification-item--unread {
     background-color: #eff6ff;
@@ -258,6 +312,33 @@ const handleNotificationClick = async (notification) => {
 .notification-content {
     flex: 1;
     min-width: 0;
+    cursor: pointer;
+}
+
+.delete-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn:hover {
+    color: #ef4444;
+    background: #fee2e2;
+    border-radius: 4px;
+}
+
+.delete-btn svg {
+    width: 14px;
+    height: 14px;
 }
 
 .notification-title {
@@ -283,14 +364,6 @@ const handleNotificationClick = async (notification) => {
     color: #9ca3af;
 }
 
-.unread-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
-    flex-shrink: 0;
-    margin-top: 6px;
-}
 
 .empty-state {
     display: flex;

@@ -352,7 +352,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getGIDetail, assignGIManager, completeGI } from '@/api/shipping/goodsIssue'
@@ -706,6 +706,19 @@ const getStatusLabel = (status) => ({
 onMounted(() => {
     fetchGIDetail()
 })
+
+// 라우트 파라미터 변경 감지 (같은 컴포넌트에서 다른 출고지시로 이동할 때)
+watch(
+    () => route.params.giCode,
+    (newGiCode, oldGiCode) => {
+        if (newGiCode && newGiCode !== oldGiCode) {
+            // 탭을 기본값으로 리셋
+            activeTab.value = 'issue'
+            // 데이터 다시 로드
+            fetchGIDetail()
+        }
+    }
+)
 </script>
 
 <style scoped>
