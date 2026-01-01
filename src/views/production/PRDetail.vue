@@ -28,19 +28,20 @@
             </div>
 
             <!-- stepper -->
-            <div class="stepper">
-                <div v-for="(s, idx) in steps" :key="s.code" class="stepper-item">
-                    <div class="dot" :class="getStepState(idx)">
-                        {{ idx + 1 }}
+            <div class="flex items-center gap-4">
+                <div v-for="(step, idx) in steps" :key="idx" class="relative flex items-center gap-3">
+                    <div class="flex flex-col items-center">
+                        <div :class="getStepDotClass(idx)"
+                            class="flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-white transition-all duration-300">
+                            {{ idx + 1 }}
+                        </div>
+                        <span class="mt-1 text-[11px] font-medium text-gray-900">{{ step }}</span>
+                        <span class="text-[10px] text-gray-400">
+                            {{ idx === 0 ? header.requestedAt?.slice(0, 10) : (idx === 3 && header.status === 'PR_DONE'
+                                ? header.updatedAt?.slice(0, 10) : '-') }}
+                        </span>
                     </div>
-
-
-                    <div class="stepper-text">
-                        <div class="step-label">{{ s.label }}</div>
-                        <div class="step-date">{{ stepDateText(idx) }}</div>
-                    </div>
-
-                    <div v-if="idx !== steps.length - 1" class="line"></div>
+                    <div v-if="idx !== steps.length - 1" class="mb-6 h-[2px] w-12 bg-gray-200"></div>
                 </div>
             </div>
         </div>
@@ -222,7 +223,7 @@
                                                 <td class="py-4 font-bold text-gray-900">{{ approvalData.drafterName }}
                                                 </td>
                                                 <td class="py-4">{{ getPositionLabel(approvalData.drafterPositionCode)
-                                                    }}</td>
+                                                }}</td>
                                                 <td class="py-4">{{ approvalData.drafterDepartment }}</td>
                                                 <td class="py-4 text-[#10B981] font-bold">승인</td>
                                                 <td class="py-4">{{ approvalData.draftedAt }}</td>
@@ -353,50 +354,53 @@ const header = ref({
 })
 const items = ref([])
 
-const steps = [
-    { key: 'APPR', label: '생산요청 결재' },
-    { key: 'PLAN', label: '계획수립' },
-    { key: 'PROD', label: '생산 중' },
-    { key: 'DONE', label: '생산 완료' }
-]
+const steps = ['요청/결재', '생산 계획', '생산 진행', '생산 완료'];
 
 const currentStepIndex = computed(() => {
-    const status = header.value.status
-    const progress = header.value.productionProgress
+    const status = header.value.status;
+    const progress = header.value.productionProgress;
 
-    if (status === 'PR_RVW' || status === 'PR_TMP') {
-        return -1
+    if (!status) return -1;
+
+    if (['PR_TMP', 'PR_RVW', 'PR_APPR_PEND', 'PR_APPR_RJCT'].includes(status)) return 0;
+
+    if (status === 'PR_PLANNED' || (status === 'PR_APPR_DONE' && (!progress || progress === 'PLANNING' || progress === 'PLANNED'))) {
+        return 1;
     }
 
-    if (status === 'PR_APPR_PEND') {
-        return 0
-    }
+    if (status === 'PR_PRODUCING' || progress === 'PRODUCING') return 2;
 
-    if (status === 'PR_APPR_DONE') {
-        if (!progress) return 1
+    if (status === 'PR_DONE' || progress === 'COMPLETED') return 3;
 
-        const map = {
-            PLANNING: 1,
-            PLANNED: 1,
-            PRODUCING: 2,
-            COMPLETED: 3
-        }
+    return -1;
+});
 
-        return map[progress] ?? 1
-    }
+const getStepDotClass = (idx) => {
+    const cur = currentStepIndex.value;
+    if (cur === -1) return 'bg-[#CBD5E0]';
 
-    return -1
-})
+    if (cur === 3) return 'bg-[#0FBA81]';
 
+    if (idx < cur) return 'bg-[#0FBA81]';
+    if (idx === cur) return 'bg-[#4C4CDD]';
+    return 'bg-[#CBD5E0]';
+};
 
-const getStepState = (idx) => {
-    const cur = currentStepIndex.value
-    if (cur === -1) return 'inactive'
-    if (idx < cur) return 'done'
-    if (idx === cur) return 'current'
-    return 'inactive'
-}
-
+const statusClass = computed(() => {
+    const s = header.value.status;
+    const styles = {
+        'PR_TMP': 'bg-[#F3F4F6] text-[#374151]', // gray
+        'PR_RVW': 'bg-[#FFFBEB] text-[#B4540A]', // yellow/amber
+        'PR_APPR_PEND': 'bg-[#ECFEF6] text-[#278465]', // green
+        'PR_APPR_DONE': 'bg-[#ECFEF6] text-[#278465]', // green
+        'PR_APPR_RJCT': 'bg-[#FFD8D8] text-[#D34242]', // red
+        'PR_PLANNED': 'bg-[#F0F6FF] text-[#1E4ED8]', // blue
+        'PR_PRODUCING': 'bg-[#F0F6FF] text-[#1E4ED8]', // blue
+        'PR_DONE': 'bg-[#F3F4F6] text-[#000000]', // gray/black
+        'PR_CANCEL': 'bg-[#FFD8D8] text-[#D34242]'  // red
+    };
+    return styles[s] || 'bg-gray-100 text-gray-600';
+});
 
 const reloadDetail = async () => {
     const res = await getPRDetail(prId)
@@ -472,27 +476,6 @@ onMounted(async () => {
     header.value = res.header
     items.value = Array.isArray(res.items) ? res.items : []
     await reloadDetail()
-})
-
-const statusLabel = computed(() => ({
-    PR_RVW: '요청검토',
-    PR_APPR_PEND: '결재중',
-    PR_APPR_DONE: '결재승인',
-    PR_APPR_RJCT: '결재반려',
-    PR_PLANNED: '계획수립',
-    PR_PRODUCING: '생산중',
-    PR_DONE: '생산완료',
-    PR_CANCEL: '취소'
-}[header.value.status] || header.value.status))
-
-const statusClass = computed(() => {
-    const s = header.value.status
-    if (s === 'PR_RVW' || s === 'PR_APPR_PEND') return 'green'
-    if (s === 'PR_APPR_RJCT') return 'red'
-    if (s === 'PR_PLANNED') return 'yellow'
-    if (s === 'PR_PRODUCING') return 'purple'
-    if (s === 'PR_DONE') return 'blue'
-    return 'gray'
 })
 
 const stepDateText = (idx) => {
@@ -688,60 +671,6 @@ const closePrint = () => {
 .status-pill.gray {
     background: #F3F4F6;
     color: #374151;
-}
-
-/* 오른쪽 stepper */
-.stepper {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-top: 2px;
-}
-
-.stepper-item {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-}
-
-.dot {
-    width: 41px;
-    height: 41px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 17px;
-    font-weight: 700;
-    color: #fff;
-    background: #CBD5E0;
-}
-
-.stepper-text {
-    width: 78px;
-}
-
-.step-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: #000;
-    margin-top: 2px;
-}
-
-.step-date {
-    margin-top: 2px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #A0ADC1;
-    text-align: center;
-}
-
-.line {
-    width: 53px;
-    height: 2px;
-    background: #D9D9D9;
-    margin-top: 20px;
 }
 
 /* 메인 흰 패널 */
