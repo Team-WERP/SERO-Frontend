@@ -742,7 +742,6 @@ const fetchAllDocuments = async () => {
     try {
       const response = await section.fetchFn(orderId);
       section.data = response || [];
-      console.log("문서!",section);
     } catch (err) {
       console.error(`${section.title} 조회 실패:`, err);
       section.data = [];
