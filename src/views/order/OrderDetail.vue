@@ -589,7 +589,7 @@ const currentStepIndex = computed(() => {
     if (!status) return -1;
     if (['ORD_RED', 'ORD_RVW'].includes(status)) return 0;
     if (status.includes('APPR')) return 1;
-    if (['ORD_WORK_REQ', 'ORD_PRO', 'ORD_SHIP_READY', 'ORD_SHIPPING'].includes(status)) return 2;
+    if (['ORD_PRO', 'ORD_SHIPPING', 'ORD_PARTIAL_ING'].includes(status)) return 2;
     if (status === 'ORD_DONE') return 3;
     return -1;
 });
@@ -807,7 +807,6 @@ const fetchAllDocuments = async () => {
     try {
       const response = await section.fetchFn(orderId);
       section.data = response || [];
-      console.log("문서!",section);
     } catch (err) {
       console.error(`${section.title} 조회 실패:`, err);
       section.data = [];
@@ -869,10 +868,9 @@ const getOrderStatusBadgeClass = (s) => {
     'ORD_RVW': 'bg-[#FFFBEB] text-[#B4540A]',
     'ORD_APPR_PEND': 'bg-[#ECFEF6] text-[#278465]',
     'ORD_APPR_DONE': 'bg-[#ECFEF6] text-[#278465]',
-    'ORD_WORK_REQ': 'bg-[#F0F6FF] text-[#1E4ED8]',
     'ORD_PRO': 'bg-[#F0F6FF] text-[#1E4ED8]',
-    'ORD_SHIP_READY': 'bg-[#F0F6FF] text-[#1E4ED8]',
     'ORD_SHIPPING': 'bg-[#F0F6FF] text-[#1E4ED8]',
+    'ORD_PARTIAL_ING': 'bg-[#F0F6FF] text-[#1E4ED8]',
     'ORD_DONE': 'bg-[#F3F4F6] text-[#000000]',
     'ORD_APPR_RJCT': 'bg-[#FFD8D8] text-[#D34242]',
     'ORD_CANCEL': 'bg-[#FFD8D8] text-[#D34242]'
@@ -883,7 +881,7 @@ const getOrderStatusBadgeClass = (s) => {
 const getOrderStatusLabel = (s) => {
     const map = { 
         'ORD_RED': '접수대기', 'ORD_RVW': '주문검토', 'ORD_APPR_PEND': '주문결재중', 
-        'ORD_APPR_DONE': '결재승인', 'ORD_APPR_RJCT': '결재반려','ORD_PRO': '생산중', 'ORD_SHIP_READY': '배송중', 'ORD_SHIPPING': '출고중', 
+        'ORD_APPR_DONE': '결재승인', 'ORD_APPR_RJCT': '결재반려','ORD_PRO': '생산중', 'ORD_SHIPPING': '출고/배송중', 'ORD_PARTIAL_ING': '부분처리중', 
         'ORD_DONE': '배송완료', 'ORD_CANCEL': '주문취소' 
     };
     return map[s] || s;
