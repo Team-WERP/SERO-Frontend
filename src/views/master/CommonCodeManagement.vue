@@ -2,8 +2,8 @@
     <div class="common-code-page">
         <div class="page-header">
             <div>
-                <h1 class="page-title">공통 코드 관리</h1>
-                <p class="page-description">시스템 전반에서 사용하는 표준 코드를 통합하여 관리합니다.</p>
+                <h1 class="page-title">공통 코드 조회</h1>
+                <p class="page-description">시스템 전반에서 사용하는 공통 코드를 통합하여 조회합니다.</p>
             </div>
         </div>
 
