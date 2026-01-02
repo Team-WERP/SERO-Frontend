@@ -315,7 +315,7 @@ const trendOptions = {
                     <div class="flex justify-between items-center mb-6">
                         <div class="flex items-center gap-2">
                             <span class="w-1.5 h-4 bg-indigo-500 rounded-full"></span>
-                            <h2 class="font-bold text-slate-800 tracking-tight">최근 6개월 목표 대비 생산량</h2>
+                            <h2 class="font-bold text-slate-800 tracking-tight">최근 12개월 목표 대비 생산량</h2>
                         </div>
                     </div>
                     <div class="h-64">
@@ -325,6 +325,19 @@ const trendOptions = {
             </div>
 
             <div class="col-span-12 lg:col-span-4 space-y-6">
+
+                <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <span class="w-1.5 h-4 bg-indigo-500 rounded-full"></span> 라인별 CAPA 부하 분석
+                    </h2>
+                    <div class="h-44">
+                        <Bar :data="capaChartData" :options="commonOptions" />
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-4 leading-relaxed font-medium">
+                        * 100% 초과 시 초과 부하(Overload) 상태입니다. 라인 배정 조정이 권장됩니다.
+                    </p>
+                </section>
+
                 <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <h2 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
                         <span class="w-1.5 h-4 bg-emerald-500 rounded-full"></span> 실시간 라인 가동 상태
@@ -342,24 +355,13 @@ const trendOptions = {
 
                 <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <h2 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <span class="w-1.5 h-4 bg-indigo-500 rounded-full"></span> 라인별 CAPA 부하 분석
-                    </h2>
-                    <div class="h-44">
-                        <Bar :data="capaChartData" :options="commonOptions" />
-                    </div>
-                    <p class="text-[10px] text-slate-400 mt-4 leading-relaxed font-medium">
-                        * 100% 초과 시 초과 부하(Overload) 상태입니다. 라인 배정 조정이 권장됩니다.
-                    </p>
-                </section>
-
-                <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
                         <span class="w-1.5 h-4 bg-rose-500 rounded-full"></span> 고객사별 종합 리스크
                     </h2>
                     <div class="h-40">
                         <Bar :data="riskChartData" :options="commonOptions" />
                     </div>
                 </section>
+
             </div>
         </div>
     </div>
