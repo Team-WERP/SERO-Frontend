@@ -77,26 +77,37 @@
       </div>
 
       <div class="flex justify-end gap-2 bg-gray-50 p-4 border-t">
-        <button @click="$emit('close')" class="rounded-lg bg-gray-200 px-6 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-300">취소</button>
-        <button @click="submitDO" class="rounded-lg bg-[#4C4CDD] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#3b3bbb]">납품서 생성</button>
+        <button @click="$emit('close')" :disabled="isSubmitting" class="rounded-lg bg-gray-200 px-6 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">취소</button>
+        <button @click="submitDO" :disabled="isSubmitting" class="rounded-lg bg-[#4C4CDD] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#3b3bbb] disabled:opacity-50 disabled:cursor-not-allowed">
+          <span v-if="isSubmitting">생성 중...</span>
+          <span v-else>납품서 생성</span>
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
   soId: Number,
-  items: Array,        
-  historyItems: Array  
+  items: Array,
+  historyItems: Array
 });
 
 const emit = defineEmits(['close', 'submit']);
 
 const shippedAt = ref('');
 const note = ref('');
+const isSubmitting = ref(false);
+
+// 모달이 열릴 때마다 상태 초기화 (props.items가 변경되면 모달이 새로 열린 것)
+watch(() => props.items, () => {
+  isSubmitting.value = false;
+  shippedAt.value = '';
+  note.value = '';
+}, { immediate: true });
 
 const draftItems = ref(props.items.map(item => {
   const history = props.historyItems?.find(h => h.itemId === item.id) || { doQuantity: 0 };
@@ -116,8 +127,14 @@ const draftItems = ref(props.items.map(item => {
 const formatNumber = (n) => new Intl.NumberFormat().format(n || 0);
 
 const submitDO = () => {
+  // 중복 클릭 방지 - 이미 제출 중이면 무시
+  if (isSubmitting.value) {
+    console.warn('이미 납품서 생성 중입니다. 중복 클릭이 무시되었습니다.');
+    return;
+  }
+
   if (!shippedAt.value) return alert('납기일시를 선택해주세요.');
-  
+
   const payload = {
     soId: props.soId,
     shippedAt: shippedAt.value.replace('T', ' '),
@@ -131,7 +148,19 @@ const submitDO = () => {
   };
 
   if (payload.items.length === 0) return alert('신규 출고 요청 수량을 1개 이상 입력해주세요.');
-  
+
+  // 제출 시작 - 버튼 비활성화
+  isSubmitting.value = true;
+
+  // 부모에게 이벤트 전달 (부모에서 성공 시 모달을 닫으면 watch가 상태를 초기화함)
   emit('submit', payload);
+
+  // 안전장치: 3초 후 자동으로 상태 리셋 (네트워크 오류 등으로 모달이 안 닫힐 경우 대비)
+  setTimeout(() => {
+    if (isSubmitting.value) {
+      console.warn('제출 상태가 3초 이상 유지되어 자동으로 리셋합니다.');
+      isSubmitting.value = false;
+    }
+  }, 3000);
 };
 </script>

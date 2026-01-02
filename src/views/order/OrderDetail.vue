@@ -769,12 +769,13 @@ const handleDOSubmit = async (payload) => {
     await createDO(payload);
 
     alert('납품서가 생성되었습니다.');
-    isDOModalOpen.value = false;
+    isDOModalOpen.value = false; // 성공 시에만 모달 닫기
     await fetchHistory(); // 이력 갱신하여 미출고 수량 업데이트
     if (activeTab.value === 'PRODUCTION') await fetchAllDocuments();
   } catch (err) {
     console.error('납품 요청 실패:', err);
     alert('납품 요청이 실패했습니다.');
+    // 실패 시에는 모달을 닫지 않음 - 사용자가 재시도할 수 있도록
   } finally {
     isLoading.value = false;
   }
