@@ -99,8 +99,8 @@ const shippedAt = ref('');
 const note = ref('');
 
 const draftItems = ref(props.items.map(item => {
-  const history = props.historyItems?.find(h => h.itemId === item.id) || { giQuantity: 0 };
-  const unshippedQty = item.quantity - (history.giQuantity || 0);
+  const history = props.historyItems?.find(h => h.itemId === item.id) || { doQuantity: 0 };
+  const unshippedQty = item.quantity - (history.doQuantity || 0);
 
   return {
     soItemId: item.id,

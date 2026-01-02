@@ -304,7 +304,7 @@
           </div>
 
           <div class="flex gap-2 justify-end mb-5">
-            <template v-if="order.status === 'ORD_APPR_DONE'">
+            <template v-if="canCreateDeliveryOrProduction">
               <button @click="openPRModal" class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">생산 설정</button>
               <button @click="openDOModal" class="rounded-lg bg-[#4C4CDD] px-4 py-2 text-sm font-bold text-white hover:bg-[#3b3bbb]">납품 설정</button>
             </template>
@@ -594,6 +594,70 @@ const currentStepIndex = computed(() => {
     return -1;
 });
 
+// 부분 출고 지원: 미출고 수량이 남아있는지 확인
+const hasUnshippedQuantity = computed(() => {
+  console.log('hasUnshippedQuantity 체크:', {
+    hasOrderItems: !!order.value?.items,
+    orderItemsCount: order.value?.items?.length,
+    hasItemHistory: !!itemHistory.value?.items,
+    itemHistoryCount: itemHistory.value?.items?.length,
+    orderItems: order.value?.items,
+    itemHistory: itemHistory.value?.items
+  });
+
+  if (!order.value?.items || !itemHistory.value?.items) {
+    console.log('→ 데이터 없음, false 반환');
+    return false;
+  }
+
+  const result = order.value.items.some(item => {
+    const history = itemHistory.value.items.find(h => h.itemId === item.id);
+    const shippedQty = history?.doQuantity || 0;
+    const unshippedQty = item.quantity - shippedQty;
+
+    console.log(`품목 ${item.itemName}:`, {
+      itemId: item.id,
+      quantity: item.quantity,
+      historyFound: !!history,
+      doQuantity: history?.doQuantity,
+      shippedQty,
+      unshippedQty,
+      hasRemaining: unshippedQty > 0
+    });
+
+    return unshippedQty > 0;
+  });
+
+  console.log('→ 최종 결과:', result);
+  return result;
+});
+
+// 생산 설정/납품 설정 버튼 표시 조건
+const canCreateDeliveryOrProduction = computed(() => {
+  if (!order.value?.status) return false;
+
+  // 결재 승인 또는 작업 진행 중인 상태에서만 버튼 표시
+  const allowedStatuses = [
+    'ORD_APPR_DONE',    // 결재 승인
+    'ORD_WORK_REQ',     // 작업 요청
+    'ORD_PRO',          // 생산 중
+    'ORD_SHIP_READY',   // 출고 준비
+    'ORD_SHIPPING'      // 출고 중
+  ];
+
+  const statusAllowed = allowedStatuses.includes(order.value.status);
+  const hasRemaining = hasUnshippedQuantity.value;
+
+  console.log('canCreateDeliveryOrProduction:', {
+    status: order.value.status,
+    statusAllowed,
+    hasUnshippedQuantity: hasRemaining,
+    result: statusAllowed && hasRemaining
+  });
+
+  return statusAllowed && hasRemaining;
+});
+
 const getStepDotClass = (idx) => {
     const cur = currentStepIndex.value;
     if (cur === -1) return 'bg-[#CBD5E0]';
@@ -701,9 +765,10 @@ const handleDOSubmit = async (payload) => {
   try {
     isLoading.value = true;
     await createDO(payload);
-    
+
     alert('납품서가 생성되었습니다.');
     isDOModalOpen.value = false;
+    await fetchHistory(); // 이력 갱신하여 미출고 수량 업데이트
     if (activeTab.value === 'PRODUCTION') await fetchAllDocuments();
   } catch (err) {
     console.error('납품 요청 실패:', err);
@@ -959,7 +1024,7 @@ const handleCancelConfirm = async (cancelData) => {
 
 onMounted(() => {
   fetchDetail();
-
+  fetchHistory(); // 버튼 표시를 위해 이력 데이터 로드
 });
 </script>
 

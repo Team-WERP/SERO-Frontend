@@ -510,7 +510,7 @@ const goToRefDocDetail = () => {
     if (refDocType.toUpperCase() === 'SO') {
         router.push(`/order/management/${refDocId}`);
     } else if (refDocType.toUpperCase() === 'GI') {
-        router.push(`/warehouse/goods-issues/${refDocCode}`);
+        router.push(`/warehouse/goods-issues/${refDocId}`);
     } else if (refDocType.toUpperCase() === 'PR') {
         router.push(`/production/requests/${refDocId}`);
     } else {

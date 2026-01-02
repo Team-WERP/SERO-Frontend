@@ -494,7 +494,7 @@ const showAssignManagerButton = computed(() => {
 
 // 결재 요청 버튼 표시 여부
 const showApprovalRequestButton = computed(() => {
-    const currentUserId = userStore.userId
+    const currentUserId = userStore.user?.id
     const isManager = giDetail.value.managerId === currentUserId
 
     const result = giDetail.value.managerName &&
