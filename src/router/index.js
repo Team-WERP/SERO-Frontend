@@ -47,6 +47,7 @@ import ItemBomManagement from "@/views/master/ItemBomManagement.vue";
 import ItemBomDetail from "@/views/master/ItemBomDetail.vue";
 import MasterCompanyInfo from "@/views/master/MasterCompanyInfo.vue";
 import EmployeeList from "@/views/master/EmployeeList.vue";
+import CommonCodeManagement from "@/views/master/CommonCodeManagement.vue";
 
 // 전자결재
 import ApprovalDashboard from "@/views/approval/ApprovalDashboard.vue";
@@ -245,7 +246,7 @@ const router = createRouter({
                     meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
                 },
                 {
-                    path: "warehouse/goods-issues/:giCode",
+                    path: "warehouse/goods-issues/:id",
                     component: GoodsIssueDetail,
                     meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
                 },
@@ -270,7 +271,7 @@ const router = createRouter({
                 { path: "/master/bom/:id", component: ItemBomDetail },
                 { path: "/master/company", component: MasterCompanyInfo },
                 { path: "/master/employees", component: EmployeeList },
-                { path: "/master/common-code", component: SystemCommonCode },
+                { path: "/master/common-code", component: CommonCodeManagement },
 
                 // ---------------------
                 // 전자결재
@@ -299,7 +300,7 @@ const router = createRouter({
                 },
                 {
                     path: "master/common-code",
-                    component: SystemCommonCode,
+                    component: CommonCodeManagement,
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
                 },
                 // 시스템 관리

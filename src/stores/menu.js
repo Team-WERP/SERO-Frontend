@@ -150,7 +150,7 @@ export const useMenuStore = defineStore("menu", {
                     role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
                 },
                 {
-                    name: "공통코드 관리",
+                    name: "공통코드 조회",
                     path: "/master/common-code",
                     role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
                 },
