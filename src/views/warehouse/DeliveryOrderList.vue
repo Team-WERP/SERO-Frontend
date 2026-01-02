@@ -2,17 +2,11 @@
     <div class="do-page">
         <!-- 상단 헤더 -->
         <div class="page-header">
-            <div>
+            <div class="header-left">
                 <h1 class="page-title">납품서 관리</h1>
                 <p class="page-description">
                     확정된 납품서를 조회합니다.
                 </p>
-            </div>
-            <div class="header-actions">
-                <div class="period-selector">
-                    <label>기준월(납품일)</label>
-                    <input type="month" v-model="selectedMonth" @change="onMonthChange" />
-                </div>
             </div>
         </div>
 
@@ -42,6 +36,16 @@
                 <div class="filter-item keyword">
                     <label>납품서번호</label>
                     <input type="text" v-model="searchKeyword" placeholder="검색하세요" @keyup.enter="fetchDOList" />
+                </div>
+
+                <div class="filter-item">
+                    <label>작성자</label>
+                    <button
+                        class="my-do-btn"
+                        :class="{ active: showOnlyMyDO }"
+                        @click="toggleMyDO">
+                        {{ showOnlyMyDO ? '전체 납품서' : '내 납품서 목록' }}
+                    </button>
                 </div>
 
                 <div class="button-group">
@@ -132,12 +136,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useUserStore } from '@/stores/user.js'
 import { getDODetail } from '@/api/shipping/deliveryOrder'
 import DeliveryOrderPreviewModal from '@/components/modals/DeliveryOrderPreviewModal.vue'
 import axios from '@/api/axios'
 
+const userStore = useUserStore()
+
 // 날짜 필터
-const selectedMonth = ref('')
 const startDate = ref('')
 const endDate = ref('')
 
@@ -150,6 +156,7 @@ const statusFilters = [
 
 // 검색
 const searchKeyword = ref('')
+const showOnlyMyDO = ref(false) // 내가 작성한 납품서만 조회
 
 // 납품서 목록
 const doList = ref([])
@@ -177,28 +184,39 @@ const selectedDO = ref({
     items: []
 })
 
-// 기준월 변경
-const onMonthChange = () => {
-    if (selectedMonth.value) {
-        const [year, month] = selectedMonth.value.split('-')
-        const firstDay = new Date(year, month - 1, 1)
-        const lastDay = new Date(year, month, 0)
-
-        startDate.value = firstDay.toISOString().split('T')[0]
-        endDate.value = lastDay.toISOString().split('T')[0]
-
-        fetchDOList()
-    }
-}
-
 // 필터 초기화
 const resetFilters = () => {
-    selectedMonth.value = ''
     startDate.value = ''
     endDate.value = ''
     selectedStatus.value = ''
     searchKeyword.value = ''
+    showOnlyMyDO.value = false
     fetchDOList()
+}
+
+// 내가 작성한 납품서 토글
+const toggleMyDO = async () => {
+    // 이미 활성화된 상태면 비활성화
+    if (showOnlyMyDO.value) {
+        showOnlyMyDO.value = false
+        await fetchDOList()
+        return
+    }
+
+    // 비활성화 상태에서 활성화 시도
+    const previousValue = showOnlyMyDO.value
+    showOnlyMyDO.value = true
+
+    // fetchDOList를 호출하여 필터링
+    await fetchDOList()
+
+    // 내가 작성한 납품서가 없으면 버튼 상태 되돌리기
+    if (!doList.value || doList.value.length === 0) {
+        alert('작성한 납품서가 없습니다.')
+        showOnlyMyDO.value = previousValue
+        // 전체 목록 다시 조회
+        await fetchDOList()
+    }
 }
 
 // 납품서 목록 조회
@@ -207,16 +225,28 @@ const fetchDOList = async () => {
         isLoading.value = true
         const params = {}
 
-        if (startDate.value) params.startDate = startDate.value
-        if (endDate.value) params.endDate = endDate.value
+        // 날짜 필터는 둘 다 있어야 적용
+        if (startDate.value && endDate.value) {
+            params.startDate = startDate.value
+            params.endDate = endDate.value
+        }
+
         if (selectedStatus.value) params.status = selectedStatus.value
         if (searchKeyword.value) params.doCode = searchKeyword.value
 
+        // 내가 작성한 납품서만 조회
+        if (showOnlyMyDO.value) {
+            params.drafterId = userStore.user?.id
+        }
+
         const response = await axios.get('/delivery-orders', { params })
-        doList.value = response.data || []
+        doList.value = Array.isArray(response.data) ? response.data : []
     } catch (error) {
         console.error('납품서 목록 조회 실패:', error)
-        alert('납품서 목록을 불러오는데 실패했습니다.')
+        // 401 에러가 아닌 경우에만 alert 표시
+        if (error.response?.status !== 401) {
+            alert('납품서 목록을 불러오는데 실패했습니다.')
+        }
     } finally {
         isLoading.value = false
     }
@@ -271,27 +301,24 @@ const formatDateTime = (dateTime) => {
 
 // 초기화
 onMounted(() => {
-    // 현재 월로 초기화
-    const now = new Date()
-    selectedMonth.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    onMonthChange()
+    // 날짜 필터 없이 전체 납품서 조회
+    fetchDOList()
 })
 </script>
 
 <style scoped>
-/* ===== 페이지 컨테이너 ===== */
+/* ===== 페이지 전체 ===== */
 .do-page {
-    padding: 30px;
-    background: #f9fafb;
-    min-height: calc(100vh - 60px);
+    padding: 5px;
+    width: 100%;
 }
 
-/* ===== 페이지 헤더 ===== */
+/* ===== 헤더 ===== */
 .page-header {
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 30px;
+    align-items: flex-end;
 }
 
 .page-title {
@@ -306,177 +333,171 @@ onMounted(() => {
     color: #6b7280;
 }
 
-.header-actions {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.period-selector {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.period-selector label {
-    font-size: 14px;
+/* ===== 검색 / 필터 ===== */
+.filter-title {
+    font-size: 20px;
     font-weight: 600;
-    color: #374151;
-}
-
-.period-selector input[type="month"] {
-    padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
     color: #111827;
+    margin-bottom: 10px;
 }
 
-/* ===== 검색 섹션 ===== */
 .search-section {
     background: #ffffff;
-    border-radius: 12px;
-    padding: 24px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
     margin-bottom: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.filter-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 16px;
 }
 
 .filter-row {
     display: flex;
-    gap: 16px;
     align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .filter-item {
     display: flex;
     flex-direction: column;
     gap: 6px;
-}
-
-.filter-item.keyword {
-    flex: 1;
-}
-
-.filter-item label {
     font-size: 13px;
-    font-weight: 600;
     color: #374151;
+}
+
+.filter-item > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-item span {
+    color: #6b7280;
 }
 
 .filter-item input[type="date"],
 .filter-item input[type="text"],
 .filter-item select {
-    padding: 8px 12px;
+    height: 36px;
+    padding: 0 10px;
     border: 1px solid #d1d5db;
     border-radius: 6px;
-    font-size: 14px;
-    color: #111827;
+    font-size: 13px;
+    background: #ffffff;
+    min-width: 140px;
 }
 
-.filter-item input[type="text"] {
-    width: 100%;
+.filter-item input[type="date"]:focus,
+.filter-item input[type="text"]:focus,
+.filter-item select:focus {
+    outline: none;
+    border-color: #4C4CDD;
 }
 
-.filter-item div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.filter-item.keyword {
+    flex: 1;
+    min-width: 200px;
 }
 
+/* ===== 버튼 그룹 ===== */
 .button-group {
     display: flex;
     gap: 8px;
+    align-self: flex-end;
+    margin-top: 18px;
 }
 
 .reset-btn {
-    padding: 8px;
-    background: #ffffff;
+    height: 36px;
+    width: 36px;
+    padding: 0;
+    background: #f3f4f6;
+    color: #374151;
     border: 1px solid #d1d5db;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6b7280;
+    transition: all 0.2s;
+}
+
+.reset-btn svg {
+    width: 20px;
+    height: 20px;
+    color: #374151;
 }
 
 .reset-btn:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
+    background: #e5e7eb;
+}
+
+.reset-btn:hover svg {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
 }
 
 .search-btn {
-    padding: 8px 20px;
+    height: 36px;
+    padding: 0 24px;
     background: #4C4CDD;
+    color: #ffffff;
     border: none;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
     cursor: pointer;
-    transition: all 0.2s;
 }
 
 .search-btn:hover {
     background: #3d3dbb;
 }
 
-/* ===== 아이템 섹션 ===== */
+/* ===== 리스트 섹션 ===== */
 .items-section {
     position: relative;
     background: #ffffff;
-    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
     padding: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .total-count {
     font-size: 14px;
-    font-weight: 600;
-    color: #374151;
+    color: #6b7280;
 }
 
 /* ===== 테이블 ===== */
 .items-table {
     width: 100%;
     border-collapse: collapse;
-    border: 1px solid #e5e7eb;
 }
 
 .items-table thead {
     background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
 }
 
 .items-table th {
     padding: 12px 16px;
-    text-align: left;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: #374151;
-    border-bottom: 2px solid #e5e7eb;
+    text-align: left;
 }
 
 .items-table td {
-    padding: 14px 16px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
     font-size: 14px;
     color: #111827;
-    border-bottom: 1px solid #e5e7eb;
-    vertical-align: middle;
+}
+
+.items-table tbody tr:hover {
+    background: #f9fafb;
 }
 
 .clickable-row {
@@ -484,24 +505,23 @@ onMounted(() => {
     transition: background-color 0.2s;
 }
 
-.clickable-row:hover {
-    background-color: #f9fafb;
-}
-
+/* ===== 공통 정렬 ===== */
 .text-center {
     text-align: center;
 }
 
+/* ===== 링크 ===== */
 .link {
     color: #4C4CDD;
-    font-weight: 600;
     cursor: pointer;
+    font-weight: 600;
 }
 
 .link:hover {
     text-decoration: underline;
 }
 
+/* ===== 품목명 ===== */
 .item-name {
     display: flex;
     align-items: center;
@@ -516,6 +536,7 @@ onMounted(() => {
     border-radius: 12px;
 }
 
+/* ===== 상태 뱃지 ===== */
 .status-badge {
     display: inline-block;
     padding: 4px 12px;
@@ -544,5 +565,37 @@ onMounted(() => {
     padding: 60px 20px;
     color: #9ca3af;
     font-size: 14px;
+}
+
+/* ===== 작성자 필터 버튼 ===== */
+.filter-item .my-do-btn {
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    min-width: 140px;
+    background: #ffffff;
+    color: #374151;
+}
+
+.filter-item .my-do-btn:hover {
+    border-color: #9ca3af;
+    background: #f9fafb;
+}
+
+.filter-item .my-do-btn.active {
+    background: #4C4CDD;
+    color: #ffffff;
+    border-color: #4C4CDD;
+}
+
+.filter-item .my-do-btn.active:hover {
+    background: #3d3dbb;
+    border-color: #3d3dbb;
 }
 </style>
