@@ -21,26 +21,16 @@ ChartJS.register(
     BarElement, PointElement, LineElement
 )
 
-/* =========================
-   UI 및 Raw 데이터 상태
-========================= */
 const isMyTasksOnly = ref(false)
 const searchQuery = ref('')
 const productionKpiRaw = ref(null)
 const prRiskRawList = ref([])
 
-/* =========================
-   🔥 차트 데이터 (초기값 설정)
-   vue-chartjs 반응성을 위해 ref로 관리하며 통째로 할당합니다.
-========================= */
 const lineChartData = ref({ labels: [], datasets: [{ data: [] }] })
 const capaChartData = ref({ labels: [], datasets: [{ data: [] }] })
 const monthlyTrendData = ref({ labels: [], datasets: [] })
 const riskChartData = ref({ labels: [], datasets: [{ data: [] }] })
 
-/* =========================
-   데이터 로딩 (중복 제거 및 최적화)
-========================= */
 onMounted(async () => {
     try {
         const [summary, rawRiskList, lineStatus, lines, trend] = await Promise.all([
@@ -118,9 +108,6 @@ onMounted(async () => {
     }
 })
 
-/* =========================
-   ViewModel & 유틸리티
-========================= */
 const getRiskLevel = (risk) => {
     if (risk >= 80) return { class: 'text-rose-600 bg-rose-50' }
     if (risk >= 50) return { class: 'text-amber-600 bg-amber-50' }
@@ -152,9 +139,6 @@ const productionKpiMock = computed(() => {
     }
 })
 
-/* =========================
-   차트 옵션
-========================= */
 const commonOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -179,11 +163,15 @@ const trendOptions = {
 </script>
 
 <template>
-    <div class="bg-slate-50 min-h-screen space-y-6 p-6">
+    <div class=" min-h-screen space-y-6">
         <header class="flex justify-between items-end mb-4">
             <div>
-                <h1 class="text-2xl font-black text-slate-900 tracking-tight">생산 통합 관제</h1>
-                <p class="text-sm text-slate-400 font-medium tracking-wide">Production Intelligence & Analysis</p>
+                <h1 class="text-[28px] font-bold text-[#111827] mb-2 tracking-tight">
+                    생산 통합 관제
+                </h1>
+                <p class="text-[14px] text-[#6b7280] font-medium tracking-wide">
+                    Production Intelligence & Analysis
+                </p>
             </div>
 
             <div class="flex items-center gap-4">
