@@ -434,44 +434,46 @@
         
         <div class="p-6">
           <div class="overflow-hidden rounded-xl border border-gray-200">
-            <table class="w-full text-center text-sm">
-              <thead class="bg-gray-50 text-gray-500 font-bold">
-                <tr>
-                  <th class="px-3 py-3 border-b">가용재고</th>
-                  <th class="px-3 py-3 border-b">생산요청</th>
-                  <th class="px-3 py-3 border-b">생산입고</th>
-                  <th class="px-3 py-3 border-b">기납품수량</th>
-                  <th class="px-3 py-3 border-b">출고지시</th>
-                  <th class="px-3 py-3 border-b">출고완료</th>
-                  <th class="px-3 py-3 border-b">배송완료</th>
-                  <th class="px-3 py-3 border-b">이력 생성일시</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                <tr v-if="historyDetails.length === 0">
-                  <td colspan="8" class="py-12">
-                    <div class="flex flex-col items-center justify-center">
-                      <img 
-                        src="@/assets/새로이새로미.png" 
-                        alt="No Data" 
-                        class="mb-4 h-16 w-auto opacity-40" 
-                      />
-                      <p class="text-gray-400 font-medium">변동 이력 데이터가 없습니다.</p>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-for="h in historyDetails" :key="h.historyId">
-                  <td class="px-3 py-4 font-medium">{{ formatPrice(h.item.availableStock) }}</td>
-                  <td class="px-3 py-4">{{ formatPrice(h.prQuantity) }}</td>
-                  <td class="px-3 py-4">{{ formatPrice(h.piQuantity) }}</td>
-                  <td class="px-3 py-4">{{ formatPrice(h.doQuantity) }}</td>
-                  <td class="px-3 py-4">{{ formatPrice(h.giQuantity) }}</td>
-                  <td class="px-3 py-4">{{ formatPrice(h.shippedQuantity) }}</td>
-                  <td class="px-3 py-4">{{ formatPrice(h.completedQuantity) }}</td>
-                  <td class="px-3 py-4 text-xs text-gray-500">{{ h.createdAt || '-' }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="max-h-[500px] overflow-y-auto">
+              <table class="w-full text-center text-sm">
+                <thead class="bg-gray-50 text-gray-500 font-bold sticky top-0">
+                  <tr>
+                    <th class="px-3 py-3 border-b bg-gray-50">가용재고</th>
+                    <th class="px-3 py-3 border-b bg-gray-50">생산요청</th>
+                    <th class="px-3 py-3 border-b bg-gray-50">생산입고</th>
+                    <th class="px-3 py-3 border-b bg-gray-50">기납품수량</th>
+                    <th class="px-3 py-3 border-b bg-gray-50">출고지시</th>
+                    <th class="px-3 py-3 border-b bg-gray-50">출고완료</th>
+                    <th class="px-3 py-3 border-b bg-gray-50">배송완료</th>
+                    <th class="px-3 py-3 border-b bg-gray-50">이력 생성일시</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr v-if="historyDetails.length === 0">
+                    <td colspan="8" class="py-12">
+                      <div class="flex flex-col items-center justify-center">
+                        <img
+                          src="@/assets/새로이새로미.png"
+                          alt="No Data"
+                          class="mb-4 h-16 w-auto opacity-40"
+                        />
+                        <p class="text-gray-400 font-medium">변동 이력 데이터가 없습니다.</p>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-for="h in historyDetails" :key="h.historyId">
+                    <td class="px-3 py-4 font-medium">{{ formatPrice(h.item.availableStock) }}</td>
+                    <td class="px-3 py-4">{{ formatPrice(h.prQuantity) }}</td>
+                    <td class="px-3 py-4">{{ formatPrice(h.piQuantity) }}</td>
+                    <td class="px-3 py-4">{{ formatPrice(h.doQuantity) }}</td>
+                    <td class="px-3 py-4">{{ formatPrice(h.giQuantity) }}</td>
+                    <td class="px-3 py-4">{{ formatPrice(h.shippedQuantity) }}</td>
+                    <td class="px-3 py-4">{{ formatPrice(h.completedQuantity) }}</td>
+                    <td class="px-3 py-4 text-xs text-gray-500">{{ h.createdAt || '-' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
         <div class="flex justify-end p-5 border-t">
