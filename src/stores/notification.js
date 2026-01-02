@@ -10,138 +10,105 @@ export const useNotificationStore = defineStore('notification', {
     }),
 
     getters: {
-        unreadNotifications: (state) =>
-            state.notifications.filter(n => !n.read),
-
+        unreadNotifications: (state) => state.notifications.filter(n => !n.read),
         hasUnread: (state) => state.unreadCount > 0
     },
 
     actions: {
         /**
-         * 알림 목록 조회
+         * 알림 목록 조회 및 개수 동기화
          */
-        async fetchNotifications() {
+        async fetchInitialData() {
             try {
-                const data = await getMyNotifications();
-                this.notifications = data;
-            } catch (error) {
-                console.error('알림 목록 조회 실패:', error);
-            }
-        },
-
-        /**
-         * 읽지 않은 알림 개수 조회
-         */
-        async fetchUnreadCount() {
-            try {
-                const count = await getUnreadCount();
+                // 두 정보를 동시에 가져와 상태 일관성 유지
+                const [list, count] = await Promise.all([
+                    getMyNotifications(),
+                    getUnreadCount()
+                ]);
+                this.notifications = list;
                 this.unreadCount = count;
             } catch (error) {
-                console.error('읽지 않은 알림 개수 조회 실패:', error);
+                console.error('초기 알림 데이터 로드 실패:', error);
+            }
+        },
+
+        async fetchNotifications() {
+            try {
+                this.notifications = await getMyNotifications();
+            } catch (error) { console.error('알림 로드 실패:', error); }
+        },
+
+        async fetchUnreadCount() {
+            try {
+                this.unreadCount = await getUnreadCount();
+                console.log(this.unreadCount)
+            } catch (error) { console.error('카운트 로드 실패:', error); }
+        },
+
+        /**
+         * 모든 알림 읽음 처리 (UI 즉시 반영)
+         */
+        async markAllNotificationsAsRead() {
+            // 읽지 않은 알림이 이미 0이면 무시
+            if (this.unreadCount === 0) return;
+
+            try {
+                // 1. 서버 API 호출 (백엔드 컨트롤러의 /read-all 엔드포인트)
+                await markAllAsRead(); 
+
+                // 2. 프론트엔드 로컬 상태 강제 업데이트
+                // 배열 전체를 순회하여 read를 true로 변경
+                this.notifications = this.notifications.map(n => ({
+                    ...n,
+                    read: true
+                }));
+                
+                // 3. 개수 초기화
+                this.unreadCount = 0;
+                
+            } catch (error) {
+                console.error('모든 알림 읽음 처리 실패:', error);
+                // 에러 발생 시 상태 롤백을 위해 다시 조회 시도
+                await this.fetchInitialData();
             }
         },
 
         /**
-         * 알림 읽음 처리
+         * 단일 알림 읽음 처리
          */
         async markNotificationAsRead(notificationId) {
             try {
                 await markAsRead(notificationId);
-
-                const notification = this.notifications.find(n => n.id === notificationId);
-                if (notification && !notification.read) {
-                    notification.read = true;
+                const n = this.notifications.find(item => item.id === notificationId);
+                if (n && !n.read) {
+                    n.read = true;
                     this.unreadCount = Math.max(0, this.unreadCount - 1);
                 }
-            } catch (error) {
-                console.error('알림 읽음 처리 실패:', error);
-            }
+            } catch (error) { console.error('읽음 처리 실패:', error); }
         },
 
-        /**
-         * SSE 실시간 알림 추가
-         */
-        addNotification(notification) {
-            this.notifications.unshift(notification);
-
-            if (!notification.read) {
-                this.unreadCount++;
-            }
-
-            if (this.notifications.length > 50) {
-                this.notifications.pop();
-            }
-        },
-
-        /**
-         * SSE 연결 상태 설정
-         */
-        setConnected(connected) {
-            this.isConnected = connected;
-        },
-
-        /**
-         * EventSource 저장
-         */
-        setEventSource(eventSource) {
-            this.eventSource = eventSource;
-        },
-
-        /**
-         * SSE 연결 종료
-         */
-        disconnect() {
-            if (this.eventSource) {
-                this.eventSource.close();
-                this.eventSource = null;
-            }
-            this.isConnected = false;
-        },
-
-        /**
-         * 모든 알림 읽음 처리
-         */
-        async markAllNotificationsAsRead() {
-            try {
-                await markAllAsRead();
-
-                // 모든 알림을 읽음 상태로 변경
-                this.notifications.forEach(n => {
-                    n.read = true;
-                });
-                this.unreadCount = 0;
-            } catch (error) {
-                console.error('모든 알림 읽음 처리 실패:', error);
-            }
-        },
-
-        /**
-         * 알림 삭제
-         */
         async removeNotification(notificationId) {
             try {
                 await deleteNotification(notificationId);
-
-                // 삭제할 알림이 읽지 않은 상태였다면 개수 감소
-                const notification = this.notifications.find(n => n.id === notificationId);
-                if (notification && !notification.read) {
-                    this.unreadCount = Math.max(0, this.unreadCount - 1);
-                }
-
-                // 목록에서 제거
-                this.notifications = this.notifications.filter(n => n.id !== notificationId);
-            } catch (error) {
-                console.error('알림 삭제 실패:', error);
-            }
+                const n = this.notifications.find(item => item.id === notificationId);
+                if (n && !n.read) this.unreadCount = Math.max(0, this.unreadCount - 1);
+                this.notifications = this.notifications.filter(item => item.id !== notificationId);
+            } catch (error) { console.error('삭제 실패:', error); }
         },
 
-        /**
-         * 초기화
-         */
-        reset() {
-            this.notifications = [];
-            this.unreadCount = 0;
-            this.disconnect();
-        }
+        addNotification(notification) {
+            if (this.notifications.some(n => n.id === notification.id)) return;
+            this.notifications.unshift(notification);
+            if (!notification.read) this.unreadCount++;
+            if (this.notifications.length > 50) this.notifications.pop();
+        },
+
+        setConnected(status) { this.isConnected = status; },
+        setEventSource(es) { this.eventSource = es; },
+        disconnect() {
+            if (this.eventSource) { this.eventSource.close(); this.eventSource = null; }
+            this.isConnected = false;
+        },
+        reset() { this.disconnect(); this.notifications = []; this.unreadCount = 0; }
     }
 });

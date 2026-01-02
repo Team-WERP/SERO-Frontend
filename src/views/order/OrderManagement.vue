@@ -181,8 +181,8 @@ const tabs = [
 
 const statusLabelMap = { 
   'ORD_RED': '접수대기', 'ORD_RVW': '주문검토', 'ORD_APPR_PEND': '주문결재중', 
-  'ORD_APPR_DONE': '결재승인', 'ORD_WORK_REQ': '작업요청', 'ORD_PRO': '생산중', 
-  'ORD_SHIP_READY': '출고중', 'ORD_SHIPPING': '배송중', 'ORD_DONE': '배송완료', 
+  'ORD_APPR_DONE': '결재승인', 'ORD_PRO': '생산중', 
+  'ORD_PARTIAL_ING': '부분처리중', 'ORD_SHIPPING': '출고/배송중', 'ORD_DONE': '배송완료', 
   'ORD_APPR_RJCT': '결재반려', 'ORD_CANCEL': '주문취소' 
 };
 
@@ -278,9 +278,8 @@ const getStatusBadgeClass = (s) => {
     'ORD_RVW': 'bg-[#FFFBEB] text-[#B4540A]',
     'ORD_APPR_PEND': 'bg-[#ECFEF6] text-[#278465]',
     'ORD_APPR_DONE': 'bg-[#ECFEF6] text-[#278465]',
-    'ORD_WORK_REQ': 'bg-[#F0F6FF] text-[#1E4ED8]',
     'ORD_PRO': 'bg-[#F0F6FF] text-[#1E4ED8]',
-    'ORD_SHIP_READY': 'bg-[#F0F6FF] text-[#1E4ED8]',
+    'ORD_PARTIAL_ING': 'bg-[#F0F6FF] text-[#1E4ED8]',
     'ORD_SHIPPING': 'bg-[#F0F6FF] text-[#1E4ED8]',
     'ORD_DONE': 'bg-[#F3F4F6] text-[#000000]',
     'ORD_APPR_RJCT': 'bg-[#FFD8D8] text-[#D34242]',

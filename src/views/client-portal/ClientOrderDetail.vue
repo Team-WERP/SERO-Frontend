@@ -189,7 +189,6 @@ const getStatusLabel = (status) => {
   const map = {
     'CLI_SO_RED': '접수대기',
     'CLI_SO_ING': '진행중',
-    'CLI_SO_SHIPPING': '배송중',
     'CLI_SO_DONE': '완료',
     'CLI_SO_CANCEL': '취소'
   };
@@ -200,7 +199,6 @@ const getStatusClass = (status) => {
   const map = {
     'CLI_SO_RED': 'bg-amber-50 text-amber-600 border border-amber-200',
     'CLI_SO_ING': 'bg-blue-50 text-blue-600 border border-blue-200',
-    'CLI_SO_SHIPPING': 'bg-indigo-50 text-indigo-600 border border-indigo-200',
     'CLI_SO_DONE': 'bg-emerald-50 text-emerald-600 border border-emerald-200',
     'CLI_SO_CANCEL': 'bg-rose-50 text-rose-600 border border-rose-200'
   };
