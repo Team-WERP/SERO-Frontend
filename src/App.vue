@@ -1,7 +1,7 @@
 <template>
   <RouterView />
   <ExpireSessionModal v-if="userStore.isExpireModalOpen" :seconds="userStore.remainingSeconds" @extend="handleExtend"
-    @logout="userStore.logout" />
+    @logout="() => logout(false)" />
 </template>
 
 <script setup>
@@ -12,7 +12,8 @@ import { reissue as reissueApi } from '@/api/auth';
 import ExpireSessionModal from "@/components/common/ExpireSessionModal.vue";
 
 const userStore = useUserStore();
-useSessionTimer();
+
+const { logout } = useSessionTimer();
 
 const handleExtend = async () => {
   try {

@@ -11,6 +11,7 @@ export const useUserStore = defineStore("user", {
         tokenExp: null,
         heartbeat: 0,
         isExpireModalOpen: false,
+        isSessionHandling: false,
     }),
 
     getters: {

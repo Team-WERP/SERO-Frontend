@@ -14,6 +14,7 @@ export function useSessionTimer() {
 
         timer = setInterval(() => {
             userStore.heartbeat++;
+            console.log(userStore.heartbeat);
 
             const remain = userStore.remainingSeconds;
 
@@ -28,6 +29,8 @@ export function useSessionTimer() {
             // 만료 시 강제 로그아웃
             if (remain <= 0) {
                 stopTimer();
+                console.log("??")
+                isLoggingOut = true;
                 handleLogout(true);
             }
         }, 1000);
@@ -39,22 +42,28 @@ export function useSessionTimer() {
         if (isLoggingOut) return;
         isLoggingOut = true;
 
+        userStore.isSessionHandling = true;
+
         try {
             const type = userStore.hasAuthority("AC_CLI")
                 ? "client"
                 : "hq";
 
+            userStore.isExpireModalOpen = false;
+
+            console.log("여기")
             await logoutApi(type);
         } catch (e) {
             console.error("로그아웃 API 실패", e);
         } finally {
-            userStore.isExpireModalOpen = false;
             stopTimer();
             userStore.logout();
 
-            if (expired) {
-                router.replace("/session-expired");
-            }
+            console.log("뭐야 여기")
+
+            router.replace(
+                expired ? "/session-expired" : "/login"
+            );
         }
     };
 
@@ -77,4 +86,8 @@ export function useSessionTimer() {
             else stopTimer();
         }
     );
+
+    return {
+        logout: handleLogout,
+    };
 }

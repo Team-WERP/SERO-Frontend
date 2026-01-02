@@ -14,9 +14,9 @@
             로그인 시간을 연장하시겠습니까?
 
             <div class="flex flex-row justify-items-end font-bold mt-6 gap-3 justify-end">
-                <button class="border border-[#6a7282] text-gray-500 py-1.5 px-3 rounded"
+                <button class="border border-[#6a7282] text-gray-500 py-1.5 px-3 rounded cursor-pointer"
                     @click=" $emit('logout')">로그아웃</button>
-                <button class="border border-[#4C4CDD] bg-[#4C4CDD] text-white py-1.5 px-3 rounded"
+                <button class="border border-[#4C4CDD] bg-[#4C4CDD] text-white py-1.5 px-3 rounded cursor-pointer"
                     @click="$emit('extend')">로그인
                     연장</button>
             </div>
