@@ -160,7 +160,13 @@ const handleNotificationClick = async (notification) => {
 };
 
 const handleMarkAllAsRead = async () => {
-    await notificationStore.markAllNotificationsAsRead();
+    if (notificationStore.unreadCount === 0) return;
+
+    try {
+        await notificationStore.markAllNotificationsAsRead();
+    } catch (error) {
+        alert('알림 읽음 처리에 실패했습니다.');
+    }
 };
 
 const handleDelete = async (notificationId) => {
