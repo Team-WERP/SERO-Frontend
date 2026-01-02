@@ -165,6 +165,11 @@ onMounted(async () => {
 .common-code-page {
     padding: 5px;
     width: 100%;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans KR', sans-serif;
+}
+
+.common-code-page * {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans KR', sans-serif !important;
 }
 
 /* ===== 헤더 ===== */
@@ -265,7 +270,6 @@ onMounted(async () => {
 .code-type-code {
     flex-shrink: 0;
     width: 140px;
-    font-family: 'Courier New', monospace;
     font-size: 13px;
     font-weight: 600;
     color: #4C4CDD;
@@ -414,7 +418,6 @@ onMounted(async () => {
     background: #f3f4f6;
     color: #374151;
     border-radius: 4px;
-    font-family: 'Courier New', monospace;
     font-size: 12px;
     font-weight: 600;
 }
