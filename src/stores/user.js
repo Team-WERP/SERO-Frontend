@@ -11,7 +11,6 @@ export const useUserStore = defineStore("user", {
         tokenExp: null,
         heartbeat: 0,
         isExpireModalOpen: false,
-        modalShownInTab: false,
     }),
 
     getters: {
@@ -67,7 +66,11 @@ export const useUserStore = defineStore("user", {
             state.heartbeat;
 
             if (!state.tokenExp || !state.isAuthenticated) return 0;
-            return Math.floor((state.tokenExp - Date.now()) / 1000);
+
+            return Math.max(
+                0,
+                Math.floor((state.tokenExp - Date.now()) / 1000)
+            );
         },
 
         remainingTimeMs(state) {
@@ -110,16 +113,6 @@ export const useUserStore = defineStore("user", {
             this.tokenExp = payload.exp * 1000;
             this.isAuthenticated = true;
         },
-        async reissueToken() {
-            // TODO 토큰 재발급
-            const res = await api.reissue(); // { accessToken, accessTokenExp }
-            this.tokenExp = res.accessTokenExp;
-            localStorage.setItem("accessToken", res.accessToken);
-            this.heartbeat++; // 즉시 반영
-            this.isExpireModalOpen = false;
-            this.modalShownInTab = false;
-            localStorage.setItem("tokenReissuedAt", Date.now()); // 다른 탭 알림
-        },
         /** 로그아웃 */
         logout() {
             this.user = null;
@@ -148,11 +141,6 @@ export const useUserStore = defineStore("user", {
         },
         setTokenExp(exp) {
             this.tokenExp = exp;
-        },
-
-        async refreshToken() {
-            // const res = await refreshTokenApi();
-            // this.setTokenExp(res.accessTokenExp); // 🔄 카운트 리셋
         },
     },
 });

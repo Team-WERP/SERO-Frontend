@@ -28,7 +28,7 @@ const userName = localStorage.getItem("name");
 const userRole = computed(() => userStore.userRoleLabel);
 const userPosition = computed(() => userStore.userPosition);
 const userInitial = computed(() => userName ? userName.charAt(0) : "");
-const isModalActive = ref(true);
+const isModalActive = ref(false);
 
 const openModal = () => {
     isModalActive.value = !isModalActive.value;

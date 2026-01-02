@@ -1,14 +1,15 @@
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
+import { logout as logoutApi } from "@/api/auth.js";
 
 let timer = null;
 
 export function useSessionTimer() {
     const userStore = useUserStore();
+    const router = useRouter();
 
-    onMounted(() => {
-        if (!userStore.isAuthenticated) return;
-
+    const startTimer = () => {
         if (timer) return;
 
         timer = setInterval(() => {
@@ -16,43 +17,64 @@ export function useSessionTimer() {
 
             const remain = userStore.remainingSeconds;
 
-            // 90초 진입 시 모달 오픈
+            // 만료 90초 전 모달 오픈
             if (remain <= 90 && remain > 0) {
-                userStore.isExpireModalOpen = true;
-                userStore.modalShownInTab = true;
-                localStorage.setItem('expireModalShownAt', Date.now());
+                if (!userStore.isExpireModalOpen) {
+                    userStore.isExpireModalOpen = true;
+                    userStore.modalShownInTab = true;
+                }
             }
 
             // 만료 시 강제 로그아웃
             if (remain <= 0) {
-                userStore.isExpireModalOpen = false;
-                userStore.logout();
+                stopTimer();
+                handleLogout(true);
             }
         }, 1000);
+    };
 
-        // 비활성 → 활성 복귀 보정
-        const onVisible = () => {
-            if (!document.hidden) {
-                userStore.heartbeat++;
+    let isLoggingOut = false;
+
+    const handleLogout = async (expired = false) => {
+        if (isLoggingOut) return;
+        isLoggingOut = true;
+
+        try {
+            const type = userStore.hasAuthority("AC_CLI")
+                ? "client"
+                : "hq";
+
+            await logoutApi(type);
+        } catch (e) {
+            console.error("로그아웃 API 실패", e);
+        } finally {
+            userStore.isExpireModalOpen = false;
+            stopTimer();
+            userStore.logout();
+
+            if (expired) {
+                router.replace("/session-expired");
             }
-        };
+        }
+    };
 
-        document.addEventListener("visibilitychange", onVisible);
+    const stopTimer = () => {
+        if (!timer) return;
+        clearInterval(timer);
+        timer = null;
+    };
 
-        const onStorage = (e) => {
-            if (e.key === "tokenReissuedAt") {
-                userStore.isExpireModalOpen = false;
-                userStore.modalShownInTab = false;
-                userStore.heartbeat++;
-            }
-        };
-        window.addEventListener("storage", onStorage);
-
-        onUnmounted(() => {
-            clearInterval(timer);
-            timer = null;
-            document.removeEventListener("visibilitychange", onVisible);
-            window.removeEventListener("storage", onStorage);
-        });
+    onMounted(() => {
+        if (userStore.isAuthenticated) {
+            startTimer();
+        }
     });
+
+    watch(
+        () => userStore.isAuthenticated,
+        (isAuth) => {
+            if (isAuth) startTimer();
+            else stopTimer();
+        }
+    );
 }

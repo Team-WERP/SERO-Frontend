@@ -17,9 +17,9 @@
         <div class="divider"></div>
 
         <ul class="profile-modal__menu">
-            <li @click="goToMyPage">
+            <!-- <li @click="goToMyPage">
                 <span class="icon">👤</span> 내 정보 수정
-            </li>
+            </li> -->
             <li @click="goToSettings">
                 <span class="icon">⚙️</span> 설정
             </li>
@@ -49,37 +49,28 @@
                 연장
             </button>
         </div>
-
-
-        <Toast :show="showToast" message="세션이 1분 후 만료됩니다. 연장해주세요." />
     </div>
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
-import { logout as logoutApi } from '@/api/auth';
-import Toast from '@/components/common/Toast.vue';
+import { logout as logoutApi, reissue as reissueApi } from '@/api/auth';
 
 const router = useRouter();
 const userStore = useUserStore();
 
 const emit = defineEmits(['close']);
 
-const showToast = ref(false);
-const toastShown = ref(false);
-
 const userEmail = computed(() => userStore.user.email);
 const userDept = computed(() => userStore.userPosition);
 const userName = localStorage.getItem("name");
 const userRole = computed(() => userStore.userRoleLabel);
-const userPosition = computed(() => userStore.userPosition);
 const userInitial = computed(() => userName ? userName.charAt(0) : "");
 
-
 const goToMyPage = () => {
-    router.push('/system/mypage'); // 마이페이지 라우트 경로 (예시)
+    router.push('/system/mypage');
     emit('close');
 };
 
@@ -105,30 +96,23 @@ const handleLogout = async () => {
     }
 };
 
-watch(
-    () => userStore.remainingTimeMs,
-    (v) => {
-        // 🔔 1분 미만 경고
-        if (v <= 60_000 && v > 0 && !toastShown.value) {
-            showToast.value = true;
-            toastShown.value = true;
-
-            setTimeout(() => {
-                showToast.value = false;
-            }, 4000);
-        }
-
-        // ⛔ 만료
-        if (v <= 0) {
-            userStore.logout();
-            router.replace("/login");
-        }
-    }
-);
-
 const extendSession = async () => {
-    await userStore.refreshToken();
-    toastShown.value = false; // 🔄 다시 토스트 허용
+    try {
+        const type = userStore.hasAuthority("AC_CLI")
+            ? "client"
+            : "hq";
+
+        const res = await reissueApi(type);
+
+        const { accessToken, name } = res.data;
+
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('name', name);
+
+        userStore.setFromToken(accessToken);
+    } catch (e) {
+        console.error("토큰 재발급 API 실패", e);
+    }
 };
 </script>
 
@@ -148,7 +132,6 @@ const extendSession = async () => {
     cursor: default;
 }
 
-/* 상단 정보 영역 */
 .profile-modal__header {
     padding: 20px;
     display: flex;
@@ -209,14 +192,12 @@ const extendSession = async () => {
     font-weight: 500;
 }
 
-/* 구분선 */
 .divider {
     height: 1px;
     background-color: #e5e7eb;
     margin: 0;
 }
 
-/* 메뉴 리스트 */
 .profile-modal__menu {
     list-style: none;
     padding: 8px 0;
@@ -242,7 +223,6 @@ const extendSession = async () => {
     font-size: 16px;
 }
 
-/* 하단 버튼 영역 */
 .profile-modal__footer {
     padding: 12px 16px;
     background-color: #f9fafb;
