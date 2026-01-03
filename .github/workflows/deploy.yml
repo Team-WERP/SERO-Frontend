@@ -1,0 +1,73 @@
+name: Deploy to AWS Elastic Beanstalk
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+  push:
+    branches:
+      - "main" # (주의) develop인지 main인지 확인하세요. 아까 main에 푸시하신다고 했습니다.
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      run: npm install
+
+    # [중요 1] 빌드 전에 .env 파일을 생성해야 Vite가 백엔드 주소를 인식합니다!
+    - name: Create .env file
+      run: |
+        echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" > .env
+
+    - name: Build project
+      run: npm run build
+
+    # (선택) AWS CLI 설치 단계는 beanstalk-deploy 액션을 쓴다면 굳이 없어도 되지만, 유지해도 무방합니다.
+    - name: Install AWS CLI
+      run: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install --update
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+
+    # [중요 2] server.js, Procfile, .ebextensions를 모두 포함시켜야 합니다.
+    - name: Generate deployment package
+      run: |
+        mkdir -p deploy
+        cp -r dist deploy/
+        cp package.json deploy/
+        cp server.js deploy/
+        cp Procfile deploy/
+        cp -r .ebextensions deploy/ 2>/dev/null || echo ".ebextensions not found"
+        cp -r .platform deploy/ 2>/dev/null || echo ".platform not found"
+        cd deploy && zip -r deploy.zip .
+
+    - name: Beanstalk Deploy
+      uses: einaregilsson/beanstalk-deploy@v22
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: sero-f
+        environment_name: Sero-f-env # (주의) AWS 콘솔에 있는 환경 이름 대소문자 정확히 확인!
+        version_label: github-action-${{ github.sha }}
+        region: ap-northeast-2
+        deployment_package: deploy/deploy.zip
