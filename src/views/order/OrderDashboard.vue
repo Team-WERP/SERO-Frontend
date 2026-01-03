@@ -21,7 +21,7 @@
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-5 bg-[#4C4CDD] rounded-full"></span>
-                    <h3 class="font-bold">월별 수주 실적 및 목표 비교</h3>
+                    <h3 class="font-bold text-[15px]">월별 수주 실적 및 목표 비교</h3>
                 </div>
                 <button class="text-[12px] text-slate-400 hover:text-slate-600 transition-colors">
                     <MoreHorizontal size="18" />
@@ -35,7 +35,7 @@
         <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-2">
-                    <span class="w-1 h-4 bg-[#4C4CDD] rounded-full"></span>
+                    <span class="w-2 h-4 bg-[#4C4CDD] rounded-full"></span>
                     <h3 class="font-bold text-slate-800 text-[16px]">거래처별 TOP 5 수주액</h3>
                     <span class="text-[11px] text-slate-400 ml-1">이달 기준</span>
                 </div>
@@ -51,9 +51,10 @@
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
         <div class="lg:col-span-12 bg-white p-8 rounded-2xl border border-slate-200">
-          <div class="flex flex-col mb-6">
-            <h3 class="font-bold text-slate-800 text-lg">납기 임박·지연 주문</h3>
-          </div>
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-2 h-5 bg-[#4C4CDD] rounded-full"></span>
+                <h3 class="font-bold text-[15px]">납기 임박/지연 주문</h3>
+            </div>
 
           <div class="overflow-x-auto border border-slate-100 rounded-xl">
             <table class="w-full text-left border-collapse min-w-[800px]">
@@ -105,15 +106,23 @@
         </div>
   
         <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200">
-          <h3 class="font-bold mb-6 flex justify-between border-b pb-2">
-            <span>{{ format(selectedDate, 'yyyy-MM-dd') }} 납기 일정</span>
-            <span class="text-[#4C4CDD]">{{ selectedDayOrders.length }}건</span>
-          </h3>
           
+            <div class="flex justify-between items-center mb-6 border-b border-gray-300 pb-2">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-4 bg-[#4C4CDD] rounded-full"></span>
+                <h3 class="font-bold text-[15px]">
+                {{ format(selectedDate, 'yyyy-MM-dd') }} 납기 일정
+                </h3>
+            </div>
+
+                <span class="text-[#4C4CDD] font-bold text-[15px]">
+                    {{ selectedDayOrders.length }}건
+                </span>
+            </div>
           <div class="space-y-5 overflow-y-auto max-h-[600px] pr-2">
             <div v-for="order in selectedDayOrders" :key="order.orderId" 
                  @click="openOrderModal(order)"
-                 class="flex gap-4 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors items-center"> 
+                 class="flex gap-4 cursor-pointer hover:bg-slate-50 p-4 rounded-lg transition-colors items-center"> 
               
               <div class="text-[12px] font-bold text-blue-600 bg-blue-50 h-fit px-2 py-1 rounded">
                 {{ order.shippedTime }}

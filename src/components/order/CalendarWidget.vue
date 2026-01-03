@@ -1,7 +1,10 @@
 <template>
   <div>
     <div class="flex justify-between items-center mb-6">
-      <h3 class="font-bold flex items-center gap-2">납기 스케줄</h3>
+      <div class="flex items-center gap-2">
+          <span class="w-2 h-4 bg-[#4C4CDD] rounded-full"></span>
+          <h3 class="font-bold text-slate-800 text-[16px]">납기 일정 캘린더</h3>
+      </div>
       <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
         <button @click="moveMonth(-1)" class="p-1 hover:bg-white hover:shadow-sm rounded transition-all"><ChevronLeft size="16"/></button>
         <span class="text-xs font-bold px-2 min-w-[80px] text-center">{{ format(viewDate, 'yyyy. MM') }}</span>
