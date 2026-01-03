@@ -188,8 +188,10 @@
                                     class="w-full px-3 py-2 border rounded text-sm transition-all text-ellipsis pr-8 bg-slate-100 border-slate-200 text-slate-500 cursor-default" />
 
                                 <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                                    <svg v-if="formData.relatedDoc" class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    <svg v-if="formData.relatedDoc" class="w-4 h-4 text-green-500" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7"></path>
                                     </svg>
                                     <svg v-else class="w-4 h-4 text-slate-400 pointer-events-none" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -723,6 +725,8 @@ const mapRefDoc = (type, res) => {
         case 'PR': {
             const pr = res;
 
+            console.log(pr);
+
             return {
                 id: pr.header.prId,
                 docType: 'PR',
@@ -731,7 +735,7 @@ const mapRefDoc = (type, res) => {
                 giCode: null,
                 clientName: pr.header.managerName,
                 title: pr.header.prCode,
-                url: null,
+                url: pr.header.prUrl,
                 items: pr.items,
                 requestedAt: pr.header.requestedAt,
                 dueAt: pr.header.dueAt,
@@ -753,7 +757,7 @@ const mapRefDoc = (type, res) => {
                 giCode: gi.giCode,
                 clientName: gi.clientName,
                 title: gi.giCode,
-                url: gi.documentUrl || null,
+                url: gi.giUrl,
                 items: gi.items,
                 createdAt: gi.createdAt,
                 scheduledAt: gi.scheduledAt,

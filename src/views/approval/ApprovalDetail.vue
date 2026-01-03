@@ -18,7 +18,7 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <button @click="isPreviewOpen = true"
+                    <button @click="openPopup"
                         class="px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-colors">
                         미리보기
                     </button>
@@ -37,8 +37,6 @@
                     </button>
                 </div>
             </header>
-
-            <ApprovalPreviewModal v-if="isPreviewOpen" :data="approvalData" @close="isPreviewOpen = false" />
 
             <div class="flex gap-6 items-start relative">
 
@@ -281,9 +279,11 @@ import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { getApprovalDetail, approve, reject } from '@/api/approval.js';
 import { useUserStore } from '@/stores/user';
-import ApprovalPreviewModal from '@/components/approval/ApprovalPreviewModal.vue';
 import ApprovalActionModal from '@/components/approval/ApprovalActionModal.vue';
 import { EMPLOYEE_RANK, EMPLOYEE_POSITION, APPROVAL_TYPE, DOC_TYPE_LABEL } from '@/constants/approval.js';
+import { getSODetail } from '@/api/order/salesOrder.js';
+import { getPRDetail } from '@/api/production/productionRequest.js';
+import { getGIDetail } from '@/api/shipping/goodsIssue.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -297,7 +297,6 @@ const {
 const approvalId = route.params.approvalId;
 
 const loading = ref(true);
-const isPreviewOpen = ref(false);
 const approvalData = ref(null);
 const isMyTurn = ref(false);
 
@@ -546,4 +545,295 @@ const handleReject = async (note) => {
     }
 };
 
+const order = ref(null);
+
+const getOrderData = async (refDocId) => {
+    order.value = await getSODetail(refDocId);
+};
+
+const prData = ref(null);
+const giData = ref(null);
+
+const openPopup = async () => {
+    if (!loading) return;
+
+    const refDocType = approvalData.value.refDocType;
+    const refDocId = approvalData.value.refDocId;
+
+    const popup = window.open('', '_blank', 'width=900,height=900,scrollbars=yes');
+
+    if (!popup) {
+        alert('팝업 차단을 해제해주세요.');
+        return;
+    }
+
+    // 데이터 준비
+    const drafter = approvalFlow.value.find(item => item.lineType === 'drafter') || {};
+    const draftDate = approvalData.value.draftedAt ? formatDate(approvalData.value.draftedAt).slice(0, 10) : '-';
+    // 기안 내용 (없을 경우 빈 문자열)
+    const draftContent = approvalData.value.content || '';
+
+    // 결재 라인 HTML 생성 (3단 구조: 직급-도장-날짜)
+    const approvalLineHtml = approvalFlow.value.map(line => {
+        const position = getPositionName(line.approverPositionCode) || '담당';
+        const name = line.approverName;
+        const status = line.status;
+        const date = line.processedAt ? formatDate(line.processedAt).slice(0, 10).replace(/-/g, '/') : '';
+
+        let signContent = '';
+        if (status === 'ALS_APPR' || (line.lineType === 'drafter' && status === 'ALS_APPR')) {
+            signContent = `
+                <div class="flex flex-col items-center justify-center w-full h-full">
+                    <span class="text-blue-600 font-bold border-2 border-blue-600 rounded-full w-14 h-14 flex items-center justify-center text-sm opacity-80 transform rotate-[-5deg]" style="border-width:3px;">
+                        ${name}<br>인
+                    </span>
+                </div>`;
+        } else if (status === 'ALS_RJCT') {
+            signContent = `<span class="text-red-500 font-bold text-lg">반려</span>`;
+        } else {
+            signContent = `<span class="text-gray-300"></span>`;
+        }
+
+        return `
+            <td class="border-r border-black p-0 w-24">
+                <div class="bg-gray-100 border-b border-black p-1 text-center text-xs font-bold h-7 flex items-center justify-center">
+                    ${position}
+                </div>
+                <div class="h-20 border-b border-black flex items-center justify-center p-1">
+                    ${signContent}
+                </div>
+                <div class="h-8 flex items-center justify-center text-[11px] text-gray-700 font-medium bg-white">
+                    ${date}
+                </div>
+            </td>
+        `;
+    }).join('');
+
+    const emptySlots = 2 - approvalFlow.value.length;
+    let emptySlotsHtml = '';
+    if (emptySlots > 0) {
+        emptySlotsHtml = Array(emptySlots).fill(`
+            <td class="border-r border-black p-0 w-24">
+                <div class="bg-gray-100 border-b border-black h-7"></div>
+                <div class="h-20 border-b border-black"></div>
+                <div class="h-8"></div>
+            </td>
+        `).join('');
+    }
+
+    if (refDocType === 'SO') {
+        await getOrderData(refDocId);
+
+        if (!order.value) return;
+
+        const getPopupContent = () => {
+            const itemsHtml = order.value.items.map((item, idx) => `
+                <tr>
+                    <td class="border-r border-b border-black p-2">${idx + 1}</td>
+                    <td class="border-r border-b border-black p-2">${item.itemCode || '-'}</td>
+                    <td class="border-r border-b border-black p-2 text-left px-3">${item.itemName}</td>
+                    <td class="border-r border-b border-black p-2">${item.spec || '-'}</td>
+                    <td class="border-r border-b border-black p-2 text-center">${(item.quantity || 0).toLocaleString()}</td>
+                    <td class="border-r border-b border-black p-2 text-center">${item.unit || 'EA'}</td>
+                    <td class="border-r border-b border-black p-2 text-right">${(item.unitPrice || 0).toLocaleString()}</td>
+                    <td class="border-r border-b border-black p-2 text-right">${(item.totalPrice || 0).toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            const totalQuantity = order.value.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            const orderDate = order.value.orderedAt ? order.value.orderedAt.slice(0, 10) : '-';
+            const shipDate = order.value.shippedAt ? order.value.shippedAt.slice(0, 10) : '-';
+
+            // HTML 반환
+            return `
+                <!DOCTYPE html>
+                <html lang="ko">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>결재 문서 미리보기</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                        @page { size: A4; margin: 10mm; }
+                        body { font-family: "Noto Sans KR", sans-serif; margin: 0; }
+                        /* 인쇄 시 버튼 숨김 처리 */
+                        @media print {
+                            .no-print { display: none !important; }
+                        }
+                        .print-container { margin: 0 auto; padding: 10mm; background: white; box-sizing: border-box; }     
+                        .writing-vertical {
+                            writing-mode: vertical-lr;
+                            text-orientation: upright;
+                            letter-spacing: 5px;
+                        }
+                    </style>
+                </head>
+                <body class="bg-gray-100 flex justify-center print:bg-white">
+                    <div class="print-container bg-white shadow-lg print:shadow-none relative w-[210mm] min-h-[297mm]">
+                        
+                        <div class="flex justify-end gap-3 mb-10 no-print border-b pb-4">
+                            <button onclick="window.print()" class="px-6 py-2 bg-blue-600 text-white rounded font-bold shadow hover:bg-blue-700 transition-colors cursor-pointer flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                인쇄하기
+                            </button>
+                            <button onclick="window.close()" class="px-6 py-2 bg-gray-500 text-white rounded font-bold shadow hover:bg-gray-600 transition-colors cursor-pointer">
+                                닫기
+                            </button>
+                        </div>
+
+                        <h1 class="text-xl font-bold text-center mb-3">${approvalData.value.title}</h1>
+                        <div class="flex justify-between items-end mb-8">
+
+                            <table class="border-collapse border border-black text-sm w-[45%]">
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold w-24">기안자</td>
+                                    <td class="border border-black p-2 text-center">${drafter.approverName || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold">소 속</td>
+                                    <td class="border border-black p-2 text-center">${drafter.approverDepartment || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold">기안일</td>
+                                    <td class="border border-black p-2 text-center">${draftDate}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold">문서번호</td>
+                                    <td class="border border-black p-2 text-center">${approvalData.value.approvalCode}</td>
+                                </tr>
+                            </table>
+
+                            <table class="border-collapse border-t border-b border-l border-black text-sm">
+                                <tr>
+                                    <td rowspan="2" class="bg-gray-100 border-r border-black w-4 text-center font-bold align-middle writing-vertical p-1">
+                                        결재
+                                    </td>
+                                    ${approvalLineHtml}
+                                    ${emptySlotsHtml}
+                                </tr>
+                            </table>
+                        </div>
+
+                        ${draftContent ? `
+                        <div class="border border-black p-1 mb-8 text-sm">
+                            <div class="font-bold mb-2 border-b border-black/20 pb-1">[기안 내용]</div>
+                            ${draftContent}
+                        </div>
+                        ` : ''}
+
+                        <h1 class="text-4xl font-medium text-center tracking-[15px] mb-12 border-b-[2px] border-black pb-4">주 문 서</h1>
+
+                        <div class="grid grid-cols-2 gap-0 border-t border-l border-black mb-8">
+                            <div class="border-r border-b border-black">
+                                <div class="bg-gray-100 p-2 font-bold border-b border-black text-center">발주처</div>
+                                <table class="w-full text-sm">
+                                    <tr>
+                                        <td class="w-24 bg-gray-50 p-2 border-r border-black font-bold text-center">회사명</td>
+                                        <td class="p-2">${order.value.clientName}</td>
+                                    </tr>
+                                    <tr class="border-t border-black">
+                                        <td class="bg-gray-50 p-2 border-r border-black font-bold text-center">담당자</td>
+                                        <td class="p-2">${order.value.clientManagerName || '-'}</td>
+                                    </tr>
+                                    <tr class="border-t border-black">
+                                        <td class="bg-gray-50 p-2 border-r border-black font-bold text-center">연락처</td>
+                                        <td class="p-2">${order.value.clientManagerContact || '-'}</td>
+                                    </tr>
+                                    <tr class="border-t border-black">
+                                        <td class="bg-gray-50 p-2 border-r border-black font-bold text-center">주소</td>
+                                        <td class="p-2 leading-tight">${order.value.clientAddress || '-'}</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div class="border-r border-b border-black">
+                                <div class="bg-gray-100 p-2 font-bold border-b border-black text-center">수주처</div>
+                                <table class="w-full text-sm">
+                                    <tr>
+                                        <td class="w-24 bg-gray-50 p-2 border-r border-black font-bold text-center">회사명</td>
+                                        <td class="p-2">새로</td>
+                                    </tr>
+                                    <tr class="border-t border-black">
+                                        <td class="bg-gray-50 p-2 border-r border-black font-bold text-center">담당자</td>
+                                        <td class="p-2">${order.value.managerName || '박지혜'}</td>
+                                    </tr>
+                                    <tr class="border-t border-black">
+                                        <td class="bg-gray-50 p-2 border-r border-black font-bold text-center">연락처</td>
+                                        <td class="p-2">010-4444-5555</td>
+                                    </tr>
+                                    <tr class="border-t border-black">
+                                        <td class="bg-gray-50 p-2 border-r border-black font-bold text-center">주소</td>
+                                        <td class="p-2 leading-tight">서울시 동작구 보라매로 87</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-l border-black mb-8 text-sm grid grid-cols-4">
+                            <div class="bg-gray-100 p-2 font-bold border-r border-b border-black text-center">주문 번호</div>
+                            <div class="p-2 border-r border-b border-black">${order.value.orderCode}</div>
+                            
+                            <div class="bg-gray-100 p-2 font-bold border-r border-b border-black text-center">주문 일자</div>
+                            <div class="p-2 border-r border-b border-black">${orderDate}</div>
+                            
+                            <div class="bg-gray-100 p-2 font-bold border-r border-b border-black text-center">납기 일자</div>
+                            <div class="p-2 border-r border-b border-black col-span-3">${shipDate}</div>
+                            
+                            <div class="bg-gray-100 p-2 font-bold border-r border-b border-black text-center">비고</div>
+                            <div class="p-2 border-r border-b border-black col-span-3">${order.value.note || '-'}</div>
+                        </div>
+
+                        <h3 class="text-lg font-bold mb-2">주문 품목 정보</h3>
+                        <table class="w-full border-t border-l border-black text-xs text-center mb-8">
+                            <thead class="bg-gray-100 font-bold">
+                                <tr>
+                                    <th class="border-r border-b border-black p-2 w-10">No</th>
+                                    <th class="border-r border-b border-black p-2 w-24">품목 코드</th>
+                                    <th class="border-r border-b border-black p-2">품목명</th>
+                                    <th class="border-r border-b border-black p-2 w-24">규격</th>
+                                    <th class="border-r border-b border-black p-2 w-16">수량</th>
+                                    <th class="border-r border-b border-black p-2 w-14">단위</th>
+                                    <th class="border-r border-b border-black p-2 w-24">단가(원)</th>
+                                    <th class="border-r border-b border-black p-2 w-28">금액</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                                <tr class="bg-gray-100 font-medium">
+                                    <td colspan="4" class="border-r border-b border-black p-2 font-bold">합계</td>
+                                    <td class="border-r border-b border-black p-2 font-bold">${totalQuantity.toLocaleString()}</td>
+                                    <td colspan="2" class="border-r border-b border-black p-2"></td>
+                                    <td class="border-r border-b border-black p-2 text-right font-bold">${(order.value.totalPrice || 0).toLocaleString()}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="border-t border-l border-black text-sm font-medium grid grid-cols-4">
+                            <div class="bg-gray-100 p-3 border-r border-b border-black font-bold text-center">총 수량</div>
+                            <div class="p-3 border-r border-b border-black text-center">${totalQuantity.toLocaleString()}</div>
+                            
+                            <div class="bg-gray-100 p-3 border-r border-b border-black font-bold text-center">공급가액</div>
+                            <div class="p-3 border-r border-b border-black text-right">${(order.value.totalPrice || 0).toLocaleString()} 원</div>
+                            
+                            <div class="bg-gray-100 p-4 border-r border-b border-black text-center flex items-center justify-center font-bold text-base">총 합계 금액</div>
+                            <div class="p-4 border-r border-b font-bold border-black text-right text-xl col-span-3">
+                                ${(order.value.totalPrice || 0).toLocaleString()} 원
+                            </div>
+                        </div>
+
+                    </div>
+                </body>
+                </html>`;
+        };
+
+        popup.document.write(getPopupContent());
+        popup.document.close();
+    } else if (refDocType === 'GI') {
+        giData.value = await getGIDetail(refDocId);
+    } else if (refDocType === 'PR') {
+        prData.value = await getPRDetail(refDocId);
+    } else {
+        alert('지원하지 않는 문서 타입입니다.');
+    }
+};
 </script>
