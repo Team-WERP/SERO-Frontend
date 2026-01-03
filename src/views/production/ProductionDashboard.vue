@@ -84,6 +84,7 @@ onMounted(async () => {
                     label: '목표 수량',
                     data: trend.target,
                     borderColor: '#6366f1',
+                    backgroundColor: '#6366f1',
                     borderWidth: 2,
                     pointBackgroundColor: '#6366f1',
                     fill: false,
@@ -120,37 +121,6 @@ const getRiskLevel = (risk) => {
     if (risk >= 50) return { class: 'text-amber-600 bg-amber-50' }
     return { class: 'text-emerald-600 bg-emerald-50' }
 }
-const riskChartDataByClient = computed(() => {
-    if (prRiskRawList.value.length === 0) return { labels: [], datasets: [] };
-
-    // 1. 고객사별로 데이터 그룹화
-    const clientMap = prRiskRawList.value.reduce((acc, curr) => {
-        if (!acc[curr.clientName]) {
-            acc[curr.clientName] = [];
-        }
-        acc[curr.clientName].push(curr.summary.maxRisk);
-        return acc;
-    }, {});
-
-    // 2. 고객사별 리스크 평균값 계산 (또는 Math.max로 최대값 추출 가능)
-    const labels = Object.keys(clientMap);
-    const data = labels.map(client => {
-        const risks = clientMap[client];
-        const avgRisk = risks.reduce((a, b) => a + b, 0) / risks.length;
-        return Math.round(avgRisk);
-    });
-
-    return {
-        labels: labels,
-        datasets: [{
-            label: '평균 리스크 지수',
-            data: data,
-            backgroundColor: '#fb7185',
-            borderRadius: 6,
-            barThickness: 25 // 막대 두께 조정
-        }]
-    };
-});
 
 const toggleExpand = pr => {
     pr.isExpanded = !pr.isExpanded
@@ -211,10 +181,10 @@ const goToDetail = (prId) => {
         <header class="flex justify-between items-end mb-4">
             <div>
                 <h1 class="text-[28px] font-bold text-[#111827] mb-2 tracking-tight">
-                    생산 통합 관제
+                    생산 대시보드
                 </h1>
                 <p class="text-[14px] text-[#6b7280] font-medium tracking-wide">
-                    Production Intelligence & Analysis
+                    실시간 생산 현황 및 라인 가동 상태를 한눈에 확인합니다.
                 </p>
             </div>
 
@@ -375,7 +345,7 @@ const goToDetail = (prId) => {
 
                 <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
                     <h2 class="text-base font-bold text-slate-800 mb-8 flex items-center gap-3">
-                        <span class="w-2 h-5 bg-emerald-500 rounded-full"></span> 실시간 라인 가동 상태
+                        <span class="w-2 h-5 bg-indigo-500 rounded-full"></span> 실시간 라인 가동 상태
                     </h2>
                     <div class="flex flex-col items-center">
                         <div class="w-52 h-52 relative mb-6">
@@ -387,15 +357,6 @@ const goToDetail = (prId) => {
                                 <span class="text-[12px] font-bold text-slate-400 uppercase mt-1">생산 가동률</span>
                             </div>
                         </div>
-                    </div>
-                </section>
-
-                <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 class="text-base font-bold text-slate-800 mb-8 flex items-center gap-3">
-                        <span class="w-2 h-5 bg-rose-500 rounded-full"></span> 고객사별 종합 리스크
-                    </h2>
-                    <div class="h-52">
-                        <Bar :data="riskChartDataByClient" :options="commonOptions" />
                     </div>
                 </section>
             </div>
