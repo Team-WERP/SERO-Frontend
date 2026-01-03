@@ -189,7 +189,7 @@
                                 <div v-for="(file, idx) in approvalData.approvalAttachments"
                                     :key="file.approvalAttachmentId"
                                     class="flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded hover:bg-slate-100 transition-colors cursor-pointer"
-                                    @click="downloadFile(file.approvalAttachmentUrl)">
+                                    @click="downloadFile(file.approvalAttachmentUrl, file.approvalAttachmentName)">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
@@ -466,9 +466,30 @@ const formatDate = (dateStr) => {
     return dateStr.replace('T', ' ').slice(0, 16);
 };
 
-const downloadFile = (url) => {
+const downloadFile = async (url, fileName) => {
     if (!url) return;
-    window.open(url, '_blank');
+
+    try {
+        const response = await fetch(url, { method: 'GET', cache: 'no-cache' });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const blob = await response.blob();
+
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = fileName || 'download_file';
+
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(link.href);
+
+    } catch (error) {
+        console.error("CORS 또는 네트워크 오류:", error);
+        window.open(url, '_blank');
+    }
 };
 
 const getRankName = (rank) => {
