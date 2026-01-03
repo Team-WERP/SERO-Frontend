@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Doughnut, Bar } from 'vue-chartjs'
+import { useRouter } from 'vue-router'
 import {
     Chart as ChartJS, Title, Tooltip, Legend,
     ArcElement, CategoryScale, LinearScale,
@@ -30,6 +31,7 @@ const lineChartData = ref({ labels: [], datasets: [{ data: [] }] })
 const capaChartData = ref({ labels: [], datasets: [{ data: [] }] })
 const monthlyTrendData = ref({ labels: [], datasets: [] })
 const riskChartData = ref({ labels: [], datasets: [{ data: [] }] })
+const lineUtilizationRate = ref(0)
 
 onMounted(async () => {
     try {
@@ -55,6 +57,11 @@ onMounted(async () => {
                 borderWidth: 0
             }]
         }
+
+        const totalLines = lineStatus.running + lineStatus.paused + lineStatus.stopped
+        lineUtilizationRate.value = totalLines > 0
+            ? Math.round((lineStatus.running / totalLines) * 100)
+            : 0
 
         // 3. 라인별 CAPA 부하 (Bar)
         capaChartData.value = {
@@ -113,6 +120,37 @@ const getRiskLevel = (risk) => {
     if (risk >= 50) return { class: 'text-amber-600 bg-amber-50' }
     return { class: 'text-emerald-600 bg-emerald-50' }
 }
+const riskChartDataByClient = computed(() => {
+    if (prRiskRawList.value.length === 0) return { labels: [], datasets: [] };
+
+    // 1. 고객사별로 데이터 그룹화
+    const clientMap = prRiskRawList.value.reduce((acc, curr) => {
+        if (!acc[curr.clientName]) {
+            acc[curr.clientName] = [];
+        }
+        acc[curr.clientName].push(curr.summary.maxRisk);
+        return acc;
+    }, {});
+
+    // 2. 고객사별 리스크 평균값 계산 (또는 Math.max로 최대값 추출 가능)
+    const labels = Object.keys(clientMap);
+    const data = labels.map(client => {
+        const risks = clientMap[client];
+        const avgRisk = risks.reduce((a, b) => a + b, 0) / risks.length;
+        return Math.round(avgRisk);
+    });
+
+    return {
+        labels: labels,
+        datasets: [{
+            label: '평균 리스크 지수',
+            data: data,
+            backgroundColor: '#fb7185',
+            borderRadius: 6,
+            barThickness: 25 // 막대 두께 조정
+        }]
+    };
+});
 
 const toggleExpand = pr => {
     pr.isExpanded = !pr.isExpanded
@@ -135,7 +173,7 @@ const productionKpiMock = computed(() => {
             targetQty: productionKpiRaw.value.targetQty
         },
         defect: { title: '공정 불량률', rate: productionKpiRaw.value.defectRate },
-        lineUtilization: { title: '라인 가동률', rate: productionKpiRaw.value.lineUtilizationRate }
+        lineUtilization: { title: '라인 가동성', rate: productionKpiRaw.value.lineUtilizationRate }
     }
 })
 
@@ -160,6 +198,12 @@ const trendOptions = {
         }
     }
 }
+
+const router = useRouter()
+
+const goToDetail = (prId) => {
+    router.push(`/production/requests/${prId}`)
+}
 </script>
 
 <template>
@@ -174,36 +218,36 @@ const trendOptions = {
                 </p>
             </div>
 
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
-                    <span class="text-[11px] font-black text-slate-500 uppercase tracking-wider">내 담당 업무만</span>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3 bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-[13px] font-black text-slate-500 uppercase tracking-wider">내 담당 업무만</span>
                     <button @click="isMyTasksOnly = !isMyTasksOnly"
                         :class="isMyTasksOnly ? 'bg-indigo-600' : 'bg-slate-200'"
-                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none">
+                        class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none">
                         <span :class="isMyTasksOnly ? 'translate-x-6' : 'translate-x-1'"
-                            class="inline-block h-4 w-4 mt-1 transform rounded-full bg-white shadow transition duration-200" />
+                            class="inline-block h-5 w-5 mt-1 transform rounded-full bg-white shadow transition duration-200" />
                     </button>
                 </div>
-                <div class="relative w-72">
+                <div class="relative w-80">
                     <input v-model="searchQuery" type="text" placeholder="생산요청(PR) / 고객사 검색"
-                        class="w-full px-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all shadow-sm" />
+                        class="w-full px-5 py-3 text-base rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all shadow-sm" />
                 </div>
             </div>
         </header>
 
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             <div v-for="(kpi, key) in productionKpiMock" :key="key"
-                class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
+                class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
                 <div
-                    class="flex justify-between items-start mb-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                    class="flex justify-between items-start mb-4 text-[13px] font-bold text-slate-400 uppercase tracking-widest">
                     {{ kpi.title }}
                 </div>
-                <div class="text-2xl font-black text-slate-900 mb-4 tabular-nums">
+                <div class="text-4xl font-black text-slate-700 mb-4 tabular-nums">
                     {{ key === 'production' ? kpi.completedQty?.toLocaleString() : kpi.rate + '%' }}
-                    <span v-if="key === 'production'" class="text-xs font-bold text-slate-300">/ {{
-                        kpi.targetQty?.toLocaleString() }} EA</span>
+                    <span v-if="key === 'production'" class="text-sm font-bold text-slate-300 ml-1">/ {{
+                        kpi.targetQty?.toLocaleString() }} </span>
                 </div>
-                <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
                     <div class="h-full bg-indigo-500 rounded-full transition-all duration-1000"
                         :style="{ width: (key === 'production' ? (kpi.completedQty / kpi.targetQty * 100) : kpi.rate) + '%' }">
                     </div>
@@ -211,79 +255,78 @@ const trendOptions = {
             </div>
         </section>
 
-        <div class="grid grid-cols-12 gap-6">
-            <div class="col-span-12 lg:col-span-8 space-y-6">
+        <div class="grid grid-cols-12 gap-8">
+            <div class="col-span-12 lg:col-span-8 space-y-8">
                 <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="p-5 border-b border-slate-100 flex items-center gap-2">
-                        <span class="w-1.5 h-4 bg-indigo-500 rounded-full"></span>
-                        <h2 class="font-bold text-slate-800 tracking-tight">실시간 생산요청 상세 현황</h2>
+                    <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+                        <span class="w-2 h-5 bg-indigo-500 rounded-full"></span>
+                        <h2 class="text-lg font-bold text-slate-800 tracking-tight">실시간 생산요청 상세 현황</h2>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
+                        <table class="w-full text-[15px]">
                             <thead>
                                 <tr
-                                    class="bg-slate-50/50 text-slate-400 text-[10px] uppercase tracking-widest font-bold">
-                                    <th class="py-3 px-6 text-left w-12"></th>
-                                    <th class="py-3 text-left">PR 정보</th>
-                                    <th class="py-3 text-left">고객사</th>
-                                    <th class="py-3 text-center">납기일</th>
-                                    <th class="py-3 text-center">리스크</th>
+                                    class="bg-slate-50/50 text-slate-500 text-[12px] uppercase tracking-widest font-bold">
+                                    <th class="py-4 px-6 text-left w-14"></th>
+                                    <th class="py-4 text-left">PR 정보</th>
+                                    <th class="py-4 text-left">고객사</th>
+                                    <th class="py-4 text-center">납기일</th>
+                                    <th class="py-4 text-center">리스크</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 <template v-for="pr in filteredPrList" :key="pr.prId">
                                     <tr @click="toggleExpand(pr)"
                                         class="hover:bg-indigo-50/30 cursor-pointer transition-colors group">
-                                        <td class="px-6 text-slate-300 font-bold transition-transform duration-300"
+                                        <td class="px-6 text-slate-300 font-bold transition-transform duration-300 text-base"
                                             :class="pr.isExpanded ? 'rotate-90' : ''">▶</td>
-                                        <td class="py-4">
-                                            <p class="font-black text-slate-800 group-hover:text-indigo-600">{{
+                                        <td class="py-5">
+                                            <p class="text-lg font-black text-slate-800 group-hover:text-indigo-600">{{
                                                 pr.prCode }}</p>
-                                            <p class="text-[10px] font-bold text-slate-400">품목 수: {{
+                                            <p class="text-[12px] font-bold text-slate-400 mt-0.5">품목 수: {{
                                                 pr.summary.totalItems }}건</p>
                                         </td>
-                                        <td class="font-bold text-slate-600 text-xs">{{ pr.clientName }}</td>
+                                        <td class="font-bold text-slate-600">{{ pr.clientName }}</td>
                                         <td class="text-center">
-                                            <span class="px-3 py-1 rounded-lg text-[10px] font-black"
+                                            <span class="px-4 py-1.5 rounded-lg text-xs font-black"
                                                 :class="pr.dDay <= 1 ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'">D-{{
                                                     pr.dDay }}</span>
                                         </td>
                                         <td class="text-center">
-                                            <span v-if="pr.summary" class="font-black text-xs px-2 py-1 rounded"
+                                            <span v-if="pr.summary" class="font-black text-sm px-3 py-1.5 rounded"
                                                 :class="getRiskLevel(pr.summary.maxRisk).class">
                                                 {{ pr.summary.maxRisk }}%
                                             </span>
                                         </td>
                                     </tr>
                                     <tr v-if="pr.isExpanded">
-                                        <td colspan="5" class="bg-slate-50/50 p-6">
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <td colspan="5" class="bg-slate-50/50 p-8">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div v-for="item in pr.items" :key="item.itemId"
-                                                    class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative">
-
-                                                    <div class="flex justify-between items-start mb-3">
+                                                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative">
+                                                    <div class="flex justify-between items-start mb-4">
                                                         <div>
                                                             <span
-                                                                class="text-[9px] font-black text-indigo-500 uppercase px-1.5 py-0.5 bg-indigo-50 rounded">
+                                                                class="text-[11px] font-black text-indigo-500 uppercase px-2 py-1 bg-indigo-50 rounded">
                                                                 {{ item.lineName }} </span>
-                                                            <p class="font-bold text-slate-800 mt-1 text-sm">
-                                                                {{ item.itemName }} </p>
+                                                            <p class="font-bold text-slate-800 mt-2 text-base"> {{
+                                                                item.itemName }} </p>
                                                         </div>
                                                         <span
-                                                            class="px-2 py-1 rounded text-[10px] font-black bg-slate-100 text-slate-500">
+                                                            class="px-2.5 py-1 rounded text-xs font-black bg-slate-100 text-slate-500">
                                                             목표: {{ item.targetQty }}
                                                         </span>
                                                     </div>
-
-                                                    <div class="space-y-1.5">
+                                                    <div class="space-y-2">
                                                         <div
-                                                            class="flex justify-between text-[10px] font-bold text-slate-400">
+                                                            class="flex justify-between text-[12px] font-bold text-slate-400">
                                                             <span>생산 진척률 ({{ item.producedQty }} / {{ item.targetQty
                                                                 }})</span>
-                                                            <span>{{ Math.round((item.producedQty / item.targetQty) *
-                                                                100) || 0 }}%</span>
+                                                            <span class="text-indigo-600">{{
+                                                                Math.round((item.producedQty / item.targetQty) * 100) ||
+                                                                0 }}%</span>
                                                         </div>
-                                                        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
                                                             <div class="h-full bg-indigo-500"
                                                                 :style="{ width: ((item.producedQty / item.targetQty) * 100) + '%' }">
                                                             </div>
@@ -291,7 +334,14 @@ const trendOptions = {
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="flex justify-end pt-2 border-t border-slate-50">
+                                                <span @click="goToDetail(pr.prId)"
+                                                    class="text-[13px] font-bold text-[#4C4CDD] cursor-pointer hover:underline">
+                                                    생산요청 상세 바로가기 →
+                                                </span>
+                                            </div>
                                         </td>
+
                                     </tr>
                                 </template>
                             </tbody>
@@ -299,57 +349,55 @@ const trendOptions = {
                     </div>
                 </section>
 
-                <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="flex items-center gap-2">
-                            <span class="w-1.5 h-4 bg-indigo-500 rounded-full"></span>
-                            <h2 class="font-bold text-slate-800 tracking-tight">최근 12개월 목표 대비 생산량</h2>
-                        </div>
+                <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3 mb-8">
+                        <span class="w-2 h-5 bg-indigo-500 rounded-full"></span>
+                        <h2 class="text-lg font-bold text-slate-800 tracking-tight">최근 12개월 목표 대비 생산량</h2>
                     </div>
-                    <div class="h-64">
+                    <div class="h-80">
                         <Bar :data="monthlyTrendData" :options="trendOptions" />
                     </div>
                 </section>
             </div>
 
-            <div class="col-span-12 lg:col-span-4 space-y-6">
-
-                <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <span class="w-1.5 h-4 bg-indigo-500 rounded-full"></span> 라인별 CAPA 부하 분석
+            <div class="col-span-12 lg:col-span-4 space-y-8">
+                <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 class="text-base font-bold text-slate-800 mb-8 flex items-center gap-3">
+                        <span class="w-2 h-5 bg-indigo-500 rounded-full"></span> 라인별 CAPA 부하 분석
                     </h2>
-                    <div class="h-44">
+                    <div class="h-56">
                         <Bar :data="capaChartData" :options="commonOptions" />
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-4 leading-relaxed font-medium">
+                    <p class="text-[12px] text-slate-400 mt-6 leading-relaxed font-medium">
                         * 100% 초과 시 초과 부하(Overload) 상태입니다. 라인 배정 조정이 권장됩니다.
                     </p>
                 </section>
 
-                <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <span class="w-1.5 h-4 bg-emerald-500 rounded-full"></span> 실시간 라인 가동 상태
+                <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 class="text-base font-bold text-slate-800 mb-8 flex items-center gap-3">
+                        <span class="w-2 h-5 bg-emerald-500 rounded-full"></span> 실시간 라인 가동 상태
                     </h2>
                     <div class="flex flex-col items-center">
-                        <div class="w-40 h-40 relative mb-4">
+                        <div class="w-52 h-52 relative mb-6">
                             <Doughnut :data="lineChartData" :options="commonOptions" />
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span class="text-2xl font-black text-slate-800">75%</span>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase">가동률</span>
+                                <span class="text-3xl font-black text-slate-800">
+                                    {{ lineUtilizationRate }}%
+                                </span>
+                                <span class="text-[12px] font-bold text-slate-400 uppercase mt-1">생산 가동률</span>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 class="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <span class="w-1.5 h-4 bg-rose-500 rounded-full"></span> 고객사별 종합 리스크
+                <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 class="text-base font-bold text-slate-800 mb-8 flex items-center gap-3">
+                        <span class="w-2 h-5 bg-rose-500 rounded-full"></span> 고객사별 종합 리스크
                     </h2>
-                    <div class="h-40">
-                        <Bar :data="riskChartData" :options="commonOptions" />
+                    <div class="h-52">
+                        <Bar :data="riskChartDataByClient" :options="commonOptions" />
                     </div>
                 </section>
-
             </div>
         </div>
     </div>
