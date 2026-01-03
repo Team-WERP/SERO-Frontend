@@ -13,7 +13,7 @@ const __dirname = dirname(__filename);
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // Handle all routes by serving index.html (SPA fallback)
-app.get('/*', (req, res) => {
+app.get('/:path*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
 });
 
