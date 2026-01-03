@@ -27,9 +27,6 @@ jobs:
       # 2. 빌드 수행 (여기서 dist 폴더가 생성됩니다!)
       - name: Build
         run: npm run build
-        env:
-          # .env 파일 생성 대신 Secrets 값을 빌드 시 주입
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_URL }}
 
       # 3. 배포용 패키지 생성 (중요: dist 포함)
       - name: Generate deployment package
