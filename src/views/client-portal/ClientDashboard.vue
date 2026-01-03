@@ -41,12 +41,12 @@
         </div>
   
         <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200">
-          <div class="flex justify-between items-center mb-6 border-b pb-4">
+          <div class="flex justify-between items-center mb-6 border-b border-gray-300 pb-4">
             <div class="flex items-center gap-2">
               <span class="w-1.5 h-5 bg-[#4C4CDD] rounded-full"></span>
               <h3 class="font-bold text-slate-800">공지 & 시스템 알림</h3>
             </div>
-            <button class="text-xs text-slate-400 hover:underline">더 보기</button>
+            <button class="text-[13px] text-[#4C4CDD] hover:underline">더 보기</button>
           </div>
           <div v-if="dashboardData.notices.length > 0" class="space-y-4">
             <div v-for="notice in dashboardData.notices" :key="notice.id" class="p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-slate-100">
@@ -60,6 +60,57 @@
             <img src="@/assets/새로이새로미.png" alt="No Approval" class="mb-4 h-24 w-auto opacity-40" /> 
             <span class="text-sm">등록된 공지사항이 없습니다.</span>
           </div>
+        </div>
+
+        <div class="lg:col-span-12 bg-white p-6 rounded-2xl border border-slate-200">
+            <div>
+                <div class="flex items-center gap-2">
+              <span class="w-1.5 h-5 bg-[#4C4CDD] rounded-full"></span>
+              <h3 class="font-bold text-slate-800">납기 임박/지연 주문</h3>
+            </div>
+                <p class="text-slate-500 text-xs mt-1 mb-4">현재로부터 납기 요청일까지 7일 이하 또는 지연된 주문</p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-center border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 text-[13px] font-bold border-y border-slate-100 uppercase tracking-wider">
+                            <th class="p-4">주문번호</th>
+                            <th class="p-4">PO번호</th>
+                            <th class="p-4">납기 요청일</th>
+                            <th class="p-4">남은 기간</th>
+                            <th class="p-4">상태</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50 text-[13px]">
+                        <tr v-for="urgent in dashboardData.urgentOrders" :key="urgent.orderId" 
+                            class="hover:bg-slate-50 cursor-pointer transition-colors"
+                            @click="goToDetail(urgent.orderId)">
+                            <td class="p-4text-slate-700">{{ urgent.orderCode }}</td>
+                            <td class="p-4">{{ urgent.poCode  || '-' }}</td>
+                            <td class="p-4">{{ urgent.shippedAt }}</td>
+                            <td class="p-4">
+                                <span :class="[
+                                    'font-bold px-3 py-1 rounded-full',
+                                    (urgent.dday.includes('+') || urgent.dday === 'D-Day') 
+                                        ? 'text-rose-600 bg-rose-50' 
+                                        : 'text-amber-600 bg-amber-50'
+                                ]">
+                                    {{ urgent.dday }}
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                <span :class="['px-3 py-1 rounded-full text-[11px] font-bold', getStatusClass(urgent.status)]">
+                                    {{ getStatusLabel(urgent.status) }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr v-if="dashboardData.urgentOrders.length === 0">
+                            <td colspan="5" class="p-12 text-slate-400 italic">현재 납기 임박 주문이 없습니다.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
   
         <div class="lg:col-span-12 bg-white p-6 rounded-2xl border border-slate-200 -sm">
@@ -143,7 +194,7 @@
   const statCards = computed(() => {
     const { stats } = dashboardData.value;
     return [
-      { title: '납기 임박 (7일 이내)', value: stats.nearDeadlineCount || 0, colorClass: 'text-rose-600' },
+      { title: '납기 임박/지연', value: stats.nearDeadlineCount || 0, colorClass: 'text-rose-600' },
       { title: '접수 대기', value: stats.pendingCount || 0, colorClass: 'text-amber-500' },
       { title: '진행 중', value: stats.inProgressCount || 0, colorClass: 'text-blue-600' },
       { title: '완료', value: stats.doneCount || 0, colorClass: 'text-emerald-600' }
