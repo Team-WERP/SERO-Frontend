@@ -271,18 +271,10 @@ const router = createRouter({
                 { path: "/master/bom/:id", component: ItemBomDetail },
                 { path: "/master/company", component: MasterCompanyInfo },
                 { path: "/master/employees", component: EmployeeList },
-                { path: "/master/common-code", component: CommonCodeManagement },
-
-                // ---------------------
-                // 전자결재
-                // ---------------------
-                { path: "/approval/dashboard", component: ApprovalDashboard },
-                { path: "/approval/submitted", component: ApprovalSubmitted },
-                { path: "/approval/requested", component: ApprovalRequested },
-                { path: "/approval/archived", component: ApprovalArchived },
-                { path: "/approval/received", component: ApprovalReceived },
-                { path: "/approval/referenced", component: ApprovalReferenced },
-
+                {
+                    path: "/master/common-code",
+                    component: CommonCodeManagement,
+                },
                 {
                     path: "master/bom",
                     component: ItemBomManagement,
@@ -360,18 +352,12 @@ const router = createRouter({
                     component: ApprovalDetail,
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
                 },
-
                 // 공지사항
                 {
                     path: "notices",
                     component: NoticeList,
                     meta: {
-                        roles: [
-                            "AC_SAL",
-                            "AC_PRO",
-                            "AC_WHS",
-                            "AC_SYS",
-                        ],
+                        roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
                     },
                 },
             ],
@@ -391,35 +377,35 @@ router.beforeEach((to, from, next) => {
     const userStore = useUserStore();
     const token = localStorage.getItem("accessToken");
 
-    if (to.meta.public) return next()
+    if (to.meta.public) return next();
 
-    if (!token) return next('/login')
+    if (!token) return next("/login");
 
     if (!userStore.authorities.length) {
         try {
-            userStore.initialize()
+            userStore.initialize();
         } catch {
-            localStorage.removeItem('accessToken')
-            return next('/login')
+            localStorage.removeItem("accessToken");
+            return next("/login");
         }
     }
 
-    if (to.path === '/') {
+    if (to.path === "/") {
         const roles = userStore.authorities;
 
-        if (roles.includes('AC_CLI')) {
-            return next('/client-portal/dashboard');
+        if (roles.includes("AC_CLI")) {
+            return next("/client-portal/dashboard");
         }
 
-        if (roles.includes('AC_SAL') || roles.includes('AC_SYS')) {
-            return next('/order/dashboard');
+        if (roles.includes("AC_SAL") || roles.includes("AC_SYS")) {
+            return next("/order/dashboard");
         }
 
-        if (roles.includes('AC_PRO') || roles.includes('AC_WHS')) {
-            return next('/order/management');
+        if (roles.includes("AC_PRO") || roles.includes("AC_WHS")) {
+            return next("/order/management");
         }
 
-        return next('/forbidden');
+        return next("/forbidden");
     }
 
     if (to.meta.roles) {

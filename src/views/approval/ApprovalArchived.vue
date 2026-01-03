@@ -136,7 +136,7 @@
                                         <span class="dot"
                                             :class="{ 'dot-red': item.approvalStatus === 'AS_RJCT' }"></span>
                                         <span v-if="item.approvalStatus === 'AS_RJCT'">반려자: {{ item.rejecterName
-                                        }}</span>
+                                            }}</span>
                                         <span v-else>현 결재: {{ item.currentApproverName }}</span>
                                     </div>
                                     <div class="current-approver" v-else style="visibility: hidden;">&nbsp;</div>
@@ -187,8 +187,8 @@ const tabs = ref([
 
 const searchFilter = ref({
     keyword: '',
-    startDate: '2025-12-01',
-    endDate: '2025-12-31',
+    startDate: '',
+    endDate: '',
     refDocType: '',
     approvalType: ''
 });
