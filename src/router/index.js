@@ -6,6 +6,9 @@ import MainLayout from "@/layouts/MainLayout.vue";
 // 로그인
 import Login from "@/views/auth/Login.vue";
 
+// 자동 로그아웃
+import SessionExpired from "@/views/auth/SessionExpired.vue";
+
 // 고객포털
 import ClientDashboard from "@/views/client-portal/ClientDashboard.vue";
 import ClientOrderCreate from "@/views/client-portal/ClientOrderCreate.vue";
@@ -97,6 +100,11 @@ const router = createRouter({
             path: "/not-found",
             component: NotFound,
             meta: { public: true },
+        },
+        {
+            path: "/session-expired",
+            component: SessionExpired,
+            meta: { public: true, hideLayout: true, noPadding: true },
         },
         {
             path: "/",
