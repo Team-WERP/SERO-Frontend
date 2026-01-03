@@ -37,6 +37,7 @@ jobs:
           mkdir -p deploy
           # 빌드된 결과물(dist)과 실행 서버(server.js) 필수 복사
           cp -r dist deploy/dist
+          cp -r node_modules deploy/node_modules
           cp server.js deploy/server.js
           cp package.json deploy/package.json
           cp package-lock.json deploy/package-lock.json
@@ -44,7 +45,7 @@ jobs:
           # 설정 폴더 복사 (없으면 에러나니 있으면 복사하도록 설정)
           if [ -d ".ebextensions" ]; then cp -r .ebextensions deploy/.ebextensions; fi
           if [ -d ".platform" ]; then cp -r .platform deploy/.platform; fi
-          
+
           cd deploy && zip -r deploy.zip .
 
       # 4. AWS Elastic Beanstalk 배포
