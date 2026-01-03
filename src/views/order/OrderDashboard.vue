@@ -3,7 +3,7 @@
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
     </div>
   
-    <div v-else class="min-h-screen bg-[#f8fafc] font-sans p-8">
+    <div v-else class="min-h-screen bg-[#f8fafc]">
       <header class="mb-8">
         <h1 class="text-[32px] font-bold">주문 대시보드</h1>
         <p class="text-slate-500 text-sm mt-1">실시간 수주 현황 및 납기 일정을 한 번에 확인합니다.</p>

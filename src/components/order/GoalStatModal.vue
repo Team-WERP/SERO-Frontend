@@ -99,12 +99,6 @@
           </table>
         </div>
       </div>
-
-      <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
-        <button @click="$emit('close')" class="px-8 py-3 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-all shadow-lg shadow-slate-200">
-          닫기
-        </button>
-      </div>
     </div>
   </div>
 </template>
