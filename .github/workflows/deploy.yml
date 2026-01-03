@@ -1,73 +1,63 @@
-name: Deploy to AWS Elastic Beanstalk
+name: Deploy Frontend to Elastic Beanstalk
 
 permissions:
   contents: read
-  pull-requests: write
 
 on:
-  pull_request:
-    types: [ opened, reopened, synchronize ]
   push:
     branches:
-      - "main" # (주의) develop인지 main인지 확인하세요. 아까 main에 푸시하신다고 했습니다.
+      - main  # (또는 develop, 본인 브랜치에 맞게 수정!)
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '20'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Vite/Vue3는 최신 노드 권장
 
-    - name: Install dependencies
-      run: npm install
+      # 1. 의존성 설치 (GitHub 컴퓨터에서 수행)
+      - name: Install Dependencies
+        run: npm install
 
-    # [중요 1] 빌드 전에 .env 파일을 생성해야 Vite가 백엔드 주소를 인식합니다!
-    - name: Create .env file
-      run: |
-        echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" > .env
+      # 2. 빌드 수행 (여기서 dist 폴더가 생성됩니다!)
+      - name: Build
+        run: npm run build
+        env:
+          # .env 파일 생성 대신 Secrets 값을 빌드 시 주입
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_URL }}
 
-    - name: Build project
-      run: npm run build
+      # 3. 배포용 패키지 생성 (중요: dist 포함)
+      - name: Generate deployment package
+        run: |
+          mkdir -p deploy
+          # 빌드된 결과물(dist)과 실행 서버(server.js) 필수 복사
+          cp -r dist deploy/dist
+          cp server.js deploy/server.js
+          cp package.json deploy/package.json
+          cp package-lock.json deploy/package-lock.json
+          cp Procfile deploy/Procfile
+          # 설정 폴더 복사 (없으면 에러나니 있으면 복사하도록 설정)
+          if [ -d ".ebextensions" ]; then cp -r .ebextensions deploy/.ebextensions; fi
+          if [ -d ".platform" ]; then cp -r .platform deploy/.platform; fi
+          
+          cd deploy && zip -r deploy.zip .
 
-    # (선택) AWS CLI 설치 단계는 beanstalk-deploy 액션을 쓴다면 굳이 없어도 되지만, 유지해도 무방합니다.
-    - name: Install AWS CLI
-      run: |
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install --update
-
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-2
-
-    # [중요 2] server.js, Procfile, .ebextensions를 모두 포함시켜야 합니다.
-    - name: Generate deployment package
-      run: |
-        mkdir -p deploy
-        cp -r dist deploy/
-        cp package.json deploy/
-        cp server.js deploy/
-        cp Procfile deploy/
-        cp -r .ebextensions deploy/ 2>/dev/null || echo ".ebextensions not found"
-        cp -r .platform deploy/ 2>/dev/null || echo ".platform not found"
-        cd deploy && zip -r deploy.zip .
-
-    - name: Beanstalk Deploy
-      uses: einaregilsson/beanstalk-deploy@v22
-      with:
-        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        application_name: sero-f
-        environment_name: Sero-f-env # (주의) AWS 콘솔에 있는 환경 이름 대소문자 정확히 확인!
-        version_label: github-action-${{ github.sha }}
-        region: ap-northeast-2
-        deployment_package: deploy/deploy.zip
+      # 4. AWS Elastic Beanstalk 배포
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: sero-f          # (본인 EB 애플리케이션 이름 확인)
+          environment_name: Sero-f-env      # (본인 EB 환경 이름 확인)
+          version_label: github-action-${{ github.sha }}
+          region: ap-northeast-2
+          deployment_package: deploy/deploy.zip
+          use_existing_version_if_available: false
+          wait_for_deployment: true
+          wait_for_environment_recovery: 300
