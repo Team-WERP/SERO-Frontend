@@ -1,7 +1,7 @@
 <template>
   <RouterView />
   <ExpireSessionModal v-if="userStore.isExpireModalOpen" :seconds="userStore.remainingSeconds" @extend="handleExtend"
-    @logout="() => logout(false)" />
+    @logout="() => logout()" />
 </template>
 
 <script setup>

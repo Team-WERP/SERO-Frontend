@@ -4,6 +4,7 @@ import { useUserStore } from "@/stores/user";
 import { logout as logoutApi } from "@/api/auth.js";
 
 let timer = null;
+let isLoggingOut = false;
 
 export function useSessionTimer() {
     const userStore = useUserStore();
@@ -29,29 +30,22 @@ export function useSessionTimer() {
             // 만료 시 강제 로그아웃
             if (remain <= 0) {
                 stopTimer();
-                console.log("??")
-                isLoggingOut = true;
+                console.log("??");
                 handleLogout(true);
             }
         }, 1000);
     };
-
-    let isLoggingOut = false;
 
     const handleLogout = async (expired = false) => {
         if (isLoggingOut) return;
         isLoggingOut = true;
 
         userStore.isSessionHandling = true;
+        userStore.isExpireModalOpen = false;
 
         try {
-            const type = userStore.hasAuthority("AC_CLI")
-                ? "client"
-                : "hq";
+            const type = userStore.hasAuthority("AC_CLI") ? "client" : "hq";
 
-            userStore.isExpireModalOpen = false;
-
-            console.log("여기")
             await logoutApi(type);
         } catch (e) {
             console.error("로그아웃 API 실패", e);
@@ -59,11 +53,13 @@ export function useSessionTimer() {
             stopTimer();
             userStore.logout();
 
-            console.log("뭐야 여기")
+            isLoggingOut = false;
 
-            router.replace(
-                expired ? "/session-expired" : "/login"
-            );
+            router.replace(expired ? "/session-expired" : "/login");
+
+            setTimeout(() => {
+                userStore.isSessionHandling = false;
+            }, 500);
         }
     };
 
