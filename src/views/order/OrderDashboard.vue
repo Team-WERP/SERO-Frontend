@@ -19,13 +19,24 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
         <div class="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200">
             <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-5 bg-[#4C4CDD] rounded-full"></span>
-                    <h3 class="font-bold text-[15px]">월별 수주 실적 및 목표 비교</h3>
-                </div>
-                <button class="text-[12px] text-slate-400 hover:text-slate-600 transition-colors">
-                    <MoreHorizontal size="18" />
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-5 bg-[#4C4CDD] rounded-full"></span>
+                <h3 class="font-bold text-[15px] text-slate-800">월별 수주 실적 및 목표 비교</h3>
+                <span class="text-[11px] text-slate-400 ml-1">최근 12개월 기준</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button 
+                @click="showGoalModal = true" 
+                class="text-[13px] text-[#4C4CDD] font-semibold hover:underline"
+                >
+                상세보기
                 </button>
+                
+                <button class="text-slate-400 hover:text-slate-600 transition-colors flex items-center">
+                <MoreHorizontal size="18" />
+                </button>
+            </div>
             </div>
           <div class="h-[320px]">
             <Bar :data="chartData" :options="chartOptions" />
@@ -81,8 +92,8 @@
                     </span>
                   </td>
                   <td class="p-4 text-center">
-                    <span :class="['inline-flex justify-center items-center w-24 px-3 py-1.5 rounded-full text-[11px] font-bold border shadow-sm', 
-                                  order.dday.includes('+') ? 'bg-red-500 text-white border-red-600' : 'bg-orange-400 text-white border-orange-500']">
+                    <span :class="['inline-flex justify-center items-center w-20 px-2 py-1.5 rounded-full text-[13px] font-bold', 
+                                  order.dday.includes('+') ? 'bg-red-500 text-white ' : 'bg-orange-400 text-white']">
                       {{ order.dday.includes('+') ? '납기 지연' : '납기 임박' }}
                     </span>
                   </td>
@@ -133,7 +144,7 @@
                   <div class="text-[11px] text-slate-400 font-mono">{{ order.orderCode }}</div>
                   <div class="text-sm font-bold text-slate-800">{{ order.clientName }}</div>
                 </div>
-                <div :class="['text-[12px] px-2 py-0.5 rounded font-bold shrink-0', getStatusBadgeClass(order.status)]">
+                <div :class="['text-[12px] px-2 py-1 rounded-full font-bold shrink-0', getStatusBadgeClass(order.status)]">
                   {{ statusLabelMap[order.status] || order.status }}
                 </div>
               </div>
@@ -146,7 +157,7 @@
         </div>
       </div>
   
-      <GoalStatModal v-if="showGoalModal" :data="mainData.monthlyGoal" @close="showGoalModal = false" />
+      <GoalStatModal v-if="showGoalModal" :data="mainData.monthlyGoal" @close="showGoalModal = false " @refresh="fetchData"/>
       
       <div v-if="showOrderModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div class="bg-white p-8 rounded-2xl max-w-md w-full">
@@ -169,7 +180,6 @@
   import { useRouter } from 'vue-router';
 
   
-  // 컴포넌트 등록
   import StatCard from '@/components/order/StatCard.vue';
   import CalendarWidget from '@/components/order/CalendarWidget.vue';
   import GoalStatModal from '@/components/order/GoalStatModal.vue';
@@ -185,20 +195,31 @@
   const selectedOrderDetails = ref(null);
   const router = useRouter();
   
-  onMounted(async () => {
+  const fetchData = async () => {
     try {
-      const params = { year: 2026, month: 1 };
-      const [dashRes, calRes] = await Promise.all([
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+
+        const params = { 
+            year: currentYear, 
+            month: currentMonth 
+        };
+        const [dashRes, calRes] = await Promise.all([
         getDashboard(params),
         getDashboardCalendar(params)
-      ]);
-      mainData.value = dashRes;
-      calendarData.value = calRes;
+        ]);
+        mainData.value = dashRes;
+        calendarData.value = calRes;
     } catch (error) {
-      console.error("데이터 로딩 실패:", error);
+        console.error("데이터 로딩 실패:", error);
     } finally {
-      loading.value = false;
+        loading.value = false;
     }
+  };
+
+  onMounted(() => {
+    fetchData();
   });
   
   const handleMonthChange = async ({ year, month }) => {
@@ -216,7 +237,10 @@
     return day ? day.dailyOrders : [];
   });
   
-  const formatPrice = (val) => `₩${(val / 1000000).toFixed(1)}M`;
+  const formatPrice = (val) => {
+    if (val >= 100000000) return `₩${(val / 100000000).toFixed(2)}억`;
+    return `₩${(val / 1000000).toFixed(1)}백만`;
+};
   
   const chartData = computed(() => ({
     labels: mainData.value?.monthlyGoal.map(g => `${g.goalMonth}월`) || [],

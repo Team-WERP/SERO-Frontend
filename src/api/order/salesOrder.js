@@ -1,13 +1,28 @@
 import api from '@/api/axios.js';
 
 // ====================== 본사 대시보드 =============================
+
+// 대시보드 기본 데이터 조회
 export const getDashboard = (params = {}) => {
   return api.get('/orders/dashboard', { params })
       .then(res => res.data)
 }
 
+// 납기 일정 캘린더 조회
 export const getDashboardCalendar = (params = {}) => {
   return api.get('/orders/dashboard/calendar', { params })
+      .then(res => res.data)
+}
+
+// 수주 목표 조회
+export const getDashboardGoals = (params = {}) => {
+  return api.get('/orders/dashboard/goal', { params })
+      .then(res => res.data)
+}
+
+// 수주 목표 업데이트
+export const updateDashboardGoals = (goalId, updateData) => {
+  return api.put(`/orders/dashboard/goal/${goalId}`,updateData)
       .then(res => res.data)
 }
 

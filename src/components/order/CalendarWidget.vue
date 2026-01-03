@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+    <div class="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-xl overflow-hidden">
       <div v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="bg-slate-50 py-2 text-center text-[11px] font-bold text-slate-400 uppercase">
         {{ d }}
       </div>
