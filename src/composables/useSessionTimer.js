@@ -15,7 +15,6 @@ export function useSessionTimer() {
 
         timer = setInterval(() => {
             userStore.heartbeat++;
-            console.log(userStore.heartbeat);
 
             const remain = userStore.remainingSeconds;
 
@@ -30,7 +29,6 @@ export function useSessionTimer() {
             // 만료 시 강제 로그아웃
             if (remain <= 0) {
                 stopTimer();
-                console.log("??");
                 handleLogout(true);
             }
         }, 1000);
