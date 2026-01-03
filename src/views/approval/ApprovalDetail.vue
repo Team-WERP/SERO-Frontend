@@ -162,7 +162,7 @@
                                             {{ getDocType(approvalData.refDocType) }}
                                         </span>
                                         <span class="text-sm font-bold text-blue-800">{{ approvalData.refDocCode
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -247,7 +247,7 @@
                                     <p class="text-sm font-bold text-slate-700 mb-1">
                                         {{ log.approverName }}
                                         <span class="text-xs font-normal text-slate-500 ml-1">{{ log.approverDepartment
-                                        }}</span>
+                                            }}</span>
                                     </p>
 
                                     <div v-if="log.note" class="bg-slate-50 border border-slate-200 rounded p-2.5 mt-1">
@@ -546,12 +546,31 @@ const handleReject = async (note) => {
 };
 
 const order = ref(null);
+const gi = ref(null);
+const prData = ref(null);
 
 const getOrderData = async (refDocId) => {
-    order.value = await getSODetail(refDocId);
+    try {
+        order.value = await getSODetail(refDocId);
+    } catch (error) {
+        console.error("결재 미리보기 조회 실패:", error);
+
+        alert("문서 정보를 불러오는데 실패했습니다.");
+        return;
+    }
 };
 
-const prData = ref(null);
+const getPrData = async (refDocId) => {
+    try {
+        prData.value = await getPRDetail(refDocId);
+    } catch (error) {
+        console.error("결재 미리보기 조회 실패:", error);
+
+        alert("문서 정보를 불러오는데 실패했습니다.");
+        return;
+    }
+};
+
 const giData = ref(null);
 
 const openPopup = async () => {
@@ -560,20 +579,10 @@ const openPopup = async () => {
     const refDocType = approvalData.value.refDocType;
     const refDocId = approvalData.value.refDocId;
 
-    const popup = window.open('', '_blank', 'width=900,height=900,scrollbars=yes');
-
-    if (!popup) {
-        alert('팝업 차단을 해제해주세요.');
-        return;
-    }
-
-    // 데이터 준비
     const drafter = approvalFlow.value.find(item => item.lineType === 'drafter') || {};
     const draftDate = approvalData.value.draftedAt ? formatDate(approvalData.value.draftedAt).slice(0, 10) : '-';
-    // 기안 내용 (없을 경우 빈 문자열)
     const draftContent = approvalData.value.content || '';
 
-    // 결재 라인 HTML 생성 (3단 구조: 직급-도장-날짜)
     const approvalLineHtml = approvalFlow.value.map(line => {
         const position = getPositionName(line.approverPositionCode) || '담당';
         const name = line.approverName;
@@ -624,7 +633,10 @@ const openPopup = async () => {
     if (refDocType === 'SO') {
         await getOrderData(refDocId);
 
-        if (!order.value) return;
+        if (!order.value) {
+            alert('데이터를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+            return;
+        }
 
         const getPopupContent = () => {
             const itemsHtml = order.value.items.map((item, idx) => `
@@ -826,12 +838,222 @@ const openPopup = async () => {
                 </html>`;
         };
 
+        const popup = window.open('', '_blank', 'width=900,height=900,scrollbars=yes');
+
+        if (!popup) {
+            alert('팝업 차단을 해제해주세요.');
+            return;
+        }
+
         popup.document.write(getPopupContent());
         popup.document.close();
     } else if (refDocType === 'GI') {
         giData.value = await getGIDetail(refDocId);
+
+        await getOrderData(refDocId);
+
+        if (!order.value) return;
+
     } else if (refDocType === 'PR') {
-        prData.value = await getPRDetail(refDocId);
+        getPrData(refDocId);
+
+        if (!prData.value || !prData.value.header) {
+            alert('데이터를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+            return;
+        }
+
+        const getPopupContent = () => {
+            const header = prData.value.header; // 헤더 정보
+            const items = prData.value.items;   // 품목 리스트
+
+            // 1. 품목 리스트 HTML 생성
+            const itemsHtml = items.map((item, idx) => `
+                <tr>
+                    <td class="center">${idx + 1}</td>
+                    <td class="center">${item.itemCode || '-'}</td>
+                    <td>${item.itemName}</td>
+                    <td class="center">${item.spec || '-'}</td>
+                    <td class="center">${item.unit || 'EA'}</td>
+                    <td class="right bold">${(item.requestedQuantity || 0).toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            // 2. 빈 행 채우기 (최소 10줄 유지)
+            const emptyRowsCount = Math.max(0, 10 - items.length);
+            const emptyRowsHtml = Array(emptyRowsCount).fill(`
+                <tr>
+                    <td class="center">&nbsp;</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            `).join('');
+
+            // 3. 총 합계 계산
+            const totalQuantity = items.reduce((acc, cur) => acc + (cur.requestedQuantity || 0), 0);
+
+            // HTML 반환
+            return `
+                <!DOCTYPE html>
+                <html lang="ko">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>생산요청서 미리보기</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                        @page { size: A4; margin: 10mm; }
+                        body { font-family: "Noto Sans KR", sans-serif; margin: 0; }
+                        
+                        /* 인쇄 시 버튼 숨김 */
+                        @media print {
+                            .no-print { display: none !important; }
+                        }
+                        .print-container { margin: 0 auto; padding: 10mm; background: white; box-sizing: border-box; width: 210mm; min-height: 297mm; }     
+                        .writing-vertical { writing-mode: vertical-lr; text-orientation: upright; letter-spacing: 5px; }
+                        table.doc-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; }
+                        table.doc-table th, table.doc-table td { border: 1px solid #000; padding: 8px; font-size: 13px; word-break: break-all; }
+                        table.doc-table th { background: #f2f2f2; font-weight: bold; text-align: center; }
+                        .doc-title { font-size: 32px; letter-spacing: 15px; text-decoration: underline; text-underline-offset: 8px; margin: 30px 0; text-align: center; font-weight: bold; }
+                        .center { text-align: center; }
+                        .right { text-align: right; }
+                        .bold { font-weight: bold; }
+                        .highlight-text { color: #d32f2f; font-weight: bold; }
+                        .footer-note { margin-top: 20px; font-size: 12px; border: 1px solid #000; padding: 10px; min-height: 60px; }
+                    </style>
+                </head>
+                <body class="bg-gray-100 flex justify-center print:bg-white">
+                    <div class="print-container bg-white shadow-lg print:shadow-none relative">
+                        
+                        <div class="flex justify-end gap-3 mb-10 no-print border-b pb-4">
+                            <button onclick="window.print()" class="px-6 py-2 bg-blue-600 text-white rounded font-bold shadow hover:bg-blue-700 transition-colors cursor-pointer flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                인쇄하기
+                            </button>
+                            <button onclick="window.close()" class="px-6 py-2 bg-gray-500 text-white rounded font-bold shadow hover:bg-gray-600 transition-colors cursor-pointer">
+                                닫기
+                            </button>
+                        </div>
+
+                        <h1 class="text-xl font-bold text-center mb-3">${approvalData.value.title}</h1>
+                        
+                        <div class="flex justify-between items-end mb-8">
+                            <table class="border-collapse border border-black text-sm w-[45%]">
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold w-24">기안자</td>
+                                    <td class="border border-black p-2 text-center">${drafter.approverName || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold">소 속</td>
+                                    <td class="border border-black p-2 text-center">${drafter.approverDepartment || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold">기안일</td>
+                                    <td class="border border-black p-2 text-center">${draftDate}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold">문서번호</td>
+                                    <td class="border border-black p-2 text-center">${approvalData.value.approvalCode}</td>
+                                </tr>
+                            </table>
+
+                            <table class="border-collapse border-t border-b border-l border-black text-sm">
+                                <tr>
+                                    <td rowspan="2" class="bg-gray-100 border-r border-black w-4 text-center font-bold align-middle writing-vertical p-1">
+                                        결재
+                                    </td>
+                                    ${approvalLineHtml}
+                                    ${emptySlotsHtml}
+                                </tr>
+                            </table>
+                        </div>
+
+                        ${draftContent ? `
+                        <div class="border border-black p-1 mb-8 text-sm">
+                            <div class="font-bold mb-2 border-b border-black/20 pb-1">[기안 내용]</div>
+                            ${draftContent}
+                        </div>
+                        ` : ''}
+
+                        <div class="header-container flex justify-center">
+                            <h1 class="doc-title">생 산 요 청 서</h1>
+                        </div>
+
+                        <table class="doc-table info-table">
+                            <tbody>
+                                <tr>
+                                    <th>생산요청번호</th>
+                                    <td>${header.prCode || '-'}</td>
+                                    <th>요청일자</th>
+                                    <td>${header.requestedAt || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <th>주문번호</th>
+                                    <td>${header.soCode || '-'}</td>
+                                    <th>납기일자</th>
+                                    <td class="highlight-text">${header.dueAt || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <th>요청자</th>
+                                    <td>${header.drafterName || '-'}</td>
+                                    <th>담당자</th>
+                                    <td>${header.managerName || '-'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="doc-table item-table">
+                            <colgroup>
+                                <col style="width: 5%">
+                                <col style="width: 15%">
+                                <col style="width: 30%">
+                                <col style="width: 20%">
+                                <col style="width: 10%">
+                                <col style="width: 20%">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>품목코드</th>
+                                    <th>품목명</th>
+                                    <th>규격</th>
+                                    <th>단위</th>
+                                    <th>수량</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                                ${emptyRowsHtml}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="5">합 계</th>
+                                    <td class="right bold">${totalQuantity.toLocaleString()}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div class="footer-note">
+                            <p>※ 특이사항: 위와 같이 생산을 요청하오니 기한 내 납품 바랍니다.</p>
+                        </div>
+                        
+                        </div>
+                </body>
+                </html>`;
+        };
+
+        const popup = window.open('', '_blank', 'width=900,height=900,scrollbars=yes');
+
+        if (!popup) {
+            alert('팝업 차단을 해제해주세요.');
+            return;
+        }
+
+        popup.document.write(getPopupContent());
+        popup.document.close();
+
     } else {
         alert('지원하지 않는 문서 타입입니다.');
     }
