@@ -546,7 +546,7 @@ const handleReject = async (note) => {
 };
 
 const order = ref(null);
-const gi = ref(null);
+const giData = ref(null);
 const prData = ref(null);
 
 const getOrderData = async (refDocId) => {
@@ -571,7 +571,16 @@ const getPrData = async (refDocId) => {
     }
 };
 
-const giData = ref(null);
+const getGiData = async (refDocId) => {
+    try {
+        giData.value = await getGIDetail(refDocId);
+    } catch (error) {
+        console.error("결재 미리보기 조회 실패:", error);
+
+        alert("문서 정보를 불러오는데 실패했습니다.");
+        return;
+    }
+};
 
 const openPopup = async () => {
     if (!loading) return;
@@ -848,12 +857,262 @@ const openPopup = async () => {
         popup.document.write(getPopupContent());
         popup.document.close();
     } else if (refDocType === 'GI') {
-        giData.value = await getGIDetail(refDocId);
+        getGiData(refDocId);
 
-        await getOrderData(refDocId);
+        if (!giData.value) {
+            alert('데이터를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+            return;
+        }
 
-        if (!order.value) return;
+        const getPopupContent = () => {
+            const gi = giData.value;
+            const items = gi.items || [];
 
+            // 1. 품목 리스트 HTML 생성
+            const itemsHtml = items.map((item, idx) => `
+                <tr>
+                    <td class="center">${idx + 1}</td>
+                    <td class="center">${item.itemCode || '-'}</td>
+                    <td>${item.itemName}</td>
+                    <td class="center">${item.spec || '-'}</td>
+                    <td class="center">${item.unit || 'EA'}</td>
+                    <td class="right bold">${(item.quantityAUn || 0).toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            // 2. 빈 행 채우기 (최소 5줄 유지)
+            const emptyRowsCount = Math.max(0, 5 - items.length);
+            const emptyRowsHtml = Array(emptyRowsCount).fill(`
+                <tr>
+                    <td class="center">&nbsp;</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            `).join('');
+
+            // 3. 총 수량 계산
+            const totalQuantity = items.reduce((sum, item) => sum + (item.quantityAUn || 0), 0);
+
+            // 날짜 포맷팅
+            const scheduledDate = gi.scheduledAt ? formatDate(gi.scheduledAt).slice(0, 10) : '-';
+
+            // HTML 반환
+            return `
+                <!DOCTYPE html>
+                <html lang="ko">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>출고지시서 미리보기</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                        @page { size: A4; margin: 10mm; }
+                        body { font-family: "Noto Sans KR", sans-serif; margin: 0; }
+                        @media print { .no-print { display: none !important; } }
+                        
+                        /* 컨테이너 스타일 */
+                        .print-container { margin: 0 auto; padding: 10mm; background: white; box-sizing: border-box; width: 210mm; min-height: 297mm; }     
+                        .writing-vertical { writing-mode: vertical-lr; text-orientation: upright; letter-spacing: 5px; }
+
+                        /* 출고지시서 전용 스타일 */
+                        .gi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+                        .gi-header h1 { font-size: 32px; font-weight: bold; color: #111827; }
+                        
+                        /* 상단 우측 정보 테이블 */
+                        .header-info-table { border-collapse: collapse; text-align: left; font-size: 13px; }
+                        .header-info-table th { padding: 4px 12px; font-weight: 600; background: #f3f4f6; border: 1px solid #d1d5db; }
+                        .header-info-table td { padding: 4px 12px; border: 1px solid #d1d5db; }
+
+                        .divider { border: none; border-top: 2px solid #111827; margin: 20px 0; }
+                        
+                        /* 섹션 제목 */
+                        h3 { font-size: 16px; font-weight: bold; color: #111827; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #e5e7eb; }
+
+                        /* 상세 정보 테이블 (From/To) */
+                        .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; }
+                        .detail-table th { width: 100px; padding: 8px 12px; font-weight: 600; background: #f9fafb; border: 1px solid #e5e7eb; text-align: left; }
+                        .detail-table td { padding: 8px 12px; border: 1px solid #e5e7eb; }
+
+                        /* 품목 테이블 */
+                        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #d1d5db; font-size: 13px; }
+                        .items-table th { padding: 10px 8px; font-weight: 600; background: #f3f4f6; border: 1px solid #d1d5db; text-align: center; }
+                        .items-table td { padding: 8px; border: 1px solid #e5e7eb; text-align: center; }
+                        .items-table tfoot td { background: #f9fafb; font-weight: bold; border-top: 2px solid #d1d5db; padding: 10px 8px; }
+
+                        .right { text-align: right !important; }
+                        .center { text-align: center !important; }
+                        
+                        .note-box { padding: 15px; background: #f9fafb; border: 1px solid #e5e7eb; min-height: 80px; font-size: 14px; white-space: pre-wrap; }
+                        
+                        /* 수령인 정보 박스 */
+                        .recipient-box { display: flex; align-items: center; gap: 20px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; margin-top: 5px; font-size: 13px; }
+                        .recipient-box .label { font-weight: 600; color: #374151; }
+                        .recipient-box .value { font-weight: bold; color: #111827; }
+                    </style>
+                </head>
+                <body class="bg-gray-100 flex justify-center print:bg-white">
+                    <div class="print-container bg-white shadow-lg print:shadow-none relative">
+                        
+                        <div class="flex justify-end gap-3 mb-10 no-print border-b pb-4">
+                            <button onclick="window.print()" class="px-6 py-2 bg-blue-600 text-white rounded font-bold shadow hover:bg-blue-700 transition-colors cursor-pointer flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                인쇄하기
+                            </button>
+                            <button onclick="window.close()" class="px-6 py-2 bg-gray-500 text-white rounded font-bold shadow hover:bg-gray-600 transition-colors cursor-pointer">
+                                닫기
+                            </button>
+                        </div>
+
+                        <h1 class="text-xl font-bold text-center mb-3">${approvalData.value.title}</h1>
+                        
+                        <div class="flex justify-between items-end mb-8">
+                            <table class="border-collapse border border-black text-sm w-[45%]">
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold w-24">기안자</td>
+                                    <td class="border border-black p-2 text-center">${drafter.approverName || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold">소 속</td>
+                                    <td class="border border-black p-2 text-center">${drafter.approverDepartment || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold">기안일</td>
+                                    <td class="border border-black p-2 text-center">${draftDate}</td>
+                                </tr>
+                                <tr>
+                                    <td class="bg-gray-100 border border-black p-2 text-center font-bold">문서번호</td>
+                                    <td class="border border-black p-2 text-center">${approvalData.value.approvalCode}</td>
+                                </tr>
+                            </table>
+
+                            <table class="border-collapse border-t border-b border-l border-black text-sm">
+                                <tr>
+                                    <td rowspan="2" class="bg-gray-100 border-r border-black w-4 text-center font-bold align-middle writing-vertical p-1">
+                                        결재
+                                    </td>
+                                    ${approvalLineHtml}
+                                    ${emptySlotsHtml}
+                                </tr>
+                            </table>
+                        </div>
+
+                        ${draftContent ? `
+                        <div class="border border-black p-1 mb-8 text-sm">
+                            <div class="font-bold mb-2 border-b border-black/20 pb-1">[기안 내용]</div>
+                            ${draftContent}
+                        </div>
+                        ` : ''}
+
+                        <div class="gi-header">
+                            <h1>출고지시서</h1>
+                            <table class="header-info-table">
+                                <tbody>
+                                    <tr>
+                                        <th>문서번호</th>
+                                        <td>${gi.giCode}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>출고예정일자</th>
+                                        <td>${scheduledDate}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>참조문서</th>
+                                        <td>${gi.doCode || '-'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <hr class="divider" />
+
+                        <div class="flex gap-8 mb-6">
+                            <div class="flex-1">
+                                <h3>출고 정보 (From)</h3>
+                                <table class="detail-table">
+                                    <tbody>
+                                        <tr>
+                                            <th>출고 창고</th>
+                                            <td>${gi.warehouseName || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>담당자</th>
+                                            <td>${gi.managerName || '미배정'}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="flex-1">
+                                <h3>배송 정보 (To)</h3>
+                                <table class="detail-table">
+                                    <tbody>
+                                        <tr>
+                                            <th>납품처</th>
+                                            <td>${gi.companyName || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>도착지 주소</th>
+                                            <td>${gi.address || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>연락처</th>
+                                            <td>${gi.recipientContact || '-'}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="recipient-box">
+                                    <span class="label">수령인 이름</span>
+                                    <span class="value">${gi.recipientName || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3>출고 품목 상세</h3>
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>품목코드</th>
+                                    <th>품목명</th>
+                                    <th>규격</th>
+                                    <th>단위</th>
+                                    <th>지시수량</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                                ${emptyRowsHtml}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5" class="right font-bold">합계 (Total)</td>
+                                    <td class="right font-bold">${totalQuantity.toLocaleString()}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <h3>특이사항 (Note)</h3>
+                        <div class="note-box">
+                            ${gi.note || '-'}
+                        </div>
+
+                    </div>
+                </body>
+                </html>`;
+        };
+
+        const popup = window.open('', '_blank', 'width=900,height=900,scrollbars=yes');
+
+        if (!popup) {
+            alert('팝업 차단을 해제해주세요.');
+            return;
+        }
+
+        popup.document.write(getPopupContent());
+        popup.document.close();
     } else if (refDocType === 'PR') {
         getPrData(refDocId);
 
