@@ -582,37 +582,70 @@ const getGiData = async (refDocId) => {
     }
 };
 
-const openPopup = async () => {
-    if (!loading) return;
+const getLoadingHtml = () => {
+    return `
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+            <meta charset="UTF-8">
+            <title>문서 로딩 중...</title>
+            <script src="https://cdn.tailwindcss.com"><\/script>
+            <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+            <style>
+                body { font-family: "Noto Sans KR", sans-serif; }
+            </style>
+        </head>
+        <body>
+            <div class="flex flex-col justify-center items-center h-screen bg-white">
+                <div class="w-10 h-10 border-4 border-gray-200 border-t-[#4C4CDD] rounded-full animate-spin mb-4"></div>
+                <span class="text-[20px] font-semibold text-slate-700">문서 정보를 불러오는 중...</span>
+                <p class="text-slate-400 text-sm mt-2">잠시만 기다려주세요.</p>
+            </div>
+        </body>
+        </html>
+    `;
+};
 
+const openPopup = async () => {
     const refDocType = approvalData.value.refDocType;
     const refDocId = approvalData.value.refDocId;
 
-    const drafter = approvalFlow.value.find(item => item.lineType === 'drafter') || {};
-    const draftDate = approvalData.value.draftedAt ? formatDate(approvalData.value.draftedAt).slice(0, 10) : '-';
-    const draftContent = approvalData.value.content || '';
+    const popup = window.open('', '_blank', 'width=900,height=900,scrollbars=yes');
 
-    const approvalLineHtml = approvalFlow.value.map(line => {
-        const position = getPositionName(line.approverPositionCode) || '담당';
-        const name = line.approverName;
-        const status = line.status;
-        const date = line.processedAt ? formatDate(line.processedAt).slice(0, 10).replace(/-/g, '/') : '';
+    if (!popup) {
+        alert('팝업 차단을 해제해주세요.');
+        return;
+    }
 
-        let signContent = '';
-        if (status === 'ALS_APPR' || (line.lineType === 'drafter' && status === 'ALS_APPR')) {
-            signContent = `
+    popup.document.write(getLoadingHtml());
+    popup.document.close(); // 브라우저가 로딩 화면을 렌더링하도록 마감
+
+    try {
+        const drafter = approvalFlow.value.find(item => item.lineType === 'drafter') || {};
+        const draftDate = approvalData.value.draftedAt ? formatDate(approvalData.value.draftedAt).slice(0, 10) : '-';
+        const draftContent = approvalData.value.content || '';
+
+        const approvalLineHtml = approvalFlow.value.map(line => {
+            const position = getPositionName(line.approverPositionCode) || '담당';
+            const name = line.approverName;
+            const status = line.status;
+            const date = line.processedAt ? formatDate(line.processedAt).slice(0, 10).replace(/-/g, '/') : '';
+
+            let signContent = '';
+            if (status === 'ALS_APPR' || (line.lineType === 'drafter' && status === 'ALS_APPR')) {
+                signContent = `
                 <div class="flex flex-col items-center justify-center w-full h-full">
                     <span class="text-blue-600 font-bold border-2 border-blue-600 rounded-full w-14 h-14 flex items-center justify-center text-sm opacity-80 transform rotate-[-5deg]" style="border-width:3px;">
                         ${name}<br>인
                     </span>
                 </div>`;
-        } else if (status === 'ALS_RJCT') {
-            signContent = `<span class="text-red-500 font-bold text-lg">반려</span>`;
-        } else {
-            signContent = `<span class="text-gray-300"></span>`;
-        }
+            } else if (status === 'ALS_RJCT') {
+                signContent = `<span class="text-red-500 font-bold text-lg">반려</span>`;
+            } else {
+                signContent = `<span class="text-gray-300"></span>`;
+            }
 
-        return `
+            return `
             <td class="border-r border-black p-0 w-24">
                 <div class="bg-gray-100 border-b border-black p-1 text-center text-xs font-bold h-7 flex items-center justify-center">
                     ${position}
@@ -625,30 +658,33 @@ const openPopup = async () => {
                 </div>
             </td>
         `;
-    }).join('');
+        }).join('');
 
-    const emptySlots = 2 - approvalFlow.value.length;
-    let emptySlotsHtml = '';
-    if (emptySlots > 0) {
-        emptySlotsHtml = Array(emptySlots).fill(`
+        const emptySlots = 2 - approvalFlow.value.length;
+        let emptySlotsHtml = '';
+        if (emptySlots > 0) {
+            emptySlotsHtml = Array(emptySlots).fill(`
             <td class="border-r border-black p-0 w-24">
                 <div class="bg-gray-100 border-b border-black h-7"></div>
                 <div class="h-20 border-b border-black"></div>
                 <div class="h-8"></div>
             </td>
         `).join('');
-    }
-
-    if (refDocType === 'SO') {
-        await getOrderData(refDocId);
-
-        if (!order.value) {
-            alert('데이터를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
-            return;
         }
 
-        const getPopupContent = () => {
-            const itemsHtml = order.value.items.map((item, idx) => `
+        let finalHtml = '';
+
+        if (refDocType === 'SO') {
+            await getOrderData(refDocId);
+
+            if (!order.value) {
+                alert('데이터를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+                popup.close();
+                return;
+            }
+
+            const getPopupContent = () => {
+                const itemsHtml = order.value.items.map((item, idx) => `
                 <tr>
                     <td class="border-r border-b border-black p-2">${idx + 1}</td>
                     <td class="border-r border-b border-black p-2">${item.itemCode || '-'}</td>
@@ -661,12 +697,12 @@ const openPopup = async () => {
                 </tr>
             `).join('');
 
-            const totalQuantity = order.value.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-            const orderDate = order.value.orderedAt ? order.value.orderedAt.slice(0, 10) : '-';
-            const shipDate = order.value.shippedAt ? order.value.shippedAt.slice(0, 10) : '-';
+                const totalQuantity = order.value.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                const orderDate = order.value.orderedAt ? order.value.orderedAt.slice(0, 10) : '-';
+                const shipDate = order.value.shippedAt ? order.value.shippedAt.slice(0, 10) : '-';
 
-            // HTML 반환
-            return `
+                // HTML 반환
+                return `
                 <!DOCTYPE html>
                 <html lang="ko">
                 <head>
@@ -845,31 +881,24 @@ const openPopup = async () => {
                     </div>
                 </body>
                 </html>`;
-        };
+            };
 
-        const popup = window.open('', '_blank', 'width=900,height=900,scrollbars=yes');
+            finalHtml = getPopupContent();
+        } else if (refDocType === 'GI') {
+            getGiData(refDocId);
 
-        if (!popup) {
-            alert('팝업 차단을 해제해주세요.');
-            return;
-        }
+            if (!giData.value) {
+                alert('데이터를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+                popup.close();
+                return;
+            }
 
-        popup.document.write(getPopupContent());
-        popup.document.close();
-    } else if (refDocType === 'GI') {
-        getGiData(refDocId);
+            const getPopupContent = () => {
+                const gi = giData.value;
+                const items = gi.items || [];
 
-        if (!giData.value) {
-            alert('데이터를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
-            return;
-        }
-
-        const getPopupContent = () => {
-            const gi = giData.value;
-            const items = gi.items || [];
-
-            // 1. 품목 리스트 HTML 생성
-            const itemsHtml = items.map((item, idx) => `
+                // 1. 품목 리스트 HTML 생성
+                const itemsHtml = items.map((item, idx) => `
                 <tr>
                     <td class="center">${idx + 1}</td>
                     <td class="center">${item.itemCode || '-'}</td>
@@ -880,9 +909,9 @@ const openPopup = async () => {
                 </tr>
             `).join('');
 
-            // 2. 빈 행 채우기 (최소 5줄 유지)
-            const emptyRowsCount = Math.max(0, 5 - items.length);
-            const emptyRowsHtml = Array(emptyRowsCount).fill(`
+                // 2. 빈 행 채우기 (최소 5줄 유지)
+                const emptyRowsCount = Math.max(0, 5 - items.length);
+                const emptyRowsHtml = Array(emptyRowsCount).fill(`
                 <tr>
                     <td class="center">&nbsp;</td>
                     <td></td>
@@ -893,19 +922,19 @@ const openPopup = async () => {
                 </tr>
             `).join('');
 
-            // 3. 총 수량 계산
-            const totalQuantity = items.reduce((sum, item) => sum + (item.quantityAUn || 0), 0);
+                // 3. 총 수량 계산
+                const totalQuantity = items.reduce((sum, item) => sum + (item.quantityAUn || 0), 0);
 
-            // 날짜 포맷팅
-            const scheduledDate = gi.scheduledAt ? formatDate(gi.scheduledAt).slice(0, 10) : '-';
+                // 날짜 포맷팅
+                const scheduledDate = gi.scheduledAt ? formatDate(gi.scheduledAt).slice(0, 10) : '-';
 
-            // HTML 반환
-            return `
+                // HTML 반환
+                return `
                 <!DOCTYPE html>
                 <html lang="ko">
                 <head>
                     <meta charset="UTF-8">
-                    <title>출고지시서 미리보기</title>
+                    <title>결재 문서 미리보기</title>
                     <script src="https://cdn.tailwindcss.com"><\/script>
                     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
                     <style>
@@ -1102,31 +1131,24 @@ const openPopup = async () => {
                     </div>
                 </body>
                 </html>`;
-        };
+            };
 
-        const popup = window.open('', '_blank', 'width=900,height=900,scrollbars=yes');
+            finalHtml = getPopupContent();
+        } else if (refDocType === 'PR') {
+            getPrData(refDocId);
 
-        if (!popup) {
-            alert('팝업 차단을 해제해주세요.');
-            return;
-        }
+            if (!prData.value || !prData.value.header) {
+                alert('데이터를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+                popup.close();
+                return;
+            }
 
-        popup.document.write(getPopupContent());
-        popup.document.close();
-    } else if (refDocType === 'PR') {
-        getPrData(refDocId);
+            const getPopupContent = () => {
+                const header = prData.value.header; // 헤더 정보
+                const items = prData.value.items;   // 품목 리스트
 
-        if (!prData.value || !prData.value.header) {
-            alert('데이터를 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
-            return;
-        }
-
-        const getPopupContent = () => {
-            const header = prData.value.header; // 헤더 정보
-            const items = prData.value.items;   // 품목 리스트
-
-            // 1. 품목 리스트 HTML 생성
-            const itemsHtml = items.map((item, idx) => `
+                // 1. 품목 리스트 HTML 생성
+                const itemsHtml = items.map((item, idx) => `
                 <tr>
                     <td class="center">${idx + 1}</td>
                     <td class="center">${item.itemCode || '-'}</td>
@@ -1137,9 +1159,9 @@ const openPopup = async () => {
                 </tr>
             `).join('');
 
-            // 2. 빈 행 채우기 (최소 10줄 유지)
-            const emptyRowsCount = Math.max(0, 10 - items.length);
-            const emptyRowsHtml = Array(emptyRowsCount).fill(`
+                // 2. 빈 행 채우기 (최소 10줄 유지)
+                const emptyRowsCount = Math.max(0, 10 - items.length);
+                const emptyRowsHtml = Array(emptyRowsCount).fill(`
                 <tr>
                     <td class="center">&nbsp;</td>
                     <td></td>
@@ -1150,16 +1172,16 @@ const openPopup = async () => {
                 </tr>
             `).join('');
 
-            // 3. 총 합계 계산
-            const totalQuantity = items.reduce((acc, cur) => acc + (cur.requestedQuantity || 0), 0);
+                // 3. 총 합계 계산
+                const totalQuantity = items.reduce((acc, cur) => acc + (cur.requestedQuantity || 0), 0);
 
-            // HTML 반환
-            return `
+                // HTML 반환
+                return `
                 <!DOCTYPE html>
                 <html lang="ko">
                 <head>
                     <meta charset="UTF-8">
-                    <title>생산요청서 미리보기</title>
+                    <title>결재 문서 미리보기</title>
                     <script src="https://cdn.tailwindcss.com"><\/script>
                     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
                     <style>
@@ -1301,20 +1323,21 @@ const openPopup = async () => {
                         </div>
                 </body>
                 </html>`;
-        };
+            };
 
-        const popup = window.open('', '_blank', 'width=900,height=900,scrollbars=yes');
-
-        if (!popup) {
-            alert('팝업 차단을 해제해주세요.');
-            return;
+            finalHtml = getPopupContent();
+        } else {
+            alert('지원하지 않는 문서 타입입니다.');
         }
 
-        popup.document.write(getPopupContent());
+        popup.document.open();
+        popup.document.write(finalHtml);
         popup.document.close();
 
-    } else {
-        alert('지원하지 않는 문서 타입입니다.');
+    } catch (error) {
+        console.error("Popup Error:", error);
+        popup.close();
+        alert('문서 정보를 불러오는데 실패했습니다.');
     }
 };
 </script>
