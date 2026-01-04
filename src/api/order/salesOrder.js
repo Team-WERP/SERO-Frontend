@@ -68,6 +68,11 @@ export const cancelOrder = (orderId, cancelData) => {
 
 // ====================== 고객사 =============================
 
+// 고객사 대시보드
+export const getClientDashboard = () => {
+  return api.get('/clients/orders/dashboard').then(res => res.data);
+};
+
 // 고객사 주문
 export const createClientOrder = (orderData) => {
   return api.post('/clients/orders', orderData)
