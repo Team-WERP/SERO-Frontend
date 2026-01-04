@@ -8,6 +8,10 @@ export const useUserStore = defineStore("user", {
         clientId: null,
         isAuthenticated: false,
         authorities: [],
+        tokenExp: null,
+        heartbeat: 0,
+        isExpireModalOpen: false,
+        isSessionHandling: false,
     }),
 
     getters: {
@@ -58,6 +62,38 @@ export const useUserStore = defineStore("user", {
 
             return "";
         },
+
+        remainingSeconds(state) {
+            state.heartbeat;
+
+            if (!state.tokenExp || !state.isAuthenticated) return 0;
+
+            return Math.max(
+                0,
+                Math.floor((state.tokenExp - Date.now()) / 1000)
+            );
+        },
+
+        remainingTimeMs(state) {
+            state.heartbeat;
+
+            if (!state.tokenExp) return 0;
+            return Math.max(state.tokenExp - Date.now(), 0);
+        },
+
+        remainingTimeText() {
+            if (!this.tokenExp) return "";
+
+            const ms = this.remainingTimeMs;
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+
+            return `${m}분 ${s}초`;
+        },
+
+        isExpiringSoon() {
+            return this.remainingTimeMs <= 5 * 60 * 1000;
+        },
     },
 
     actions: {
@@ -75,18 +111,21 @@ export const useUserStore = defineStore("user", {
             };
 
             this.authorities = payload.auth ? payload.auth.split(",") : [];
-
+            this.tokenExp = payload.exp * 1000;
             this.isAuthenticated = true;
         },
-
         /** 로그아웃 */
         logout() {
             this.user = null;
             this.clientId = null;
             this.authorities = [];
+            this.tokenExp = null;
             this.isAuthenticated = false;
+            this.isExpireModalOpen = false;
+            this.modalShownInTab = false;
 
             localStorage.removeItem("accessToken");
+            localStorage.removeItem("tokenReissuedAt");
 
             // SSE 연결 종료 및 알림 초기화
             const notificationStore = useNotificationStore();
@@ -100,6 +139,9 @@ export const useUserStore = defineStore("user", {
                 return true;
             }
             return false;
-        }
+        },
+        setTokenExp(exp) {
+            this.tokenExp = exp;
+        },
     },
 });
