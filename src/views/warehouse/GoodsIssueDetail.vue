@@ -1,14 +1,12 @@
 <template>
     <div class="gi-detail-page">
         <!-- 로딩 스피너 -->
-        <div
-            v-if="isLoading"
-            class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
-        >
-            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <div v-if="isLoading"
+            class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
                 </path>
             </svg>
         </div>
@@ -68,16 +66,10 @@
 
         <!-- 탭 메뉴 -->
         <div class="tab-menu">
-            <button
-                :class="{ active: activeTab === 'issue' }"
-                @click="activeTab = 'issue'"
-            >
+            <button :class="{ active: activeTab === 'issue' }" @click="activeTab = 'issue'">
                 출고지시 관리
             </button>
-            <button
-                :class="{ active: activeTab === 'delivery' }"
-                @click="activeTab = 'delivery'"
-            >
+            <button :class="{ active: activeTab === 'delivery' }" @click="activeTab = 'delivery'">
                 배송 관리
             </button>
         </div>
@@ -157,11 +149,7 @@
             <div class="section">
                 <div class="section-header">
                     <h2 class="section-title">출고지시 품목 정보</h2>
-                    <button
-                        class="export-btn"
-                        :disabled="giDetail.status !== 'GI_APPR_DONE'"
-                        @click="handleGoodsIssue"
-                    >
+                    <button class="export-btn" :disabled="giDetail.status !== 'GI_APPR_DONE'" @click="handleGoodsIssue">
                         출고 지시
                     </button>
                 </div>
@@ -205,11 +193,7 @@
                         <button class="btn-secondary" @click="openDeliveryOrderPreview">납품서 인쇄</button>
 
                         <!-- 출고지시서 인쇄 버튼 (담당자 배정 후 표시) -->
-                        <button
-                            v-if="giDetail.managerName"
-                            class="btn-secondary"
-                            @click="openGIPreview"
-                        >
+                        <button v-if="giDetail.managerName" class="btn-secondary" @click="openGIPreview">
                             출고지시서 인쇄
                         </button>
                         <span v-else class="text-gray-400" style="padding: 8px 16px; font-size: 14px;">
@@ -226,11 +210,8 @@
             <div class="section">
                 <div class="section-header">
                     <h2 class="section-title">출고 지시 결재 진행 상황</h2>
-                    <router-link
-                        v-if="giDetail.approvalId"
-                        :to="`/approval/${giDetail.approvalId}`"
-                        class="view-approval-link"
-                    >
+                    <router-link v-if="giDetail.approvalId" :to="`/approval/${giDetail.approvalId}`"
+                        class="view-approval-link">
                         결재 바로가기 →
                     </router-link>
                 </div>
@@ -251,7 +232,8 @@
                         <div class="flow-step">
                             <div class="flow-circle completed">기안</div>
                             <div class="flow-info">
-                                <div class="flow-label">{{ giDetail.managerName || '기안' }} · {{ giDetail.managerDepartment || '-' }}</div>
+                                <div class="flow-label">{{ giDetail.managerName || '기안' }} · {{
+                                    giDetail.managerDepartment || '-' }}</div>
                             </div>
                         </div>
 
@@ -259,17 +241,15 @@
                         <template v-for="(line, index) in sortedApprovalLines" :key="index">
                             <div class="flow-arrow">→</div>
                             <div class="flow-step">
-                                <div
-                                    class="flow-circle"
-                                    :class="{
-                                        completed: line.status === 'ALS_APPR',
-                                        active: line.status === 'ALS_RVW'
-                                    }"
-                                >
+                                <div class="flow-circle" :class="{
+                                    completed: line.status === 'ALS_APPR',
+                                    active: line.status === 'ALS_RVW'
+                                }">
                                     {{ getLineTypeLabel(line.lineType) }}
                                 </div>
                                 <div class="flow-info">
-                                    <div class="flow-label">{{ line.approverName }} · {{ line.approverDepartment }}</div>
+                                    <div class="flow-label">{{ line.approverName }} · {{ line.approverDepartment }}
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -364,7 +344,8 @@
                     <div class="timeline-item" :class="{ active: deliveryStep >= 1, completed: deliveryStep > 1 }">
                         <div class="timeline-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
+                                <path
+                                    d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z" />
                             </svg>
                         </div>
                         <div class="timeline-content">
@@ -378,13 +359,16 @@
                     <div class="timeline-item" :class="{ active: deliveryStep >= 2, completed: deliveryStep > 2 }">
                         <div class="timeline-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z"/>
+                                <path
+                                    d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z" />
                             </svg>
                         </div>
                         <div class="timeline-content">
                             <div class="timeline-title">배송중</div>
-                            <div class="timeline-date">{{ giDetail.status === 'GI_SHIP_ING' || giDetail.status === 'GI_SHIP_DONE' ? '배송 진행 중' : '대기' }}</div>
-                            <div class="timeline-detail" v-if="giDetail.status === 'GI_SHIP_ING' || giDetail.status === 'GI_SHIP_DONE'">
+                            <div class="timeline-date">{{ giDetail.status === 'GI_SHIP_ING' || giDetail.status ===
+                                'GI_SHIP_DONE' ? '배송 진행 중' : '대기' }}</div>
+                            <div class="timeline-detail"
+                                v-if="giDetail.status === 'GI_SHIP_ING' || giDetail.status === 'GI_SHIP_DONE'">
                                 상품이 배송 중입니다.
                             </div>
                         </div>
@@ -394,7 +378,8 @@
                     <div class="timeline-item" :class="{ active: deliveryStep >= 3, completed: deliveryStep === 3 }">
                         <div class="timeline-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                <path
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                             </svg>
                         </div>
                         <div class="timeline-content">
@@ -412,45 +397,26 @@
         <!-- 하단 고정 버튼 (담당자 배정 모달이 열렸을 때는 숨김) -->
         <div v-if="!isManagerModalOpen" class="fixed-footer">
             <!-- 담당자 미배정 시: 담당자 배정 버튼 -->
-            <button
-                v-if="showAssignManagerButton"
-                class="btn-primary-large"
-                @click="assignManager"
-            >
+            <button v-if="showAssignManagerButton" class="btn-primary-large" @click="assignManager">
                 담당자 배정
             </button>
 
             <!-- 담당자 배정 완료 & 결재 미요청 시: 결재 요청 버튼 -->
-            <button
-                v-if="showApprovalRequestButton"
-                class="btn-primary-large"
-                @click="goToCreateApproval"
-            >
+            <button v-if="showApprovalRequestButton" class="btn-primary-large" @click="goToCreateApproval">
                 결재 상신하기
             </button>
         </div>
 
         <!-- 납품서 미리보기 모달 -->
-        <DeliveryOrderPreviewModal
-            :is-open="isDeliveryOrderModalOpen"
-            :delivery-order="deliveryOrderData"
-            @close="closeDeliveryOrderPreview"
-        />
+        <DeliveryOrderPreviewModal :is-open="isDeliveryOrderModalOpen" :delivery-order="deliveryOrderData"
+            @close="closeDeliveryOrderPreview" />
 
         <!-- 출고지시서 미리보기 모달 -->
-        <GoodsIssuePreviewModal
-            :is-open="isGoodsIssueModalOpen"
-            :goods-issue="giDetail"
-            @close="closeGIPreview"
-        />
+        <GoodsIssuePreviewModal :is-open="isGoodsIssueModalOpen" :goods-issue="giDetail" @close="closeGIPreview" />
 
         <!-- 담당자 배정 모달 -->
-        <ManagerAssignmentModal
-            v-if="isManagerModalOpen"
-            :departmentData="deptEmployees"
-            @close="isManagerModalOpen = false"
-            @confirm="onConfirmAssignment"
-        />
+        <ManagerAssignmentModal v-if="isManagerModalOpen" :departmentData="deptEmployees"
+            @close="isManagerModalOpen = false" @confirm="onConfirmAssignment" />
     </div>
 </template>
 
@@ -477,8 +443,8 @@ const canAssignManager = computed(() => {
 // 담당자 배정 버튼 표시 여부
 const showAssignManagerButton = computed(() => {
     const result = canAssignManager.value &&
-           !giDetail.value.managerName &&
-           giDetail.value.status === 'GI_RVW'
+        !giDetail.value.managerName &&
+        giDetail.value.status === 'GI_RVW'
 
     console.log('showAssignManagerButton:', {
         canAssignManager: canAssignManager.value,
@@ -498,9 +464,9 @@ const showApprovalRequestButton = computed(() => {
     const isManager = giDetail.value.managerId === currentUserId
 
     const result = giDetail.value.managerName &&
-           giDetail.value.status === 'GI_RVW' &&
-           !giDetail.value.approvalId &&
-           isManager
+        giDetail.value.status === 'GI_RVW' &&
+        !giDetail.value.approvalId &&
+        isManager
 
     console.log('showApprovalRequestButton:', {
         currentUserId: currentUserId,
@@ -820,7 +786,7 @@ const goToCreateApproval = () => {
         path: '/approval/create',
         query: {
             refDocType: 'gi',
-            refDocId: giDetail.value.giCode
+            refDocId: giDetail.value.giId
         }
     })
 
