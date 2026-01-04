@@ -71,8 +71,8 @@
                                         @mouseleave="hideTooltip">
                                         <div class="bar-content">
                                             <span class="bar-title">{{ plan.prCode }}</span>
-                                            <span class="bar-qty">
-                                                총 {{ formatNumber(plan.productionQuantity) }} {{ plan.unit }}
+                                            <span v-if="plan.durationDays > 1" class="bar-qty">
+                                                총 {{ formatNumber(plan.productionQuantity) }}{{ plan.unit }}
                                             </span>
                                         </div>
                                     </div>
@@ -203,7 +203,7 @@ const showTooltip = (e, plan) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const dailyQty = calcDailyQuantity(plan)
 
-    const text = `기간: ${plan.startDate} ~ ${plan.endDate} (${plan.durationDays}일)\n총 수량: ${formatNumber(plan.productionQuantity)} ${plan.unit}\n예상 일일 생산량: ${formatNumber(dailyQty)} ${plan.unit}`
+    const text = `기간: ${plan.startDate} ~ ${plan.endDate} (${plan.durationDays}일)\n관련 생산요청: ${plan.prCode}\n총 수량: ${formatNumber(plan.productionQuantity)} ${plan.unit}\n예상 일일 생산량: ${formatNumber(dailyQty)} ${plan.unit}`
 
     let x = rect.left + rect.width / 2
     let y = rect.bottom + 8
