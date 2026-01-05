@@ -407,7 +407,7 @@ const reloadAll = async () => {
     lines.value = await getProductionLines(3)   // 공장 id 고정
     plans.value = await getMonthlyPlans(month.value)
     unassigned.value = await getUnassignedTargets()
-    dailySummary.value = await getDailyLineSummary(month.value, 2)
+    dailySummary.value = await getDailyLineSummary(month.value, 3)
 }
 
 const onCreated = () => { showPlanModal.value = false; reloadAll() }
