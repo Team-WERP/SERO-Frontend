@@ -22,6 +22,16 @@
 
                     <div class="k">생산 라인</div>
                     <div class="v">{{ detail.productionLineName }}</div>
+
+                    <div class="k">담당자</div>
+                    <div class="v">
+                        {{ detail.managerName ?? '미지정' }}
+                    </div>
+
+                    <div class="k">계획 생성일자</div>
+                    <div class="v">
+                        {{ detail.createdAt ?? '-' }}
+                    </div>
                 </div>
             </div>
 
