@@ -10,5 +10,12 @@ const LOGOUT_URL = {
     client: '/clients/auth/logout'
 };
 
+const REISSUE_URL = {
+    hq: '/auth/reissue',
+    client: '/clients/auth/reissue'
+};
+
 export const login = (employeeType, data) => api.post(LOGIN_URL[employeeType], data);
 export const logout = (employeeType) => api.post(LOGOUT_URL[employeeType]);
+
+export const reissue = (employeeType) => api.post(REISSUE_URL[employeeType]);

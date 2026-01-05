@@ -1,12 +1,11 @@
 <template>
   <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
     <div class="bg-white w-[900px] h-[600px] rounded-2xl shadow-2xl flex flex-col relative overflow-hidden">
-      
-      <div
-        v-if="isLoading"
-        class="absolute inset-0 z-[9999] flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm"
-      >
-        <svg class="animate-spin h-10 w-10 text-[#4C4CDD] mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+
+      <div v-if="isLoading"
+        class="absolute inset-0 z-[9999] flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm">
+        <svg class="animate-spin h-10 w-10 text-[#4C4CDD] mb-3" xmlns="http://www.w3.org/2000/svg" fill="none"
+          viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
         </svg>
@@ -19,17 +18,10 @@
       </div>
 
       <div class="p-6 bg-gray-50 border-b border-gray-400 flex gap-3 shrink-0">
-        <input 
-          v-model="searchQuery" 
-          @keyup.enter="handleSearch"
-          type="text" 
-          placeholder="품목명 또는 코드를 검색하세요" 
-          class="w-80 border border-gray-600 rounded-lg px-4 py-1 text-[13px] outline-none focus:ring-2 focus:ring-indigo-500" 
-        />
-        <button 
-          @click="handleSearch"
-          class="bg-[#4C4CDD] text-white px-6 py-2 rounded-lg font-bold text-[15px] hover:bg-indigo-700"
-        >
+        <input v-model="searchQuery" @keyup.enter="handleSearch" type="text" placeholder="품목명 또는 코드를 검색하세요"
+          class="w-80 border border-gray-600 rounded-lg px-4 py-1 text-[13px] outline-none focus:ring-2 focus:ring-indigo-500" />
+        <button @click="handleSearch"
+          class="bg-[#4C4CDD] text-white px-6 py-2 rounded-lg font-bold text-[15px] hover:bg-indigo-700">
           검색
         </button>
       </div>
@@ -69,8 +61,10 @@
       </div>
 
       <div class="p-4 border-t border-gray-400 flex justify-end gap-3 bg-gray-50 shrink-0">
-        <button @click="$emit('close')" class="px-6 py-2.5 rounded-lg bg-gray-200 font-bold hover:bg-gray-300 text-[15px]">취소</button>
-        <button @click="submit" class="px-6 py-2.5 rounded-lg bg-[#4C4CDD] text-white font-bold hover:bg-indigo-700 text-[15px]">
+        <button @click="$emit('close')"
+          class="px-6 py-2.5 rounded-lg bg-gray-200 font-bold hover:bg-gray-300 text-[15px]">취소</button>
+        <button @click="submit"
+          class="px-6 py-2.5 rounded-lg bg-[#4C4CDD] text-white font-bold hover:bg-indigo-700 text-[15px]">
           선택 품목 추가 ({{ selectedIds.length }})
         </button>
       </div>
@@ -85,7 +79,7 @@ import { useUserStore } from '@/stores/user';
 
 const emit = defineEmits(['close', 'select']);
 const userStore = useUserStore();
-const clientId = userStore.getClientId || 1;
+const clientId = userStore.clientId;
 
 const items = ref([]);
 const selectedIds = ref([]);
@@ -103,7 +97,7 @@ const filteredItems = computed(() => {
 });
 
 onMounted(async () => {
-  isLoading.value = true; 
+  isLoading.value = true;
   try {
     const response = await getClientItems(clientId);
     items.value = response;
@@ -115,8 +109,8 @@ onMounted(async () => {
 });
 
 const isAllSelected = computed(() => {
-  return filteredItems.value.length > 0 && 
-         filteredItems.value.every(fi => selectedIds.value.some(si => si.id === fi.id));
+  return filteredItems.value.length > 0 &&
+    filteredItems.value.every(fi => selectedIds.value.some(si => si.id === fi.id));
 });
 
 const toggleAll = (e) => {
@@ -131,7 +125,7 @@ const toggleAll = (e) => {
 };
 
 const formatNumber = (val) => new Intl.NumberFormat().format(val);
-const handleSearch = () => {};
+const handleSearch = () => { };
 
 const submit = () => {
   if (selectedIds.value.length === 0) {

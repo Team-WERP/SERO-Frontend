@@ -180,31 +180,24 @@
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase"><span
-                                    class="text-[#ff0000] font-bold">*</span> 관련 문서 검색</label>
+                                    class="text-[#ff0000] font-bold">*</span> 관련 문서</label>
                             <div class="relative group">
                                 <input type="text" readonly
                                     :value="formData.relatedDoc?.prCode || formData.relatedDoc?.soCode || formData.relatedDoc?.giCode || ''"
-                                    :placeholder="formData.relatedDoc ? '' : '클릭하여 관련 문서를 검색하세요...'"
-                                    @click="!formData.relatedDoc ? isModalOpen = true : null"
-                                    class="w-full px-3 py-2 border rounded text-sm transition-all text-ellipsis pr-8"
-                                    :class="[
-                                        formData.relatedDoc
-                                            ? 'bg-slate-100 border-slate-200 text-slate-500 cursor-default'
-                                            : 'bg-white border-slate-300 text-slate-900 cursor-pointer focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 hover:border-blue-400'
-                                    ]" />
+                                    :placeholder="formData.relatedDoc ? '' : '관련 문서가 자동으로 선택됩니다...'"
+                                    class="w-full px-3 py-2 border rounded text-sm transition-all text-ellipsis pr-8 bg-slate-100 border-slate-200 text-slate-500 cursor-default" />
 
                                 <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                                    <button v-if="formData.relatedDoc" @click="removeRelatedDoc"
-                                        class="p-1 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-200 transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
-                                    </button>
+                                    <svg v-if="formData.relatedDoc" class="w-4 h-4 text-green-500" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7"></path>
+                                    </svg>
                                     <svg v-else class="w-4 h-4 text-slate-400 pointer-events-none" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
                                     </svg>
                                 </div>
                             </div>
@@ -277,7 +270,8 @@
                                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                                     </path>
                                 </svg>
-                                <span class="text-sm font-medium">{{ formData.relatedDoc.title }}.pdf</span>
+                                <span class="text-sm font-medium">{{ formData.relatedDoc.url.split("/").pop()
+                                    }}</span>
                             </div>
                             <a :href="formData.relatedDoc.url" target="_blank"
                                 class="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors">
@@ -352,40 +346,6 @@
             </main>
         </div>
 
-        <div v-if="isModalOpen" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white w-full max-w-lg rounded-lg shadow-xl overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-800">관련 문서 검색</h3>
-                    <button @click="isModalOpen = false" class="text-slate-400 hover:text-slate-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12">
-                            </path>
-                        </svg>
-                    </button>
-                </div>
-                <div class="max-h-80 overflow-y-auto">
-                    <div v-for="doc in dummyDocuments" :key="doc.id" @click="selectDocument(doc)"
-                        class="px-5 py-3 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors group">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="text-sm font-bold text-slate-700 group-hover:text-blue-700">{{ doc.clientName
-                                }}</span>
-                            <div class="flex gap-2">
-                                <span v-if="doc.hasPdf"
-                                    class="text-[10px] bg-red-100 text-red-600 px-1 rounded font-bold">PDF</span>
-                                <span
-                                    class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{{
-                                        doc.shippedAt }}</span>
-                            </div>
-                        </div>
-                        <div class="flex justify-between text-xs text-slate-400">
-                            <span>{{ doc.soCode || doc.prCode || doc.giCode }}</span>
-                            <span>{{ doc.recipientName }} · {{ doc.orderedAt }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
     </div>
 </template>
@@ -425,7 +385,6 @@ const {
 const userName = localStorage.getItem("name");
 const userDepartment = computed(() => userStore.userDepartment);
 
-const isModalOpen = ref(false);
 const isPreviewOpen = ref(false);
 
 const nowDate = new Date().toISOString().slice(0, 10);
@@ -463,19 +422,6 @@ const openApprovalModal = () => {
     approvalLineStore.open();
 };
 
-const selectDocument = (doc) => {
-    formData.relatedDoc = doc;
-
-    isModalOpen.value = false;
-    if (!doc.hasPdf) {
-        alert('이 문서에는 미리볼 수 있는 PDF 파일이 없습니다.');
-    }
-};
-
-const removeRelatedDoc = () => {
-    formData.relatedDoc = null;
-    isPreviewOpen.value = false;
-}
 
 const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files);
@@ -507,7 +453,13 @@ const validateTitle = () => {
 
 // 관련 문서 체크
 const validateRelatedDoc = () => {
-    if (!formData.relatedDoc?.id) {
+    const hasDoc = formData.relatedDoc && (
+        formData.relatedDoc.soCode ||
+        formData.relatedDoc.prCode ||
+        formData.relatedDoc.giCode
+    );
+
+    if (!hasDoc) {
         alert('관련 문서를 선택해야 합니다.');
         return false;
     }
@@ -716,6 +668,16 @@ onMounted(async () => {
 
     if (!refDocType || !refDocId) return;
 
+    // 1. 먼저 관련 문서 코드를 즉시 표시 (API 응답 전)
+    if (refDocType.toUpperCase() === "SO") {
+        formData.relatedDoc = { soCode: refDocId, docType: 'SO' };
+    } else if (refDocType.toUpperCase() === "PR") {
+        formData.relatedDoc = { prCode: refDocId, docType: 'PR' };
+    } else if (refDocType.toUpperCase() === "GI") {
+        formData.relatedDoc = { giCode: refDocId, docType: 'GI' };
+    }
+
+    // 2. 그 다음 상세 정보 조회
     let res;
 
     if (refDocType === "SO" || refDocType.toUpperCase() === "SO") {
@@ -728,16 +690,9 @@ onMounted(async () => {
 
     if (!res) return;
 
+    // 3. 상세 정보로 업데이트
     formData.relatedDoc = mapRefDoc(refDocType.toUpperCase(), res);
 });
-
-const dummyPdfUrl = "https://sero-erp-storage.s3.ap-northeast-2.amazonaws.com/sero/documents/28bfcc5f-ddc5-4990-89e1-43ba7e68ead1.pdf";
-
-const dummyDocuments = [
-    { id: 41, clientName: '에스엘(주)', soCode: 'SO-20251228-001', recipientName: '강지륜', orderedAt: '2025-12-28 16:41', shippedAt: '2026-02-10 16:00', hasPdf: true, url: dummyPdfUrl },
-    { id: 2, clientName: '현대 모비스', prCode: 'PR-2025-0102', recipientName: '이팀장', orderedAt: '2025-12-28 16:41', shippedAt: '2026-02-10 16:00', hasPdf: false, url: null },
-    { id: 3, clientName: '기아', giCode: 'GI-2025-0001', recipientName: '박이사', orderedAt: '2025-12-28 16:41', shippedAt: '2026-02-10 16:00', hasPdf: true, url: dummyPdfUrl },
-];
 
 const mapRefDoc = (type, res) => {
     switch (type) {
@@ -779,7 +734,7 @@ const mapRefDoc = (type, res) => {
                 giCode: null,
                 clientName: pr.header.managerName,
                 title: pr.header.prCode,
-                url: null,
+                url: pr.header.prUrl,
                 items: pr.items,
                 requestedAt: pr.header.requestedAt,
                 dueAt: pr.header.dueAt,
@@ -801,7 +756,7 @@ const mapRefDoc = (type, res) => {
                 giCode: gi.giCode,
                 clientName: gi.clientName,
                 title: gi.giCode,
-                url: gi.documentUrl || null,
+                url: gi.giUrl,
                 items: gi.items,
                 createdAt: gi.createdAt,
                 scheduledAt: gi.scheduledAt,

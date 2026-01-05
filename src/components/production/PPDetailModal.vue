@@ -5,7 +5,7 @@
             <!-- PP DETAIL -->
             <div class="pp-section" v-if="detail">
                 <div class="modal-top">
-                    <div class="modal-title">생산계획 상세</div>
+                    <div class="modal-title">🗓️ {{ detail.ppCode }}</div>
                     <button class="close-btn" @click="emit('close')">✕</button>
                 </div>
 
