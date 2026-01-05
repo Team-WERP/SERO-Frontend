@@ -110,6 +110,7 @@ export const useUserStore = defineStore("user", {
                 // name: payload.name || payload.username || payload.sub
             };
 
+            this.clientId = payload.client ?? null;
             this.authorities = payload.auth ? payload.auth.split(",") : [];
             this.tokenExp = payload.exp * 1000;
             this.isAuthenticated = true;

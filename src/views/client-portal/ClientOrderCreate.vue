@@ -13,17 +13,15 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label class="block text-[13px] font-medium text-gray-700 mb-1">귀사 PO 정보</label>
-              <input v-model="form.poNumber" type="text" placeholder="PO-1329845" class="w-full border text-[13px] rounded-lg p-2.5 border-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none" />
+              <input v-model="form.poNumber" type="text" placeholder="PO-1329845"
+                class="w-full border text-[13px] rounded-lg p-2.5 border-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none" />
             </div>
             <div>
               <label class="block text-[13px] font-medium text-gray-700 mb-1">
                 납기 요청 일시 <span class="text-red-500">*</span>
               </label>
-              <input 
-                v-model="form.requestDate" 
-                type="datetime-local" 
-                class="w-full border rounded-lg p-2.5 text-[13px] border-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none" 
-              />
+              <input v-model="form.requestDate" type="datetime-local"
+                class="w-full border rounded-lg p-2.5 text-[13px] border-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none" />
             </div>
           </div>
         </section>
@@ -33,9 +31,11 @@
             <h2 class="text-[18px] text-[#4C4CDD] font-bold flex items-center gap-2 mb-4">
               주문 품목
             </h2>
-            <button @click="isHistoryModalOpen = true" class="text-[15px] border border-[#4C4CDD] text-[#4C4CDD] px-3 py-1.5 rounded-lg hover:bg-gray-50 font-semibold">최근 주문이력 조회</button>
+            <button @click="isHistoryModalOpen = true"
+              class="text-[15px] border border-[#4C4CDD] text-[#4C4CDD] px-3 py-1.5 rounded-lg hover:bg-gray-50 font-semibold">최근
+              주문이력 조회</button>
           </div>
-          
+
           <div class="overflow-x-auto border border-gray-400 rounded-xl mb-4">
             <table class="w-full text-sm text-center">
               <thead class="bg-gray-50 text-gray-600 font-medium border-b border-gray-200">
@@ -61,22 +61,20 @@
                   <td class="px-4 py-4 text-left font-medium">{{ item.itemName }}</td>
                   <td class="px-4 py-4 text-gray-500 text-xs">{{ item.spec }}</td>
                   <td class="px-4 py-4">
-                    <input 
-                      v-model.number="item.quantity" 
-                      type="number" 
-                      @input="resetAvailability"
+                    <input v-model.number="item.quantity" type="number" @input="resetAvailability"
                       class="w-full border rounded p-1 text-center"
-                      :class="item.quantity < item.moq ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-400'"
-                    />
+                      :class="item.quantity < item.moq ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-400'" />
                     <p v-if="item.quantity < item.moq" class="text-[10px] text-red-500 mt-1 font-bold">
                       최소 주문 수량: {{ item.moq }}
                     </p>
                   </td>
                   <td class="px-4 py-4">{{ item.unit }}</td>
                   <td class="px-4 py-4 text-right">{{ formatNumber(item.contractPrice) }}</td>
-                  <td class="px-4 py-4 text-right font-semibold">{{ formatNumber(item.contractPrice * item.quantity) }}</td>
+                  <td class="px-4 py-4 text-right font-semibold">{{ formatNumber(item.contractPrice * item.quantity) }}
+                  </td>
                   <td class="px-4 py-4">
-                    <button @click="removeItem(idx)" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg text-xs">삭제</button>
+                    <button @click="removeItem(idx)"
+                      class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg text-xs">삭제</button>
                   </td>
                 </tr>
               </tbody>
@@ -95,9 +93,12 @@
           </div>
 
           <div v-if="availabilityResult" class="mb-6">
-            <div v-if="availabilityResult.deliverable" class="bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl p-5 flex items-center gap-4">
+            <div v-if="availabilityResult.deliverable"
+              class="bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl p-5 flex items-center gap-4">
               <div class="bg-[#22C55E] rounded-full p-2 shrink-0">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                </svg>
               </div>
               <div>
                 <h4 class="text-[16px] font-bold text-gray-900">진행 가능합니다.</h4>
@@ -111,14 +112,19 @@
 
             <div v-else class="bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-5 flex items-center gap-4">
               <div class="bg-[#EF4444] rounded-full p-2 shrink-0">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
               </div>
               <div>
                 <h4 class="text-[16px] font-bold text-gray-900">일정 조정이 필요합니다.</h4>
                 <p class="text-[13px] text-gray-600">현재 생산 일정상 희망일 출하가 어렵습니다. 아래 내용을 참고해주세요.</p>
                 <div class="mt-2 bg-white px-4 py-1.5 rounded-lg inline-block border border-[#FECACA]">
-                  <span v-if="!availabilityResult.isCustomMessage" class="text-[12px] text-gray-400 mr-2">가장 빠른 출하 가능 기간</span>
-                  <span class="text-[12px]" :class="availabilityResult.isCustomMessage ? 'text-gray-600' : 'text-[#DC2626]'">
+                  <span v-if="!availabilityResult.isCustomMessage" class="text-[12px] text-gray-400 mr-2">가장 빠른 출하 가능
+                    기간</span>
+                  <span class="text-[12px]"
+                    :class="availabilityResult.isCustomMessage ? 'text-gray-600' : 'text-[#DC2626]'">
                     {{ availabilityResult.expectedDate }}
                   </span>
                 </div>
@@ -127,13 +133,16 @@
           </div>
 
           <div class="flex gap-2">
-            <button @click="isItemModalOpen = true" class="bg-[#4C4CDD] text-white px-3 py-1.5 rounded-lg font-bold text-[15px] hover:bg-indigo-700">품목 추가</button>
-            <button 
-              @click="checkAvailability" 
-              :disabled="isChecking"
-              class="border border-[#4C4CDD] text-[#4C4CDD] px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-50 flex items-center gap-2"
-            >
-              <svg v-if="isChecking" class="animate-spin h-4 w-4 text-[#4C4CDD]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+            <button @click="isItemModalOpen = true"
+              class="bg-[#4C4CDD] text-white px-3 py-1.5 rounded-lg font-bold text-[15px] hover:bg-indigo-700">품목
+              추가</button>
+            <button @click="checkAvailability" :disabled="isChecking"
+              class="border border-[#4C4CDD] text-[#4C4CDD] px-3 py-1.5 rounded-lg font-bold hover:bg-indigo-50 flex items-center gap-2">
+              <svg v-if="isChecking" class="animate-spin h-4 w-4 text-[#4C4CDD]" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
               납기 가능 여부 조회
             </button>
           </div>
@@ -146,23 +155,30 @@
           <div class="space-y-4">
             <div class="flex items-center gap-4">
               <label class="w-32 text-[13px] font-bold text-gray-700">납품지 <span class="text-red-500">*</span></label>
-              <select v-model="selectedAddrId" @change="onAddressChange" class="flex-1 border text-[13px] rounded-lg p-2.5 border-gray-400 outline-none focus:ring-2 focus:ring-indigo-500">
+              <select v-model="selectedAddrId" @change="onAddressChange"
+                class="flex-1 border text-[13px] rounded-lg p-2.5 border-gray-400 outline-none focus:ring-2 focus:ring-indigo-500">
                 <option v-for="addr in allAddresses" :key="addr.id" :value="addr.id">{{ addr.name }}</option>
                 <option :value="null">직접 입력</option>
               </select>
             </div>
             <div class="flex items-center gap-4">
               <label class="w-32 text-[13px] font-bold text-gray-700">상세 주소 <span class="text-red-500">*</span></label>
-              <input v-model="form.address" type="text" class="flex-1 border border-gray-400 text-[13px] rounded-lg p-2.5 outline-none transition-colors" :class="selectedAddrId !== null ? 'bg-gray-50 text-gray-500' : 'bg-white focus:ring-2 focus:ring-indigo-500'" :readonly="selectedAddrId !== null" placeholder="배송지 주소를 입력해주세요" />
+              <input v-model="form.address" type="text"
+                class="flex-1 border border-gray-400 text-[13px] rounded-lg p-2.5 outline-none transition-colors"
+                :class="selectedAddrId !== null ? 'bg-gray-50 text-gray-500' : 'bg-white focus:ring-2 focus:ring-indigo-500'"
+                :readonly="selectedAddrId !== null" placeholder="배송지 주소를 입력해주세요" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="flex items-center gap-4">
-                <label class="w-32 text-[13px] font-bold text-gray-700">수령 담당자명 <span class="text-red-500">*</span></label>
-                <input v-model="form.recipientName" type="text" class="flex-1 border text-[13px] border-gray-400 rounded-lg p-2.5 outline-none" />
+                <label class="w-32 text-[13px] font-bold text-gray-700">수령 담당자명 <span
+                    class="text-red-500">*</span></label>
+                <input v-model="form.recipientName" type="text"
+                  class="flex-1 border text-[13px] border-gray-400 rounded-lg p-2.5 outline-none" />
               </div>
               <div class="flex items-center gap-4">
                 <label class="w-32 text-[13px] font-bold text-gray-700">연락처 <span class="text-red-500">*</span></label>
-                <input v-model="form.recipientContact" type="text" class="flex-1 border text-[13px] border-gray-400 rounded-lg p-2.5 outline-none" />
+                <input v-model="form.recipientContact" type="text"
+                  class="flex-1 border text-[13px] border-gray-400 rounded-lg p-2.5 outline-none" />
               </div>
             </div>
           </div>
@@ -170,7 +186,8 @@
 
         <section class="bg-white p-6 rounded-xl border border-gray-200">
           <h2 class="text-[18px] text-[#4C4CDD] font-bold mb-6">특이사항</h2>
-          <textarea v-model="form.note" placeholder="추가 요청사항을 입력해주세요" class="w-full border border-gray-400 text-[13px] rounded-xl p-4 h-24 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+          <textarea v-model="form.note" placeholder="추가 요청사항을 입력해주세요"
+            class="w-full border border-gray-400 text-[13px] rounded-xl p-4 h-24 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
         </section>
       </div>
 
@@ -188,7 +205,7 @@
                 <span class="text-gray-900 font-semibold">{{ totalQuantity }}</span>
               </div>
             </div>
-            
+
             <div class="mb-8">
               <div class="flex justify-between items-end font-semibold">
                 <span class="text-base text-gray-900">최종 결제 금액</span>
@@ -202,7 +219,7 @@
                 <p class="font-semibold text-gray-800">
                   {{ currentAddressName }}<br />
                   {{ form.address }}
-                </p>                
+                </p>
               </div>
               <div>
                 <p class="text-[12px] text-gray-400 mb-1 font-medium">수령인</p>
@@ -210,10 +227,8 @@
               </div>
             </div>
           </div>
-          <button 
-            @click="handleSubmit" 
-            class="w-full bg-[#4C4CDD] text-white py-3 rounded-xl font-bold text-[15px] hover:bg-indigo-700 shadow-md transition-all active:scale-[0.98]"
-          >
+          <button @click="handleSubmit"
+            class="w-full bg-[#4C4CDD] text-white py-3 rounded-xl font-bold text-[15px] hover:bg-indigo-700 shadow-md transition-all active:scale-[0.98]">
             주문서 제출하기
           </button>
         </div>
@@ -237,11 +252,11 @@ import OrderHistoryModal from '@/components/order/OrderHistoryModal.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
-const clientId = userStore.getClientId || 1;
+const clientId = userStore.clientId;
 
 const isItemModalOpen = ref(false);
 const isHistoryModalOpen = ref(false);
-const isChecking = ref(false); 
+const isChecking = ref(false);
 const availabilityResult = ref(null);
 
 const allAddresses = ref([]);
@@ -291,7 +306,7 @@ const checkAvailability = async () => {
     };
 
     const responses = await checkDeliveryAvailability(clientId, payload);
-    
+
     const isAllDeliverable = responses.every(res => res.deliverable);
 
     const hasNullDate = responses.some(res => res.expectedDeliveryDate === null);
@@ -299,7 +314,7 @@ const checkAvailability = async () => {
     let finalExpectedDate = '';
 
     if (hasNullDate) {
-     
+
       finalExpectedDate = '현재 납기 요청일의 4주 이후의 날짜로 재조정해주세요.';
     } else {
       const latestDate = responses.reduce((latest, current) => {
@@ -311,7 +326,7 @@ const checkAvailability = async () => {
     availabilityResult.value = {
       deliverable: isAllDeliverable,
       expectedDate: finalExpectedDate,
-      isCustomMessage: hasNullDate 
+      isCustomMessage: hasNullDate
     };
   } catch (error) {
     console.error('납기 조회 실패:', error);
