@@ -35,44 +35,82 @@
                 <div class="p-6">
                     <div v-if="lineGroups.length === 0" class="text-center py-12 text-gray-400">조회된 생산 계획이 없습니다.</div>
                     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- 🔽 라인 카드 -->
                         <div v-for="group in lineGroups" :key="group.lineId"
                             class="border border-gray-200 rounded-xl p-5 hover:border-indigo-300 transition-colors bg-white relative overflow-hidden">
-                            <div v-if="group.hasWorkOrder"
-                                class="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">
-                                지시완료</div>
 
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="font-bold text-gray-900 text-lg">{{ group.lineName }}</h3>
-                                    <p class="text-xs text-gray-500">일일 최대 생산량: {{
-                                        formatQuantity(group.dailyCapacity) }}
-                                    </p>
+                            <!-- 상태 배지 -->
+                            <div class="absolute top-0 right-0 text-[10px] font-black px-2 py-0.5 rounded-bl-lg"
+                                :class="group.status.color">
+                                {{ group.status.text }}
+                            </div>
+
+                            <!-- 라인 + 품목 정보 -->
+                            <div class="mb-4">
+                                <h3 class="font-bold text-gray-900 text-lg">{{ group.lineName }}</h3>
+                                <p class="text-xs text-gray-500">
+                                    생산 품목 · {{ group.materialName }}
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    일일 최대 생산량 · {{ formatQuantity(group.dailyCapacity) }}
+                                    <span class="ml-1 text-gray-400">{{ group.baseUnit }}</span>
+                                </p>
+                            </div>
+
+                            <!-- 🔹 일일 생산량 사용률 -->
+                            <div class="mb-4">
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-500">오늘 생산 사용률</span>
+                                    <span class="font-bold"
+                                        :class="group.utilizationRate > 100 ? 'text-red-500' : 'text-indigo-600'">
+                                        {{ group.utilizationRate }}%
+                                    </span>
                                 </div>
-                                <div class="flex gap-1">
-                                    <button @click="onPrint(group)"
-                                        class="p-2 text-gray-500 hover:bg-gray-100 rounded-md transition" title="인쇄">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                        </svg>
-                                    </button>
-                                    <button @click="openCreateModal(group)" :disabled="group.hasWorkOrder || isNotToday"
-                                        class="px-3 py-1.5 text-xs font-bold rounded-md transition shadow-sm"
-                                        :class="group.hasWorkOrder ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'">
-                                        지시생성
-                                    </button>
+
+                                <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full transition-all"
+                                        :class="group.utilizationRate > 100 ? 'bg-red-500' : 'bg-indigo-500'"
+                                        :style="{ width: Math.min(group.utilizationRate, 100) + '%' }" />
+                                </div>
+
+                                <div class="flex justify-between text-[11px] text-gray-400 mt-1">
+                                    <span>지시 {{ formatQuantity(group.woPlannedQty) }}</span>
+                                    <span>잔여 {{ formatQuantity(group.remainingQty) }}</span>
                                 </div>
                             </div>
 
-                            <div class="space-y-2 border-t pt-3">
-                                <div v-for="item in group.items" :key="item.ppId" class="flex justify-between text-sm">
-                                    <span class="text-gray-600 truncate max-w-[150px]">{{ item.materialName }}</span>
-                                    <span class="font-semibold">{{ formatQuantity(item.dailyPlannedQuantity) }} <small
-                                            class="text-gray-400 font-normal">{{ item.baseUnit }}</small></span>
+                            <!-- 🔹 연결된 생산계획 / 생산요청 -->
+                            <div class="border-t pt-3 space-y-2">
+                                <p class="text-xs font-bold text-gray-400 mb-1">
+                                    연관된 생산계획 / 생산요청
+                                </p>
+
+                                <div v-for="pp in group.items" :key="pp.ppId"
+                                    class="flex justify-between items-center text-sm">
+                                    <div>
+                                        <div class="font-medium text-gray-700">{{ pp.ppCode }}</div>
+                                        <div class="text-[11px] text-gray-400">
+                                            계획 {{ formatQuantity(pp.dailyPlannedQuantity) }} {{ pp.baseUnit }}
+                                        </div>
+                                    </div>
+
+                                    <div class="text-right text-xs text-gray-500">
+                                        {{ pp.hasWorkOrder ? '지시 반영됨' : '지시 대기' }}
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- 버튼 -->
+                            <div class="flex justify-end gap-2 mt-4">
+                                <button @click="openCreateModal(group)" :disabled="group.hasWorkOrder || isNotToday"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-md transition shadow-sm" :class="group.hasWorkOrder
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-indigo-600 text-white hover:bg-indigo-700'">
+                                    작업지시 생성
+                                </button>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </section>
@@ -351,16 +389,50 @@ const fetchAllData = async () => {
 // --- 6. 그룹화 로직 (계획) ---
 const lineGroups = computed(() => {
     const map = {}
+
     planPlans.value.forEach(row => {
         if (!map[row.lineId]) {
-            map[row.lineId] = { lineId: row.lineId, lineName: row.lineName, dailyCapacity: row.dailyCapacity, hasWorkOrder: false, items: [], totalWoPlanned: 0 }
+            map[row.lineId] = {
+                lineId: row.lineId,
+                lineName: row.lineName,
+                materialName: row.materialName,
+                baseUnit: row.baseUnit,
+                dailyCapacity: row.dailyCapacity,
+                items: [],
+                woPlannedQty: 0,
+                hasWorkOrder: false
+            }
         }
+
         map[row.lineId].items.push(row)
-        map[row.lineId].totalWoPlanned += row.woPlannedQuantity
+        map[row.lineId].woPlannedQty += row.woPlannedQuantity || 0
         if (row.hasWorkOrder) map[row.lineId].hasWorkOrder = true
     })
-    return Object.values(map)
+
+    return Object.values(map).map(g => {
+        const remainingQty = g.dailyCapacity - g.woPlannedQty
+        const utilizationRate = Math.round(
+            (g.woPlannedQty / g.dailyCapacity) * 100
+        )
+
+        let status
+        if (!g.hasWorkOrder) {
+            status = { text: '지시 대기', color: 'bg-gray-100 text-gray-500' }
+        } else if (remainingQty <= 0) {
+            status = { text: '전량 지시됨', color: 'bg-emerald-100 text-emerald-600' }
+        } else {
+            status = { text: '부분 지시', color: 'bg-amber-100 text-amber-600' }
+        }
+
+        return {
+            ...g,
+            remainingQty,
+            utilizationRate,
+            status
+        }
+    })
 })
+
 
 // --- 7. 작업 제어 핸들러 ---
 const openCreateModal = (group) => {
