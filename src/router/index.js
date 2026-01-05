@@ -64,6 +64,7 @@ import ApprovalDetail from "@/views/approval/ApprovalDetail.vue";
 
 // 공지사항
 import NoticeList from "@/views/notices/NoticeList.vue";
+import NoticeCreate from "@/views/notices/NoticeCreate.vue";
 
 // 시스템 관리
 import SystemCommonCode from "@/views/system/SystemCommonCode.vue";
@@ -364,6 +365,13 @@ const router = createRouter({
                 {
                     path: "notices",
                     component: NoticeList,
+                    meta: {
+                        roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
+                    },
+                },
+                {
+                    path: "notices/create",
+                    component: NoticeCreate,
                     meta: {
                         roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
                     },
