@@ -12,22 +12,14 @@
         <!-- 검색 영역 -->
         <div class="search-section">
             <div class="search-row">
-                <input
-                    type="text"
-                    v-model="searchKeyword"
-                    placeholder="예: MOTOR-001 / 모터코어 A"
-                    class="search-input"
-                />
+                <input type="text" v-model="searchKeyword" placeholder="예: MOTOR-001 / 모터코어 A" class="search-input" />
                 <button class="search-btn" @click="searchItems">검색</button>
             </div>
             <div class="filter-group">
                 <span class="filter-label">거래 상태</span>
-                <button
-                    v-for="filter in filters"
-                    :key="filter.value"
+                <button v-for="filter in filters" :key="filter.value"
                     :class="['filter-btn', { active: selectedFilter === filter.value }]"
-                    @click="selectedFilter = filter.value"
-                >
+                    @click="selectedFilter = filter.value">
                     {{ filter.label }}
                 </button>
             </div>
@@ -83,17 +75,13 @@
         </div>
 
         <!-- 단가 이력 모달 -->
-        <PriceHistoryModal
-            :is-open="isModalOpen"
-            :item-id="selectedItemId"
-            :item-info="selectedItemInfo"
-            @close="closeModal"
-        />
+        <PriceHistoryModal :is-open="isModalOpen" :item-id="selectedItemId" :item-info="selectedItemInfo"
+            @close="closeModal" />
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'    
+import { ref, onMounted, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { getClientItems } from '@/api/client/clientItem';
 import PriceHistoryModal from '@/components/client/PriceHistoryModal.vue'
@@ -121,7 +109,7 @@ const filters = [
 const searchItems = async () => {
     try {
         // 로그인한 사용자의 고객사 ID (임시로 1 사용, 실제로는 userStore에서 가져옴)
-        const clientId = userStore.getClientId || 1
+        const clientId = userStore.clientId
 
         const params = {}
         if (searchKeyword.value) params.keyword = searchKeyword.value

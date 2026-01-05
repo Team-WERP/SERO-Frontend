@@ -12,13 +12,8 @@
         <!-- 검색 영역 -->
         <div class="search-section">
             <div class="search-row">
-                <input
-                    v-model="searchKeyword"
-                    type="text"
-                    placeholder="예: 평택 제2공장 / 박명수"
-                    class="search-input"
-                    @keyup.enter="searchAddresses"
-                />
+                <input v-model="searchKeyword" type="text" placeholder="예: 평택 제2공장 / 박명수" class="search-input"
+                    @keyup.enter="searchAddresses" />
                 <button class="search-btn" @click="searchAddresses">검색</button>
                 <button class="add-btn" @click="openAddModal">+ 신규 배송지 등록</button>
             </div>
@@ -60,10 +55,7 @@
                                 <button class="action-btn edit-btn" @click="openEditModal(address)">
                                     수정
                                 </button>
-                                <button
-                                    class="action-btn delete-btn"
-                                    @click="deleteAddress(address.id)"
-                                >
+                                <button class="action-btn delete-btn" @click="deleteAddress(address.id)">
                                     삭제
                                 </button>
                             </div>
@@ -79,12 +71,8 @@
         </div>
 
         <!-- 배송지 등록/수정 모달 -->
-        <ClientAddressModal
-            :is-open="isModalOpen"
-            :address-data="selectedAddress"
-            @close="closeModal"
-            @submit="handleSubmit"
-        />
+        <ClientAddressModal :is-open="isModalOpen" :address-data="selectedAddress" @close="closeModal"
+            @submit="handleSubmit" />
     </div>
 </template>
 
@@ -112,7 +100,7 @@ const selectedAddress = ref(null)
 // 데이터 조회
 const loadAddresses = async () => {
     try {
-        const clientId = userStore.getClientId || 1
+        const clientId = userStore.clientId
         allAddresses.value = await getClientAddresses(clientId)
         console.log('조회된 배송지 목록:', allAddresses.value)
         searchAddresses()
@@ -160,7 +148,7 @@ const closeModal = () => {
 // 배송지 등록/수정 처리
 const handleSubmit = async (formData) => {
     try {
-        const clientId = userStore.getClientId || 1
+        const clientId = userStore.clientId
 
         console.log('전송할 데이터:', formData)
         console.log('클라이언트 ID:', clientId)
@@ -196,7 +184,7 @@ const deleteAddress = async (addressId) => {
     }
 
     try {
-        const clientId = userStore.getClientId || 1
+        const clientId = userStore.clientId
         await deleteAddressAPI(clientId, addressId)
         alert('배송지가 삭제되었습니다.')
         loadAddresses()

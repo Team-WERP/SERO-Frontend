@@ -6,7 +6,7 @@
                 <h2 class="modal-title">단가 변동 이력</h2>
                 <button class="close-btn" @click="closeModal">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                     </svg>
                 </button>
             </div>
@@ -106,7 +106,7 @@ watch(() => props.isOpen, async (newVal) => {
 const loadPriceHistory = async () => {
     try {
         loading.value = true
-        const clientId = userStore.getClientId || 1
+        const clientId = userStore.clientId
         priceHistory.value = await getPriceHistory(clientId, props.itemId)
     } catch (error) {
         console.error('단가 이력 조회 실패:', error)
