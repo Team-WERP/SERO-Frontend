@@ -32,11 +32,11 @@
         <table class="item-table">
             <colgroup>
                 <col style="width: 5%">
-                <col style="width: 15%">
-                <col style="width: 40%">
                 <col style="width: 20%">
-                <col style="width: 20%">
+                <col style="width: 45%">
+                <col style="width: 30%">
             </colgroup>
+
 
             <thead>
                 <tr>
@@ -44,7 +44,6 @@
                     <th>유형</th>
                     <th>참조 번호</th>
                     <th>지시 수량</th>
-                    <th>비고</th>
                 </tr>
             </thead>
 
@@ -52,7 +51,7 @@
                 <tr v-for="(item, idx) in group.items" :key="idx">
                     <td class="center">{{ idx + 1 }}</td>
                     <td class="center">
-                        <strong>{{ item.type }}</strong>
+                        <strong>{{ getTypeLabel(item.type) }}</strong>
                     </td>
                     <td class="center">
                         {{ item.refCode }}
@@ -61,7 +60,6 @@
                         {{ item.plannedQuantity }}
                         <span class="unit">{{ group.unit }}</span>
                     </td>
-                    <td></td>
                 </tr>
             </tbody>
 
@@ -73,7 +71,6 @@
                             group.items.reduce((s, i) => s + i.plannedQuantity, 0).toLocaleString()
                         }}
                     </th>
-                    <th></th>
                 </tr>
             </tfoot>
         </table>
@@ -90,6 +87,18 @@ const props = defineProps({
     group: Object,
     workDate: String
 })
+
+const getTypeLabel = (type) => {
+    switch (type) {
+        case 'PP':
+            return '생산계획'
+        case 'PR':
+            return '긴급 생산요청건'
+        default:
+            return type
+    }
+}
+
 
 </script>
 

@@ -27,3 +27,8 @@ export const previewWorkOrderResult = (woId, payload) =>
 
 export const getDailyWorkOrders = (date) =>
     api.get('/work-orders/daily', { params: { date } })
+
+export const getEmergencyTargetsByLine = (lineId) =>
+    api.get('/work-orders/emergency-targets', {
+        params: { lineId }
+    })

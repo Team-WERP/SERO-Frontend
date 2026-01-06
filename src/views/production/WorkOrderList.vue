@@ -138,9 +138,13 @@
                                                 {{ item.ppCode }}
                                             </span>
 
-                                            <span v-else class="text-gray-400">
-                                                긴급건
+                                            <span v-else
+                                                class="text-rose-600 cursor-pointer hover:underline font-medium"
+                                                @click="openPRDetail(item.prId)">
+                                                [긴급건] {{ item.prCode }} ↗
                                             </span>
+
+
 
                                         </div>
                                         <span class="font-bold text-gray-800">
@@ -193,8 +197,40 @@
                             <tbody class="divide-y divide-gray-50">
                                 <tr v-for="item in selectedGroup.items" :key="item.ppId" class="hover:bg-gray-50/50">
                                     <td class="py-3 px-4">
-                                        <span class="font-medium text-gray-700">{{ item.ppCode }}</span>
+                                        <!-- PP -->
+                                        <span v-if="!item.isEmergency" class="font-medium text-gray-700">
+                                            {{ item.ppCode }}
+                                        </span>
+
+                                        <div v-else class="relative">
+                                            <select v-model="item.prItemId" class="w-full appearance-none rounded-lg border border-gray-300 bg-white
+               px-3 py-2 text-sm font-medium
+               text-gray-800
+               focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100
+               hover:border-indigo-400 transition">
+
+                                                <!-- placeholder -->
+                                                <option value="" disabled selected hidden>
+                                                    긴급 생산요청 선택
+                                                </option>
+
+                                                <option v-for="t in emergencyTargets" :key="t.prItemId"
+                                                    :value="t.prItemId">
+                                                    {{ t.prCode }} · {{ t.itemName }}
+                                                    (잔여 {{ t.remainingQuantity }}{{ t.unit }})
+                                                </option>
+                                            </select>
+
+                                            <!-- 드롭다운 화살표 -->
+                                            <span
+                                                class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                ▼
+                                            </span>
+                                        </div>
+
+
                                     </td>
+
                                     <td class="py-3 text-right text-gray-500">{{
                                         formatQuantity(item.dailyPlannedQuantity) }}</td>
                                     <td class="py-3 text-right text-gray-400 italic">{{
@@ -278,10 +314,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getDailyPlanPreview } from '@/api/production/productionPlan.js'
-import { createWorkOrder as createWorkOrderApi, getDailyWorkOrders } from '@/api/production/workOrder.js'
+import { createWorkOrder as createWorkOrderApi, getDailyWorkOrders, getEmergencyTargetsByLine } from '@/api/production/workOrder.js'
 import WODocument from '@/components/production/WODocument.vue'
 import PPDetailModal from '@/components/production/PPDetailModal.vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const selectedDate = ref(new Date().toISOString().slice(0, 10))
 const today = new Date().toISOString().slice(0, 10)
 const isNotToday = computed(() => selectedDate.value !== today)
@@ -293,10 +331,22 @@ const selectedGroup = ref(null)
 const createQuantity = ref(0)
 const showPPDetail = ref(false)
 const selectedPpId = ref(null)
+const emergencyTargets = ref([])
 
 // 인쇄 관련 상태
 const showPrintModal = ref(false)
 const selectedWoForPrint = ref(null)
+
+const openPRDetail = (prId) => {
+    if (!prId) return
+
+    const route = router.resolve({
+        path: `/production/requests/${prId}`,
+        params: { prId }
+    })
+
+    window.open(route.href, '_blank')
+}
 
 const lineDashboard = computed(() => {
     const plans = Array.isArray(previewPlans.value) ? previewPlans.value : [];
@@ -368,12 +418,13 @@ const recalculateTotal = () => {
     createQuantity.value = selectedGroup.value.items.reduce((sum, p) => sum + (Number(p.workQuantity) || 0), 0)
 }
 
-const addEmergencyRow = () => {
+const addEmergencyRow = async () => {
+    const { data } = await getEmergencyTargetsByLine(selectedGroup.value.lineId)
+    emergencyTargets.value = data
+
     selectedGroup.value.items.push({
-        ppId: null,
-        ppCode: '긴급/특근작업',
-        dailyPlannedQuantity: 0,
-        assignedWoQuantity: 0,
+        type: 'EMERGENCY',
+        prItemId: '',
         workQuantity: 0,
         isEmergency: true
     })
@@ -386,11 +437,19 @@ const handleCreateWorkOrder = async () => {
             workDate: selectedDate.value,
             items: selectedGroup.value.items
                 .filter(item => item.workQuantity > 0)
-                .map(item => ({
-                    ppId: item.ppId,
-                    quantity: item.workQuantity,
-                    isEmergency: item.isEmergency || false
-                }))
+                .map(item => {
+                    if (item.isEmergency) {
+                        return {
+                            prItemId: item.prItemId,
+                            quantity: item.workQuantity
+                        }
+                    }
+                    return {
+                        ppId: item.ppId,
+                        quantity: item.workQuantity
+                    }
+                })
+
         }
         await createWorkOrderApi(payload)
         showCreateModal.value = false
@@ -428,7 +487,7 @@ const openPrint = (wo, line) => {
             type: item.type,
             refCode: item.type === 'PP'
                 ? item.ppCode
-                : `PR-${item.prItemId}`,
+                : item.prCode,
             plannedQuantity: item.plannedQuantity
         }))
     }
