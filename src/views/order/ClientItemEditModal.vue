@@ -36,6 +36,16 @@
                         min="0"
                     />
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label required">단가 변경 사유</label>
+                    <textarea
+                        v-model="formData.reason"
+                        class="form-textarea"
+                        placeholder="단가 변경 사유를 입력하세요 (예: 가격 재협상, 시장 상황 변화 등)"
+                        rows="3"
+                    ></textarea>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -71,14 +81,16 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved'])
 
 const formData = ref({
-    contractPrice: 0
+    contractPrice: 0,
+    reason: ''
 })
 
 watch(() => props.isOpen, (newVal) => {
     if (newVal && props.item) {
         // 모달이 열릴 때 현재 단가로 초기화
         formData.value = {
-            contractPrice: props.item.contractPrice || 0
+            contractPrice: props.item.contractPrice || 0,
+            reason: ''
         }
     }
 })
@@ -95,6 +107,11 @@ const close = () => {
 const handleSubmit = async () => {
     if (formData.value.contractPrice < 0) {
         alert('고객사 단가는 0 이상이어야 합니다.')
+        return
+    }
+
+    if (!formData.value.reason || formData.value.reason.trim() === '') {
+        alert('단가 변경 사유를 입력해주세요.')
         return
     }
 
@@ -251,7 +268,8 @@ const handleDelete = async () => {
     margin-left: 4px;
 }
 
-.form-input {
+.form-input,
+.form-textarea {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #d1d5db;
@@ -259,9 +277,16 @@ const handleDelete = async () => {
     font-size: 14px;
     color: #111827;
     transition: border-color 0.15s;
+    font-family: inherit;
 }
 
-.form-input:focus {
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-input:focus,
+.form-textarea:focus {
     outline: none;
     border-color: #4C4CDD;
 }

@@ -110,6 +110,7 @@
                                 <th class="col-status">상태</th>
                                 <th class="col-price">기본단가</th>
                                 <th class="col-contract">고객사 단가</th>
+                                <th class="col-actions">이력</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -130,6 +131,11 @@
                                 </td>
                                 <td class="col-price">{{ formatNumber(item.unitPrice) }}</td>
                                 <td class="col-contract">{{ formatNumber(item.contractPrice) }}</td>
+                                <td class="col-actions" @click.stop>
+                                    <span class="emoji-btn" @click="openHistoryModal(item)" title="가격 변경 이력 보기">
+                                        📋
+                                    </span>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -158,6 +164,14 @@
             @close="closeEditModal"
             @saved="handleItemSaved"
         />
+
+        <!-- 가격 이력 모달 -->
+        <ClientItemPriceHistoryModal
+            :is-open="isHistoryModalOpen"
+            :client-id="clientId"
+            :item="selectedItem"
+            @close="closeHistoryModal"
+        />
     </div>
 </template>
 
@@ -167,6 +181,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { getClientDetail } from '@/api/client/client'
 import ClientItemModal from './ClientItemModal.vue'
 import ClientItemEditModal from './ClientItemEditModal.vue'
+import ClientItemPriceHistoryModal from './ClientItemPriceHistoryModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -176,6 +191,7 @@ const client = ref(null)
 const loading = ref(true)
 const isItemModalOpen = ref(false)
 const isEditModalOpen = ref(false)
+const isHistoryModalOpen = ref(false)
 const selectedItem = ref(null)
 
 // 이미 등록된 품목 ID 목록 (모달에서 제외용)
@@ -243,6 +259,16 @@ const openPriceModal = (item) => {
 
 const closeEditModal = () => {
     isEditModalOpen.value = false
+    selectedItem.value = null
+}
+
+const openHistoryModal = (item) => {
+    selectedItem.value = item
+    isHistoryModalOpen.value = true
+}
+
+const closeHistoryModal = () => {
+    isHistoryModalOpen.value = false
     selectedItem.value = null
 }
 
@@ -518,6 +544,25 @@ th.col-contract,
 td.col-contract {
     width: 140px;
     text-align: right !important;
+}
+
+th.col-actions,
+td.col-actions {
+    width: 100px;
+    text-align: center !important;
+}
+
+.emoji-btn {
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+    user-select: none;
+}
+
+.emoji-btn:hover {
+    transform: scale(1.3);
+    filter: brightness(1.1);
 }
 
 .status-badge {

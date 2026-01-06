@@ -55,3 +55,14 @@ export async function deleteClientItem(clientId, itemId) {
     const response = await api.delete(`/clients-manage/${clientId}/items/${itemId}`)
     return response.data
 }
+
+/**
+ * 고객사 거래 품목 가격 이력 조회
+ * @param {number} clientId - 고객사 ID
+ * @param {number} itemId - 거래 품목 ID
+ * @returns {Promise} 가격 변경 이력 목록
+ */
+export async function getClientItemPriceHistory(clientId, itemId) {
+    const response = await api.get(`/clients-manage/${clientId}/items/${itemId}/price-history`)
+    return response.data
+}
