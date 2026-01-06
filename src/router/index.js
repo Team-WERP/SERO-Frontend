@@ -68,6 +68,7 @@ import NoticeList from "@/views/notices/NoticeList.vue";
 // 시스템 관리
 import SystemCommonCode from "@/views/system/SystemCommonCode.vue";
 import SystemEmployeeManagement from "@/views/system/SystemEmployeeManagement.vue";
+import SystemCommonCodeManagement from "@/views/system/SystemCommonCodeManagement.vue";
 import RoleManagement from "@/views/system/RoleManagement.vue";
 import StockByWarehouse from "@/views/warehouse/StockByWarehouse.vue";
 import DeliveryTracking from "@/views/warehouse/DeliveryTracking.vue";
@@ -306,7 +307,7 @@ const router = createRouter({
                 // 시스템 관리
                 {
                     path: "system/common-code",
-                    component: SystemCommonCode,
+                    component: SystemCommonCodeManagement,
                     meta: { roles: ["AC_SYS"] },
                 },
                 {
