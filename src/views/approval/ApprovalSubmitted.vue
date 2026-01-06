@@ -338,7 +338,7 @@ onMounted(() => {
 
 /* ===== 검색 / 필터 ===== */
 .filter-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: #111827;
     margin-bottom: 10px;

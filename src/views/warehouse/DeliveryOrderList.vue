@@ -98,8 +98,8 @@
                 <thead>
                     <tr>
                         <th style="width: 50px;">No</th>
-                        <th style="width: 160px;">납품서 번호</th>
-                        <th style="width: 160px;">수주 번호</th>
+                        <th style="width: 160px;">납품서번호</th>
+                        <th style="width: 160px;">주문번호</th>
                         <th style="width: 200px;">고객사</th>
                         <th style="width: 200px;">품목명</th>
                         <th style="width: 120px;">담당자</th>

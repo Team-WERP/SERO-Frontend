@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 font-sans">
     <header class="mb-8">
-      <h1 class="text-[32px] font-bold text-gray-900">주문 등록</h1>
+      <h1 class="text-[28px] font-bold text-gray-900">주문 등록</h1>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">

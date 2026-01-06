@@ -1,13 +1,13 @@
 <template>
   <div class="min-h-screen bg-gray-50 font-sans">
     <header class="mb-8">
-      <h1 class="text-[32px] font-bold text-gray-900">주문 조회</h1>
+      <h1 class="text-[28px] font-bold text-gray-900">주문 조회</h1>
     </header>
 
     <section class="bg-white p-6 rounded-xl border border-gray-200 mb-6">
       <div class="flex flex-wrap items-end gap-6">
         <div class="space-y-2">
-          <p class="text-[13px] font-bold text-gray-700">필터 및 검색</p>
+          <p class="text-[18px] font-bold text-gray-700">필터 및 검색</p>
           <div class="flex items-center gap-4 text-[13px]">
             <span class="text-gray-500">날짜</span>
             <label class="flex items-center gap-1 cursor-pointer">
@@ -72,11 +72,8 @@
       조회 결과: <span class="text-indigo-600 font-bold mx-1">{{ orders[0]?.orderCount || 0 }}</span>건
     </div>
     <section class="bg-white rounded-xl border border-gray-200 overflow-hidden relative">
-      <div v-if="isLoading" class="absolute inset-0 z-[9999] flex items-center justify-center bg-white/70 backdrop-blur-sm">
-          <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-          </svg>
+      <div v-if="isLoading" class="flex h-screen items-center justify-center bg-slate-50">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
       </div>
  
       <table class="w-full text-[13px] text-center table-fixed">
@@ -103,7 +100,7 @@
             <td class="py-4 text-gray-600">{{ order.poCode || '-' }}</td>
             <td class="py-4 truncate px-2">
               {{ order.mainItemName }}
-              <span v-if="order.totalItemCount > 1">외 {{ order.totalItemCount - 1 }}건</span>
+              <span v-if="order.totalItemCount > 1" class="text-slate-500 text-xs ml-1">외 {{ order.totalItemCount - 1 }}건</span>
             </td>
             <td class="py-4">₩ {{ formatNumber(order.totalPrice) }}</td>
             <td class="py-4">{{ order.orderedAt?.split(' ')[0] }}</td>

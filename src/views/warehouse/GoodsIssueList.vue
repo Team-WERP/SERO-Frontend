@@ -91,39 +91,39 @@
         </div>
   
         <table class="w-full border-collapse">
-          <thead class="bg-gray-50 border-b-2 border-gray-200">
+          <thead class="bg-gray-50 border-b-2 border-gray-200 text-center">
             <tr>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[50px]">No</th>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[140px]">출고지시 번호</th>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[140px]">납품서 번호</th>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[180px]">품목명</th>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[160px]">창고</th>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[110px]">출고지시일</th>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[110px]">납기일</th>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[100px]">요청자</th>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[100px]">담당자</th>
-              <th class="p-3 text-[13px] font-bold text-gray-700 text-center w-[90px]">상태</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[50px]">No</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[140px]">출고지시 번호</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[140px]">납품서 번호</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[180px]">품목명</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[160px]">창고</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[110px]">출고지시일</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[110px]">납기일</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[100px]">요청자</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[100px]">담당자</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[90px]">상태</th>
             </tr>
           </thead>
   
           <tbody class="divide-y divide-gray-200">
             <tr v-for="(gi, index) in giList" :key="gi.id" class="hover:bg-gray-50 transition-colors">
-              <td class="p-4 text-center text-[13px]">{{ index + 1 }}</td>
-              <td class="p-4 text-center text-[13px] font-bold cursor-pointer hover:underline text-gray-900" @click="goDetail(gi.id)">
+              <td class="p-4 text-center text-sm">{{ index + 1 }}</td>
+              <td class="p-4 text-center text-sm font-bold cursor-pointer hover:underline text-gray-900" @click="goDetail(gi.id)">
                 {{ gi.giCode }}
               </td>
-              <td class="p-4 text-center text-[13px] text-gray-900">{{ gi.doCode }}</td>
-              <td class="p-4 text-center text-[13px] max-w-[200px] truncate" :title="gi.itemName">
+              <td class="p-4 text-center text-sm text-gray-900">{{ gi.doCode }}</td>
+              <td class="p-4 text-center text-sm max-w-[200px] truncate" :title="gi.itemName">
                 {{ gi.itemName }}
-                <span v-if="gi.itemCount > 1" class="text-gray-400 text-[12px] ml-1">외 {{ gi.itemCount - 1 }}건</span>
+                <span v-if="gi.itemCount > 1" class="text-gray-400 text-xs ml-1">외 {{ gi.itemCount - 1 }}건</span>
               </td>
-              <td class="p-4 text-center text-[13px]">{{ gi.warehouseName }}</td>
-              <td class="p-4 text-center text-[13px]">{{ gi.createdAt.slice(0, 10) }}</td>
-              <td class="p-4 text-center text-[13px]">{{ gi.shippedAt.slice(0, 10) }}</td>
-              <td class="p-4 text-center text-[13px]">{{ gi.requesterName || '-' }}</td>
-              <td class="p-4 text-center text-[13px]">{{ gi.managerName || '-' }}</td>
+              <td class="p-4 text-center text-sm">{{ gi.warehouseName }}</td>
+              <td class="p-4 text-center text-sm">{{ gi.createdAt.slice(0, 10) }}</td>
+              <td class="p-4 text-center text-sm">{{ gi.shippedAt.slice(0, 10) }}</td>
+              <td class="p-4 text-center text-sm">{{ gi.requesterName || '-' }}</td>
+              <td class="p-4 text-center text-sm">{{ gi.managerName || '-' }}</td>
               <td class="p-4 text-center">
-                <span :class="['inline-block px-3 py-1 rounded-full text-[12px] font-bold', getTailwindStatusClass(gi.status)]">
+                <span :class="['inline-block px-3 py-1 rounded-full text-xs font-bold', getTailwindStatusClass(gi.status)]">
                   {{ getStatusLabel(gi.status) }}
                 </span>
               </td>

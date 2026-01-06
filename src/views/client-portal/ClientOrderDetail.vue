@@ -1,15 +1,12 @@
 <template>
-   <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white/70 backdrop-blur-sm">
-      <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-      </svg>
+    <div v-if="isLoading" class="flex h-screen items-center justify-center bg-slate-50">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
     </div>
   <div v-if="order" class="min-h-screen bg-gray-50 font-sans">
     <header class="mb-8">
       <router-link to="/client-portal/orders" class="text-sm text-gray-500 hover:underline">‹ 목록으로 돌아가기</router-link>
       <div class="flex items-center gap-3 mt-2">
-        <h1 class="text-[32px] font-bold text-gray-900">주문 상세</h1>
+        <h1 class="text-[28px] font-bold text-gray-900">주문 상세</h1>
         <span :class="getStatusClass(order.status)" class="px-3 py-1 rounded-full text-[13px] font-bold">
           {{ getStatusLabel(order.status) }}
         </span>

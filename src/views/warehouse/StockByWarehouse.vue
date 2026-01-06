@@ -11,7 +11,7 @@
         </div>
 
         <!-- 필터 및 검색 -->
-        <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8 shadow-sm">
+        <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
             <h2 class="text-md font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <span class="w-1 h-5 bg-indigo-600 rounded-full"></span>
                 필터 및 검색

@@ -3,11 +3,11 @@
     <div class="flex justify-between items-center mb-6">
       <div class="flex items-center gap-2">
           <span class="w-2 h-4 bg-[#4C4CDD] rounded-full"></span>
-          <h3 class="font-bold text-slate-800 text-[16px]">납기 일정 캘린더</h3>
+          <h3 class="font-bold text-slate-800 text-[18px]">납기 일정 캘린더</h3>
       </div>
       <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
         <button @click="moveMonth(-1)" class="p-1 hover:bg-white hover:shadow-sm rounded transition-all"><ChevronLeft size="16"/></button>
-        <span class="text-xs font-bold px-2 min-w-[80px] text-center">{{ format(viewDate, 'yyyy. MM') }}</span>
+        <span class="text-sm font-bold px-2 min-w-[80px] text-center">{{ format(viewDate, 'yyyy. MM') }}</span>
         <button @click="moveMonth(1)" class="p-1 hover:bg-white hover:shadow-sm rounded transition-all"><ChevronRight size="16"/></button>
       </div>
     </div>
@@ -25,7 +25,7 @@
         <span :class="['text-xs font-medium', getDay(date) === 0 ? 'text-red-500' : 'text-slate-600']">{{ format(date, 'd') }}</span>
         
         <div v-if="getDayEvent(date)" class="mt-2 flex flex-col gap-1">
-          <div class="bg-[#4C4CDD] text-white text-[9px] px-1 py-0.5 rounded font-bold text-center animate-in fade-in">
+          <div class="bg-[#4C4CDD] text-white text-sm px-1 py-0.5 rounded font-medium text-center">
             {{ getDayEvent(date).count }}건 납기
           </div>
         </div>

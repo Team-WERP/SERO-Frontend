@@ -1,11 +1,11 @@
 <template>
     <div v-if="loading" class="flex h-screen items-center justify-center bg-slate-50">
-      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
     </div>
   
     <div v-else class="min-h-screen bg-[#f8fafc]">
       <header class="mb-8">
-        <h1 class="text-[32px] font-bold">주문 대시보드</h1>
+        <h1 class="text-[30px] font-bold">주문 대시보드</h1>
         <p class="text-slate-500 text-sm mt-1">실시간 수주 현황 및 납기 일정을 한 번에 확인합니다.</p>
       </header>
   
@@ -21,14 +21,14 @@
             <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
                 <span class="w-2 h-5 bg-[#4C4CDD] rounded-full"></span>
-                <h3 class="font-bold text-[15px] text-slate-800">월별 수주 실적 및 목표 비교</h3>
-                <span class="text-[11px] text-slate-400 ml-1">최근 12개월 기준</span>
+                <h3 class="font-bold text-lg text-slate-800">월별 수주 실적 및 목표 비교</h3>
+                <span class="text-sm text-slate-400 ml-1">최근 12개월 기준</span>
             </div>
 
             <div class="flex items-center gap-4">
                 <button 
                 @click="showGoalModal = true" 
-                class="text-[13px] text-[#4C4CDD] font-semibold hover:underline"
+                class="text-sm text-[#4C4CDD] font-semibold hover:underline"
                 >
                 상세보기
                 </button>
@@ -47,8 +47,8 @@
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-4 bg-[#4C4CDD] rounded-full"></span>
-                    <h3 class="font-bold text-slate-800 text-[16px]">거래처별 TOP 5 수주액</h3>
-                    <span class="text-[11px] text-slate-400 ml-1">이달 기준</span>
+                    <h3 class="font-bold text-slate-800 text-lg">거래처별 TOP 5 수주액</h3>
+                    <span class="text-xs text-slate-400 ml-1">이달 기준</span>
                 </div>
                 <div class="text-slate-300">
                     <MoreHorizontal size="18" />
@@ -64,21 +64,21 @@
         <div class="lg:col-span-12 bg-white p-8 rounded-2xl border border-slate-200">
             <div class="flex items-center gap-2 mb-4">
                 <span class="w-2 h-5 bg-[#4C4CDD] rounded-full"></span>
-                <h3 class="font-bold text-[15px]">납기 임박/지연 주문</h3>
+                <h3 class="font-bold text-lg">납기 임박/지연 주문</h3>
             </div>
 
           <div class="overflow-x-auto border border-slate-100 rounded-xl">
             <table class="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr class="bg-slate-50 border-b border-slate-100 text-[13px] text-slate-500 text-center">
+                <tr class="bg-slate-50 border-b border-slate-100 text-sm text-slate-500 text-center">
                   <th class="p-4 uppercase w-16">No</th>
                   <th class="p-4  uppercase">주문번호</th>
                   <th class="p-4 uppercase">고객사</th>
-                  <th class="p-4 uppercase">납기일</th>
+                  <th class="p-4 uppercase">납기일시</th>
                   <th class="p-4 uppercase">상태</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-50 text-center text-[13px]">
+              <tbody class="divide-y divide-slate-50 text-center text-sm">
                 <tr v-for="(order, index) in mainData.urgentOrders" :key="order.orderId"
                     @click="openOrderModal(order)"
                     class="group hover:bg-blue-50/50 cursor-pointer transition-colors">
@@ -92,7 +92,7 @@
                     </span>
                   </td>
                   <td class="p-4 text-center">
-                    <span :class="['inline-flex justify-center items-center w-20 px-2 py-1.5 rounded-full text-[13px] font-bold', 
+                    <span :class="['inline-flex justify-center items-center w-20 px-2 py-1 rounded-full text-sm font-bold', 
                                   order.dday.includes('+') ? 'bg-red-500 text-white ' : 'bg-orange-400 text-white']">
                       {{ order.dday.includes('+') ? '납기 지연' : '납기 임박' }}
                     </span>
@@ -121,12 +121,12 @@
             <div class="flex justify-between items-center mb-6 border-b border-gray-300 pb-2">
             <div class="flex items-center gap-2">
                 <span class="w-2 h-4 bg-[#4C4CDD] rounded-full"></span>
-                <h3 class="font-bold text-[15px]">
+                <h3 class="font-bold text-lg">
                 {{ format(selectedDate, 'yyyy-MM-dd') }} 납기 일정
                 </h3>
             </div>
 
-                <span class="text-[#4C4CDD] font-bold text-[15px]">
+                <span class="text-[#4C4CDD] font-bold text-lg]">
                     {{ selectedDayOrders.length }}건
                 </span>
             </div>
@@ -135,16 +135,16 @@
                  @click="openOrderModal(order)"
                  class="flex gap-4 cursor-pointer hover:bg-slate-50 p-4 rounded-lg transition-colors items-center"> 
               
-              <div class="text-[12px] font-bold text-blue-600 bg-blue-50 h-fit px-2 py-1 rounded">
+              <div class="text-sm font-bold text-blue-600 bg-blue-50 h-fit px-2 py-1 rounded">
                 {{ order.shippedTime }}
               </div>
   
               <div class="flex-1 flex justify-between items-center gap-2"> 
                 <div>
-                  <div class="text-[11px] text-slate-400 font-mono">{{ order.orderCode }}</div>
+                  <div class="text-sm text-slate-400 font-mono">{{ order.orderCode }}</div>
                   <div class="text-sm font-bold text-slate-800">{{ order.clientName }}</div>
                 </div>
-                <div :class="['text-[12px] px-2 py-1 rounded-full font-bold shrink-0', getStatusBadgeClass(order.status)]">
+                <div :class="['text-sm px-2 py-1 rounded-full font-bold shrink-0', getStatusBadgeClass(order.status)]">
                   {{ statusLabelMap[order.status] || order.status }}
                 </div>
               </div>
@@ -159,13 +159,6 @@
   
       <GoalStatModal v-if="showGoalModal" :data="mainData.monthlyGoal" @close="showGoalModal = false " @refresh="fetchData"/>
       
-      <div v-if="showOrderModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div class="bg-white p-8 rounded-2xl max-w-md w-full">
-              <h2 class="text-xl font-bold mb-4">주문 상세 정보</h2>
-              <pre class="text-xs bg-slate-50 p-4 rounded mb-4">{{ selectedOrderDetails }}</pre>
-              <button @click="showOrderModal = false" class="w-full py-2 bg-slate-800 text-white rounded-xl">닫기</button>
-          </div>
-      </div>
     </div>
   </template>
   
@@ -191,8 +184,6 @@
   const calendarData = ref([]);
   const selectedDate = ref(new Date(2026, 0, 5));
   const showGoalModal = ref(false);
-  const showOrderModal = ref(false);
-  const selectedOrderDetails = ref(null);
   const router = useRouter();
   
   const fetchData = async () => {
@@ -288,10 +279,10 @@
       data: mainData.value?.topClients.map(c => c.totalAmount) || [],
       backgroundColor: [
         '#4c67dd', 
-        '#6379db', 
-        '#758cf0', 
-        '#7c91eb', 
-        '#9daced'
+        '#42cbf5', 
+        '#e8e520', 
+        '#ffc23d', 
+        '#ff613d'
       ],
       borderWidth: 0,
       hoverOffset: 4

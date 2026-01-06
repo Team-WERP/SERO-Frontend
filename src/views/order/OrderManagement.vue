@@ -1,7 +1,7 @@
 <template>
   <div class="bg-gray-50 min-h-screen font-sans">
     <header class="mb-6">
-      <h1 class="text-[32px] font-bold text-gray-900 tracking-tight">주문 관리</h1>
+      <h1 class="text-[30px] font-bold text-gray-900 tracking-tight">주문 관리</h1>
       <p class="text-sm text-gray-500 mt-3">전체 주문을 조회합니다.</p>
     </header>
 
@@ -21,25 +21,28 @@
     </div>
 
     <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
-      <h3 class="text-sm font-bold mb-5 text-gray-800">필터 및 검색</h3>
+      <h2 class="text-md font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span class="w-1 h-5 bg-indigo-600 rounded-full"></span>
+                필터 및 검색
+            </h2>
       <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 items-end">
         
         <div class="col-span-2">
-          <div class="flex items-center gap-5 mb-3">
-            <label class="text-xs flex items-center gap-2 cursor-pointer text-gray-700 font-medium">
+          <div class="flex items-center gap-5 mb-3 text-sm ">
+            <label class="flex items-center gap-2 cursor-pointer text-gray-700 font-medium">
               <input type="radio" v-model="searchParams.dateField" value="orderedAt" class="w-4 h-4 accent-indigo-600"> 주문일
             </label>
-            <label class="text-xs flex items-center gap-2 cursor-pointer text-gray-700 font-medium">
+            <label class="flex items-center gap-2 cursor-pointer text-gray-700 font-medium">
               <input type="radio" v-model="searchParams.dateField" value="shippedAt" class="w-4 h-4 accent-indigo-600"> 납기일
             </label>
           </div>
-          <div class="flex flex-col gap-1">
+          <div class="flex flex-col gap-1 text-sm ">
             <div class="flex items-center gap-2">
               <input 
                 type="date" 
                 v-model="searchParams.startDate" 
                 :class="[
-                  'w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:border-indigo-600 outline-none transition-all',
+                  'w-full border rounded-lg px-3 py-2 focus:ring-2 focus:border-indigo-600 outline-none transition-all',
                   dateError ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-300 focus:ring-indigo-500/20'
                 ]"
               >
@@ -53,25 +56,25 @@
                 ]"
               >
             </div>
-            <p v-if="dateError" class="text-red-500 text-[11px] font-semibold">{{ dateError }}</p>
+            <p v-if="dateError" class="text-red-500 text-xs font-semibold">{{ dateError }}</p>
           </div>
         </div>
 
         <div>
-          <label class="block text-[11px] mb-2 text-gray-500 font-bold uppercase">담당자</label>
-          <input v-model="searchParams.managerName" type="text" placeholder="전체" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all">
+          <label class="block text-sm mb-2 text-gray-500 font-bold uppercase">담당자</label>
+          <input v-model="searchParams.managerName" type="text" placeholder="박지혜" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:border-indigo-600 outline-none transition-all">
         </div>
 
         <div>
-          <label class="block text-[11px] mb-2 text-gray-500 font-bold uppercase">고객사</label>
-          <input v-model="searchParams.clientName" type="text" placeholder="전체" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all">
+          <label class="block text-sm mb-2 text-gray-500 font-bold uppercase">고객사</label>
+          <input v-model="searchParams.clientName" type="text" placeholder="전체" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:border-indigo-600 outline-none transition-all">
         </div>
 
         <div>
-          <label class="block text-[11px] mb-2 text-gray-500 font-bold uppercase">진행 상태</label>
+          <label class="block text-sm mb-2 text-gray-500 font-bold uppercase">진행 상태</label>
           <select 
             v-model="searchParams.status" 
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm  focus:border-indigo-600 outline-none transition-all bg-white"
           >
             <option value="">전체</option>
             <option v-for="(label, code) in statusLabelMap" :key="code" :value="code">{{ label }}</option>
@@ -79,12 +82,12 @@
         </div>
         
         <div class="col-span-1">
-          <label class="block text-[11px] mb-2 text-gray-500 font-bold uppercase">주문번호 / 품목명</label>
+          <label class="block text-sm mb-2 text-gray-500 font-bold uppercase">주문번호 / 품목명</label>
           <input v-model="searchParams.searchKeyword" type="text" placeholder="SO-xxxx 또는 품목명" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all">
         </div>
 
-        <div class="flex gap-2">
-          <button @click="handleSearch" class="bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-indigo-800 transition-all shadow-md active:scale-95">
+        <div class="flex gap-2 text-sm">
+          <button @click="handleSearch" class="bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-indigo-800 transition-all active:scale-95">
             검색
           </button>
           <button @click="resetFilters" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-200 border border-gray-300 transition-all active:scale-95">
@@ -108,14 +111,18 @@
         </div>
       </div>
 
+      <div v-if="loading" class="flex h-screen items-center justify-center bg-slate-50">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
+    </div>
+
       <div class="p-4 border-b border-gray-100 flex items-center bg-gray-50/50 text-sm text-gray-600 font-medium">
-        조회 결과: <span class="text-indigo-600 font-bold mx-1">{{ orders[0]?.orderCount || 0 }}</span>건
+        총 <span class="text-indigo-600 font-bold mx-1">{{ orders[0]?.orderCount || 0 }}</span>건
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-left">
           <thead>
-            <tr class="bg-gray-50 text-gray-500 text-[15px] font-bold uppercase border-b border-gray-200 text-center">
+            <tr class="bg-gray-50 text-gray-500 text-sm font-bold uppercase border-b border-gray-200 text-center">
               <th class="px-5 py-3 w-12">No</th>
               <th class="px-5 py-3">주문번호</th>
               <th class="px-5 py-3">고객사</th>
@@ -136,14 +143,14 @@
               <td class="px-5 py-4">{{ order.clientName }}</td>
               <td class="px-5 py-4">
                 {{ order.mainItemName }}
-                <span v-if="order.totalItemCount > 1">외 {{ order.totalItemCount - 1 }}건</span>
+                <span v-if="order.totalItemCount > 1" class="text-slate-500 text-xs ml-1" >외 {{ order.totalItemCount - 1 }}건</span>
               </td>
               <td class="px-5 py-4 text-center">₩ {{ formatPrice(order.totalPrice) }}</td>
               <td class="px-5 py-4 text-center">{{ order.orderedAt }}</td>
               <td class="px-5 py-4 text-center">{{ order.shippedAt }}</td>
               <td class="px-5 py-4 text-center">{{ order.managerName || '-' }}</td>
               <td class="px-5 py-4 text-center">
-                <span :class="getStatusBadgeClass(order.status)" class="px-3 py-1 rounded-[15px] text-[12px] font-bold inline-block min-w-[80px]">
+                <span :class="getStatusBadgeClass(order.status)" class="px-3 py-1 rounded-[15px] text-xs font-bold inline-block min-w-[80px]">
                   {{ getStatusLabel(order.status) }}
                 </span>
               </td>

@@ -6,7 +6,7 @@
     <div v-else class="min-h-screen bg-[#f8fafc]">
       <header class="mb-8 flex justify-between items-end">
         <div>
-          <h1 class="text-[32px] font-bold text-slate-800">대시보드</h1>
+          <h1 class="text-[28px] font-bold text-slate-800">대시보드</h1>
           <p class="text-slate-500 text-sm mt-1">최근 1년 내의 주문 현황과 진행 상태를 한 눈에 확인하세요.</p>
         </div>
         <div class="text-right">
