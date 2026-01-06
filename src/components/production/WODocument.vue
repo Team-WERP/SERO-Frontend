@@ -9,69 +9,75 @@
                 <tr>
                     <th>작업지시일자</th>
                     <td class="highlight-text">{{ workDate }}</td>
+                    <th>작업지시번호</th>
+                    <td>{{ group.workOrderCode }}</td>
+                </tr>
+                <tr>
                     <th>생산라인</th>
                     <td>{{ group.lineName }}</td>
+                    <th>일일 생산능력</th>
+                    <td>{{ group.dailyCapacity }}</td>
                 </tr>
+                <tr>
+                    <th>생산 품목</th>
+                    <td>{{ group.itemName }}</td>
+                    <th>품목 코드</th>
+                    <td>{{ group.itemCode }}</td>
+                </tr>
+
             </tbody>
         </table>
+
 
         <table class="item-table">
             <colgroup>
                 <col style="width: 5%">
+                <col style="width: 15%">
+                <col style="width: 40%">
                 <col style="width: 20%">
-                <col style="width: 30%">
-                <col style="width: 15%">
-                <col style="width: 15%">
-                <col style="width: 15%">
+                <col style="width: 20%">
             </colgroup>
+
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>생산계획번호</th>
-                    <th>품목명(코드)</th>
-                    <th>계획수량</th>
-                    <th>지시수량</th>
+                    <th>유형</th>
+                    <th>참조 번호</th>
+                    <th>지시 수량</th>
                     <th>비고</th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr v-for="(item, idx) in group.items" :key="item.ppId">
+                <tr v-for="(item, idx) in group.items" :key="idx">
                     <td class="center">{{ idx + 1 }}</td>
-                    <td class="center">{{ item.ppCode }}</td>
-                    <td>
-                        <div class="bold">{{ item.materialName }}</div>
-                        <div class="small-text">({{ item.materialCode }})</div>
+                    <td class="center">
+                        <strong>{{ item.type }}</strong>
                     </td>
-                    <td class="right">
-                        {{ (item.dailyPlannedQuantity ?? 0).toLocaleString() }}
-                        <span class="unit">{{ item.baseUnit }}</span>
+                    <td class="center">
+                        {{ item.refCode }}
                     </td>
                     <td class="right bold">
-                        {{ (item.woPlannedQuantity ?? 0).toLocaleString() }}
-                        <span class="unit">{{ item.baseUnit }}</span>
+                        {{ item.plannedQuantity }}
+                        <span class="unit">{{ group.unit }}</span>
                     </td>
-
                     <td></td>
-                </tr>
-                <tr v-for="n in Math.max(0, 8 - group.items.length)" :key="'empty-' + n">
-                    <td v-for="i in 6" :key="i">&nbsp;</td>
                 </tr>
             </tbody>
+
             <tfoot>
                 <tr>
-                    <th colspan="4">합 계</th>
-                    <td class="right bold">
+                    <th colspan="3">합계</th>
+                    <th class="right bold">
                         {{
-                            group.items
-                                .reduce((sum, i) => sum + (i.woPlannedQuantity ?? 0), 0)
-                                .toLocaleString()
+                            group.items.reduce((s, i) => s + i.plannedQuantity, 0).toLocaleString()
                         }}
-                    </td>
-                    <td></td>
+                    </th>
+                    <th></th>
                 </tr>
             </tfoot>
         </table>
+
 
         <div class="footer-note">
             <p>※ 주의사항: 작업 전 안전 장구 착용을 확인하고, 생산 완료 후 실적 등록을 즉시 완료할 것.</p>
@@ -80,14 +86,14 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
     group: Object,
     workDate: String
 })
+
 </script>
 
 <style scoped>
-/* 기존에 주신 프린트 스타일과 동일 */
 .print-page {
     width: 100%;
     padding: 10mm;
