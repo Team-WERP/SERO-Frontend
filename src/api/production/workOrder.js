@@ -32,3 +32,13 @@ export const getEmergencyTargetsByLine = (lineId) =>
     api.get('/work-orders/emergency-targets', {
         params: { lineId }
     })
+
+export const getWorkOrderResults = (params) =>
+    api.get('/work-orders/results', {
+        params: {
+            startDate: params.startDate,
+            endDate: params.endDate,
+            lineId: params.lineId ?? null,
+            keyword: params.keyword ?? null
+        }
+    })
