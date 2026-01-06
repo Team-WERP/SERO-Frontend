@@ -1,14 +1,8 @@
 <template>
     <div class="gi-detail-page">
         <!-- 로딩 스피너 -->
-        <div v-if="isLoading"
-            class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm">
-            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
-                </path>
-            </svg>
+        <div v-if="isLoading" class="absolute inset-0 z-50 flex items-center justify-center bg-white/60">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
         </div>
 
         <!-- 상단 헤더 -->
@@ -35,29 +29,40 @@
                 </div>
 
                 <!-- 프로그레스 바 -->
-                <div class="right-section">
-                    <div class="progress-bar">
-                        <div class="step" :class="{ active: currentStep >= 1, completed: currentStep > 1 }">
-                            <div class="step-circle">1</div>
-                            <div class="step-label">출고지시 결재</div>
+                <div class="right-section flex-1 flex justify-end">
+                    <div class="progress-bar flex items-center justify-end px-6 py-4">
+                        
+                        <div class="step flex flex-col items-center gap-2" :class="{ active: currentStep >= 1, completed: currentStep > 1 }">
+                        <div class="step-circle w-10 h-10 rounded-full flex items-center justify-center text-base font-bold transition-all duration-300"
+                            :class="getStepCircleClass(currentStep, 1)">1</div>
+                        <div class="step-label text-[12px] font-medium whitespace-nowrap" :class="currentStep >= 1 ? 'text-gray-900 font-semibold' : 'text-gray-500'">출고지시 결재</div>
                         </div>
-                        <div class="step-line" :class="{ active: currentStep > 1 }"></div>
+                        
+                        <div class="step-line w-[60px] h-[2px] mx-3 mb-6 transition-all duration-300" 
+                        :class="[currentStep > 1 ? 'bg-emerald-500' : 'bg-gray-200']"></div>
 
-                        <div class="step" :class="{ active: currentStep >= 2, completed: currentStep >= 2 }">
-                            <div class="step-circle">2</div>
-                            <div class="step-label">출고 완료</div>
+                        <div class="step flex flex-col items-center gap-2" :class="{ active: currentStep >= 2, completed: currentStep > 2 }">
+                        <div class="step-circle w-10 h-10 rounded-full flex items-center justify-center text-base font-bold transition-all duration-300"
+                            :class="getStepCircleClass(currentStep, 2)">2</div>
+                        <div class="step-label text-[12px] font-medium whitespace-nowrap" :class="currentStep >= 2 ? 'text-gray-900 font-semibold' : 'text-gray-500'">출고 완료</div>
                         </div>
-                        <div class="step-line" :class="{ active: currentStep > 2 }"></div>
+                        
+                        <div class="step-line w-[60px] h-[2px] mx-3 mb-6 transition-all duration-300" 
+                        :class="[currentStep > 2 ? 'bg-emerald-500' : 'bg-gray-200']"></div>
 
-                        <div class="step" :class="{ active: currentStep >= 3, completed: currentStep > 3 }">
-                            <div class="step-circle">3</div>
-                            <div class="step-label">배송 중</div>
+                        <div class="step flex flex-col items-center gap-2" :class="{ active: currentStep >= 3, completed: currentStep > 3 }">
+                        <div class="step-circle w-10 h-10 rounded-full flex items-center justify-center text-base font-bold transition-all duration-300"
+                            :class="getStepCircleClass(currentStep, 3)">3</div>
+                        <div class="step-label text-[12px] font-medium whitespace-nowrap" :class="currentStep >= 3 ? 'text-gray-900 font-semibold' : 'text-gray-500'">배송 중</div>
                         </div>
-                        <div class="step-line" :class="{ active: currentStep > 3 }"></div>
+                        
+                        <div class="step-line w-[60px] h-[2px] mx-3 mb-6 transition-all duration-300" 
+                        :class="[currentStep > 3 ? 'bg-emerald-500' : 'bg-gray-200']"></div>
 
-                        <div class="step" :class="{ active: currentStep >= 4, completed: currentStep === 4 }">
-                            <div class="step-circle">4</div>
-                            <div class="step-label">배송 완료</div>
+                        <div class="step flex flex-col items-center gap-2" :class="{ active: currentStep >= 4, completed: currentStep === 4 }">
+                        <div class="step-circle w-10 h-10 rounded-full flex items-center justify-center text-base font-bold transition-all duration-300"
+                            :class="getStepCircleClass(currentStep, 4)">4</div>
+                        <div class="step-label text-[12px] font-medium whitespace-nowrap" :class="currentStep >= 4 ? 'text-gray-900 font-semibold' : 'text-gray-500'">배송 완료</div>
                         </div>
                     </div>
                 </div>
@@ -88,11 +93,11 @@
                         </div>
                         <div class="info-row">
                             <span class="label">출고지시일시</span>
-                            <span class="value">{{ formatDateTime(giDetail.createdAt) }}</span>
+                            <span class="value">{{ giDetail.createdAt }}</span>
                         </div>
                         <div class="info-row">
                             <span class="label">출고예정일시</span>
-                            <span class="value">{{ formatDateTime(giDetail.scheduledAt) }}</span>
+                            <span class="value">{{giDetail.scheduledAt}}</span>
                         </div>
                     </div>
                 </div>
@@ -136,7 +141,7 @@
                         </div>
                         <div class="info-row">
                             <span class="label">납기일시</span>
-                            <span class="value">{{ formatDateTime(giDetail.shippedAt) }}</span>
+                            <span class="value">{{ giDetail.shippedAt }}</span>
                         </div>
                     </div>
                     <div class="view-order-link" @click="goToOrder">
@@ -161,7 +166,7 @@
                             <th style="width: 140px;">품목코드</th>
                             <th style="width: 200px;">품목명</th>
                             <th style="width: 180px;">규격</th>
-                            <th style="width: 140px;">출고지시수량(A/In)</th>
+                            <th style="width: 140px;">출고지시수량(A/Un)</th>
                             <th style="width: 140px;">출고지시수량(B/Un)</th>
                         </tr>
                     </thead>
@@ -227,33 +232,44 @@
                 <!-- 결재가 있는 경우 -->
                 <div v-else class="approval-progress">
                     <!-- 결재 진행 상황 헤더 -->
-                    <div class="approval-flow">
-                        <!-- 기안 단계 -->
-                        <div class="flow-step">
-                            <div class="flow-circle completed">기안</div>
-                            <div class="flow-info">
-                                <div class="flow-label">{{ giDetail.managerName || '기안' }} · {{
-                                    giDetail.managerDepartment || '-' }}</div>
+                    <div class="approval-flow flex items-center justify-center p-[30px_20px] bg-gray-50 rounded-lg mb-5">
+    
+                    <div class="flow-step flex flex-col items-center gap-3">
+                        <div class="w-20 h-20 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 bg-emerald-100 text-emerald-900 border-emerald-500">
+                            기안
+                        </div>
+                        <div class="text-center">
+                            <div class="text-[13px] text-gray-500 font-medium">
+                                {{ giDetail.managerName || '기안' }} · {{ giDetail.managerDepartment || '-' }}
                             </div>
                         </div>
+                    </div>
 
-                        <!-- 결재 단계들 (동적) -->
-                        <template v-for="(line, index) in sortedApprovalLines" :key="index">
-                            <div class="flow-arrow">→</div>
-                            <div class="flow-step">
-                                <div class="flow-circle" :class="{
-                                    completed: line.status === 'ALS_APPR',
-                                    active: line.status === 'ALS_RVW'
-                                }">
-                                    {{ getLineTypeLabel(line.lineType) }}
-                                </div>
-                                <div class="flow-info">
-                                    <div class="flow-label">{{ line.approverName }} · {{ line.approverDepartment }}
-                                    </div>
+                    <template v-for="(line, index) in sortedApprovalLines" :key="index">
+                        <div :class="[
+                            'h-[3px] w-20 mx-4 mb-10 transition-colors duration-300', 
+                            (index === 0 || sortedApprovalLines[index - 1].status === 'ALS_APPR') 
+                                ? 'bg-[#D1FAE5]' 
+                                : 'bg-gray-200'
+                        ]"></div>
+                        
+                        <div class="flow-step flex flex-col items-center gap-3">
+                            <div class="w-20 h-20 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300" 
+                                :class="[
+                                    line.status === 'ALS_APPR' ? 'bg-emerald-100 text-emerald-900' : 
+                                    line.status === 'ALS_RVW' ? 'bg-blue-100 text-blue-900 border-blue-500' : 
+                                    'bg-gray-200 text-gray-400 border-gray-300'
+                                ]">
+                                {{ getLineTypeLabel(line.lineType) }}
+                            </div>
+                            <div class="text-center">
+                                <div class="text-[13px] text-gray-500 font-medium">
+                                    {{ line.approverName }} · {{ line.approverDepartment }}
                                 </div>
                             </div>
-                        </template>
-                    </div>
+                        </div>
+                    </template>
+                </div>
 
                     <!-- 결재선 상세 테이블 -->
                     <table class="approval-table">
@@ -276,7 +292,7 @@
                                 <td>{{ formatRole(giDetail.managerRank, giDetail.managerPosition) }}</td>
                                 <td>{{ giDetail.managerDepartment || '-' }}</td>
                                 <td><span class="status-text approved">상신</span></td>
-                                <td>{{ formatDateTime(giDetail.createdAt) }}</td>
+                                <td>{{ giDetail.createdAt }}</td>
                                 <td>-</td>
                             </tr>
 
@@ -295,7 +311,7 @@
                                         {{ getApprovalStatusLabel(line.status) }}
                                     </span>
                                 </td>
-                                <td>{{ formatDateTime(line.processedAt) }}</td>
+                                <td>{{ line.processedAt }}</td>
                                 <td>{{ line.note || '-' }}</td>
                             </tr>
 
@@ -350,7 +366,7 @@
                         </div>
                         <div class="timeline-content">
                             <div class="timeline-title">출고 완료</div>
-                            <div class="timeline-date">{{ formatDateTime(giDetail.shippedAt) }}</div>
+                            <div class="timeline-date">{{giDetail.shippedAt}}</div>
                             <div class="timeline-detail">출고지시가 완료되어 배송 준비가 시작되었습니다.</div>
                         </div>
                     </div>
@@ -435,6 +451,15 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
+const getStepCircleClass = (current, target) => {
+  if (current > target || (target === 4 && current === 4)) {
+    return 'bg-emerald-500 text-white'; 
+  }
+  if (current > target) return 'bg-emerald-500 text-white'; 
+  if (current === target) return 'bg-[#4C4CDD] text-white'; 
+  return 'bg-gray-200 text-gray-400';
+};
+
 // 권한 체크
 const canAssignManager = computed(() => {
     return userStore.hasAuthority('AC_WHS')
@@ -445,15 +470,6 @@ const showAssignManagerButton = computed(() => {
     const result = canAssignManager.value &&
         !giDetail.value.managerName &&
         giDetail.value.status === 'GI_RVW'
-
-    console.log('showAssignManagerButton:', {
-        canAssignManager: canAssignManager.value,
-        managerName: giDetail.value.managerName,
-        managerNameType: typeof giDetail.value.managerName,
-        notManagerName: !giDetail.value.managerName,
-        status: giDetail.value.status,
-        result: result
-    })
 
     return result
 })
@@ -467,16 +483,6 @@ const showApprovalRequestButton = computed(() => {
         giDetail.value.status === 'GI_RVW' &&
         !giDetail.value.approvalId &&
         isManager
-
-    console.log('showApprovalRequestButton:', {
-        currentUserId: currentUserId,
-        managerId: giDetail.value.managerId,
-        isManager: isManager,
-        managerName: giDetail.value.managerName,
-        status: giDetail.value.status,
-        approvalId: giDetail.value.approvalId,
-        result: result
-    })
 
     return result
 })
@@ -551,7 +557,6 @@ const fetchDeliveryOrderDetail = async (doCode) => {
     try {
         const response = await getDODetail(doCode)
         deliveryOrderData.value = response
-        console.log('납품서 상세 조회 성공:', response)
     } catch (error) {
         console.error('납품서 상세 조회 실패:', error)
         alert('납품서 정보를 불러오는데 실패했습니다.')
@@ -560,12 +565,6 @@ const fetchDeliveryOrderDetail = async (doCode) => {
 
 // 납품서 미리보기 모달 핸들러
 const openDeliveryOrderPreview = async () => {
-    console.log('납품서 미리보기 열기 시도:', {
-        giCode: giDetail.value.giCode,
-        doCode: giDetail.value.doCode,
-        hasDoCode: !!giDetail.value.doCode
-    })
-
     if (!giDetail.value.doCode) {
         console.error('doCode가 없습니다. giDetail:', giDetail.value)
         alert('납품서 정보가 없습니다.\n출고지시와 연결된 납품서가 없는 것 같습니다.')
@@ -585,10 +584,6 @@ const closeDeliveryOrderPreview = () => {
 
 // 출고지시서 미리보기 핸들러
 const openGIPreview = () => {
-    console.log('출고지시서 미리보기 열기:', {
-        giCode: giDetail.value.giCode,
-        status: giDetail.value.status
-    })
     isGoodsIssueModalOpen.value = true
 }
 
@@ -689,27 +684,13 @@ const formatRole = (rank, position) => {
     return rank || position
 }
 
-// 날짜 시간 포맷팅
-const formatDateTime = (dateTime) => {
-    if (!dateTime) return '-'
-    if (typeof dateTime === 'string') {
-        // ISO 8601 형식 처리 (YYYY-MM-DDTHH:mm:ss)
-        if (dateTime.includes('T')) {
-            return dateTime.replace('T', ' ').substring(0, 16)
-        }
-        // 이미 포맷된 형태라면 그대로 반환
-        return dateTime
-    }
-    return '-'
-}
+
 
 // 출고지시 상세 조회
 const fetchGIDetail = async () => {
     try {
         isLoading.value = true
         const id = route.params.id
-        console.log('Route params:', route.params)
-        console.log('GI ID:', id)
 
         if (!id) {
             console.error('ID is undefined!')
@@ -721,16 +702,6 @@ const fetchGIDetail = async () => {
         const response = await getGIDetail(id)
         giDetail.value = response
 
-        // 디버깅: 담당자 배정 관련 정보 출력
-        console.log('GI Detail:', {
-            giCode: giDetail.value.giCode,
-            doCode: giDetail.value.doCode,
-            status: giDetail.value.status,
-            managerName: giDetail.value.managerName,
-            approvalId: giDetail.value.approvalId,
-            canAssignManager: canAssignManager.value,
-            buttonShouldShow: canAssignManager.value && !giDetail.value.managerName && giDetail.value.status === 'GI_RVW'
-        })
     } catch (error) {
         console.error('출고지시 상세 조회 실패:', error)
         if (error.response?.status === 404) {
@@ -888,7 +859,7 @@ watch(
 }
 
 .breadcrumb {
-    font-size: 13px;
+    font-size: small;
     color: #6b7280;
     margin-bottom: 12px;
 }
@@ -999,79 +970,12 @@ watch(
     background: #f3f4f6;
     color: #374151;
 }
-
-/* ===== 프로그레스 바 ===== */
-.progress-bar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 16px 24px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-}
-
-.step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-.step-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #e5e7eb;
-    color: #9ca3af;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 700;
-    transition: all 0.3s;
-}
-
-.step.active .step-circle {
-    background: #4C4CDD;
-    color: #ffffff;
-}
-
-.step.completed .step-circle {
-    background: #10b981;
-    color: #ffffff;
-}
-
-.step-label {
-    font-size: 12px;
-    color: #6b7280;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.step.active .step-label {
-    color: #111827;
-    font-weight: 600;
-}
-
-.step-line {
-    width: 60px;
-    height: 2px;
-    background: #e5e7eb;
-    margin: 0 12px;
-    margin-bottom: 24px;
-    transition: all 0.3s;
-}
-
-.step-line.active {
-    background: #4C4CDD;
-}
-
 /* ===== 탭 메뉴 ===== */
 .tab-menu {
     display: flex;
     border-bottom: 2px solid #e5e7eb;
     margin-bottom: 24px;
+    font-size: medium;
 }
 
 .tab-menu button {
@@ -1120,7 +1024,7 @@ watch(
 }
 
 .card-title {
-    font-size: 16px;
+    font-size: medium;
     font-weight: 700;
     color: #4C4CDD;
     margin: 0 0 16px 0;
@@ -1142,12 +1046,14 @@ watch(
 .info-row .label {
     color: #6b7280;
     font-weight: 500;
+
 }
 
 .info-row .value {
     color: #111827;
-    font-weight: 600;
+    font-weight: 400;
     text-align: right;
+    font-size: small;
 }
 
 .info-row .value.link {
@@ -1189,9 +1095,9 @@ watch(
 }
 
 .section-title {
-    font-size: 18px;
+    font-size: medium;
     font-weight: 700;
-    color: #111827;
+    color: #4C4CDD;
     margin: 0;
 }
 
@@ -1208,7 +1114,7 @@ watch(
 
 .items-table th {
     padding: 12px 16px;
-    font-size: 14px;
+    font-size: small;
     font-weight: 600;
     color: #374151;
     text-align: center;
@@ -1218,7 +1124,7 @@ watch(
 .items-table td {
     padding: 12px 16px;
     border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
+    font-size: small;
     color: #111827;
     text-align: center;
     vertical-align: middle;
@@ -1303,7 +1209,7 @@ watch(
     align-items: center;
     justify-content: center;
     padding: 30px 20px;
-    background: #f9fafb;
+    background: white;
     border-radius: 8px;
     margin-bottom: 20px;
 }
@@ -1326,20 +1232,17 @@ watch(
     justify-content: center;
     font-size: 14px;
     font-weight: 700;
-    border: 3px solid #e5e7eb;
     transition: all 0.3s;
 }
 
 .flow-circle.completed {
     background: #d1fae5;
     color: #065f46;
-    border-color: #10b981;
 }
 
 .flow-circle.active {
     background: #dbeafe;
     color: #1e40af;
-    border-color: #3b82f6;
 }
 
 .flow-info {
@@ -1401,16 +1304,11 @@ watch(
 .badge-sm {
     display: inline-block;
     padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    background: #f3f4f6;
-    color: #6b7280;
+    font-size: small;
 }
 
 .badge-sm.green {
-    background: #d1fae5;
-    color: #065f46;
+    color: #111827;
 }
 
 .status-text {
@@ -1441,7 +1339,7 @@ watch(
     background: #ffffff;
     border: 1px solid #d1d5db;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: small;
     font-weight: 600;
     color: #374151;
     cursor: pointer;
@@ -1458,7 +1356,7 @@ watch(
     background: #4C4CDD;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: small;
     font-weight: 600;
     color: #ffffff;
     cursor: pointer;
