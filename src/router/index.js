@@ -61,9 +61,11 @@ import ApprovalDetail from "@/views/approval/ApprovalDetail.vue";
 
 // 공지사항
 import NoticeList from "@/views/notices/NoticeList.vue";
+import NoticeCreate from "@/views/notices/NoticeCreate.vue";
+import NoticeDetail from "@/views/notices/NoticeDetail.vue";
 
 // 시스템 관리
-import SystemCommonCode from "@/views/system/SystemCommonCode.vue";
+import SystemCommonCodeManagement from "@/views/system/SystemCommonCodeManagement.vue";
 import StockByWarehouse from "@/views/warehouse/StockByWarehouse.vue";
 import DeliveryTracking from "@/views/warehouse/DeliveryTracking.vue";
 
@@ -151,7 +153,11 @@ const router = createRouter({
                     component: ClientNotices,
                     meta: { roles: ["AC_CLI"] },
                 },
-
+                {
+                    path: "client-portal/notices/:noticeId",
+                    component: NoticeDetail,
+                    meta: { roles: ["AC_CLI"] },
+                },
                 // 주문
                 {
                     path: "order/dashboard",
@@ -166,6 +172,11 @@ const router = createRouter({
                 {
                     path: "order/clients",
                     component: ClientManagement,
+                    meta: { roles: ["AC_SAL", "AC_SYS"] },
+                },
+                {
+                    path: "order/clients/:clientId",
+                    component: () => import("@/views/order/ClientDetail.vue"),
                     meta: { roles: ["AC_SAL", "AC_SYS"] },
                 },
                 {
@@ -284,7 +295,7 @@ const router = createRouter({
                 // 시스템 관리
                 {
                     path: "system/common-code",
-                    component: SystemCommonCode,
+                    component: SystemCommonCodeManagement,
                     meta: { roles: ["AC_SYS"] },
                 },
                 // 전자결재
@@ -332,6 +343,20 @@ const router = createRouter({
                 {
                     path: "notices",
                     component: NoticeList,
+                    meta: {
+                        roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
+                    },
+                },
+                {
+                    path: "notices/create",
+                    component: NoticeCreate,
+                    meta: {
+                        roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
+                    },
+                },
+                {
+                    path: "notices/:noticeId",
+                    component: NoticeDetail,
                     meta: {
                         roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
                     },

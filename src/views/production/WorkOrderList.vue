@@ -1,163 +1,315 @@
 <template>
-    <div class="pr-page">
-        <!-- 상단 헤더 -->
-        <div class="page-header">
+    <div>
+        <header class="flex justify-between items-end mb-8">
             <div>
-                <h1 class="page-title">작업지시 생성</h1>
-                <p class="page-description">
-                    생산계획을 기준으로 일자별 작업지시를 생성합니다.
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">
+                    작업지시 관리
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    생산계획 확인부터 작업지시 발행까지 한 화면에서 관리합니다.
                 </p>
             </div>
 
-            <div class="date-box">
-                <small v-if="isNotToday" class="date-hint">
+            <div class="flex flex-col items-end gap-2">
+                <span v-if="isNotToday" class="text-[13px] text-rose-700 font-medium px-2 py-1">
                     ※ 작업지시는 당일만 생성 가능합니다
-                </small>
+                </span>
 
-                <div class="date-controls">
-                    <button class="date-btn" @click="setToday">오늘</button>
-                    <button class="date-btn" @click="moveDate(-1)">◀</button>
-                    <input type="date" v-model="selectedDate" @change="fetchDailyPreview" class="date-input" />
-                    <button class="date-btn" @click="moveDate(1)">▶</button>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- 라인별 섹션 -->
-        <div v-for="group in lineGroups" :key="group.lineId" class="line-section">
-
-            <div class="line-header">
-                <div class="line-title">{{ group.lineName }}</div>
-
-                <div class="action-buttons" style="display: flex; gap: 8px;">
-                    <button class="btn" @click="onPrint(group)">
-                        작업지시서 인쇄
+                <div class="flex items-center gap-1.5">
+                    <button @click="setToday"
+                        class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+                        오늘
                     </button>
 
-                    <button class="btn primary" :disabled="group.hasWorkOrder || isNotToday"
-                        @click="openCreateModal(group)">
-                        작업지시 생성
+                    <button @click="moveDate(-1)"
+                        class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+                        ◀
+                    </button>
+
+                    <input type="date" v-model="selectedDate" @change="fetchData"
+                        class="px-2.5 py-1.5 text-sm font-semibold border border-gray-300 rounded-md bg-white text-gray-900 outline-none hover:border-indigo-500 cursor-pointer" />
+
+                    <button @click="moveDate(1)"
+                        class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+                        ▶
                     </button>
                 </div>
             </div>
 
-            <table class="items-table">
-                <thead>
-                    <tr>
-                        <th>품목</th>
-                        <th>생산계획</th>
-                        <th>오늘 계획 수량</th>
-                        <th>작업지시 수량</th>
-                    </tr>
-                </thead>
+        </header>
 
-                <tbody>
-                    <tr v-for="row in group.items" :key="row.ppId">
-                        <td>
-                            <div class="item-name">{{ row.materialName }}</div>
-                            <div class="item-code">{{ row.materialCode }}</div>
-                        </td>
-                        <td>{{ row.ppCode }}</td>
-                        <td>
-                            {{ formatQuantity(row.dailyPlannedQuantity) }}
-                            <span class="unit">{{ row.baseUnit }}</span>
-                        </td>
-                        <td>
-                            {{ formatQuantity(row.woPlannedQuantity) }}
-                            <span class="unit">{{ row.baseUnit }}</span>
-                        </td>
+        <div class="space-y-6">
+            <section v-for="line in lineDashboard" :key="line.lineId"
+                class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="grid grid-cols-1 xl:grid-cols-[320px_1fr]">
+
+                    <div class="p-6 bg-gray-50/50 border-r border-gray-100">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-[13px] font-bold text-gray-600 uppercase tracking-wider">
+                                라인 {{ line.lineId }}
+                            </span>
+                            <span class="text-[13px] font-bold px-2 py-0.5 rounded"
+                                :class="line.totalUtilization > 100 ? 'bg-red-50 text-red-600' : 'bg-indigo-50 text-indigo-600'">
+                                {{ line.totalUtilization > 100 ? '특근 가동' : '정상 가동' }}
+                            </span>
+                        </div>
+
+                        <h2 class="text-lg font-bold text-gray-900">
+                            {{ line.lineName }}
+                        </h2>
+                        <p class="text-sm text-gray-500 mb-4">
+                            생산 품목: {{ line.materialName || '미지정' }}
+                        </p>
+
+                        <div class="mb-6">
+                            <div class="flex justify-between text-[13px] mb-1.5">
+                                <span class="text-gray-500 font-medium">지시 대비 가동률</span>
+                                <span class="font-bold"
+                                    :class="line.totalUtilization > 100 ? 'text-red-500' : 'text-indigo-600'">
+                                    {{ line.totalUtilization }}%
+                                </span>
+                            </div>
+
+                            <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full transition-all duration-500"
+                                    :class="line.totalUtilization > 100 ? 'bg-red-500' : 'bg-indigo-500'"
+                                    :style="{ width: Math.min(line.totalUtilization, 100) + '%' }" />
+                            </div>
+
+                            <div class="flex justify-between text-[13px] text-gray-500 mt-2">
+                                <span>총 지시량 {{ formatQuantity(line.totalOrdered) }}</span>
+                                <span>생산능력 {{ formatQuantity(line.dailyCapacity) }} {{ line.baseUnit }}</span>
+                            </div>
+                        </div>
+
+                        <button @click="openCreateModal(line)" :disabled="isNotToday"
+                            class="cursor-pointer w-full py-3 text-sm font-bold rounded-xl transition-all
+                            bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[0.98]
+                            disabled:bg-gray-200 disabled:text-gray-400 disabled:transform-none shadow-md shadow-indigo-100">
+                            신규 작업지시 생성
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-[15px] font-bold text-gray-800">
+                                발행된 작업지시 현황
+                            </h3>
+                            <span class="text-[12px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                                총 {{ line.workOrders.length }}건
+                            </span>
+                        </div>
+
+                        <div v-if="line.workOrders.length === 0"
+                            class="h-40 flex flex-col items-center justify-center text-gray-400 text-[15px] border-2 border-dashed border-gray-100 rounded-2xl">
+                            <span>해당 일자에 발행된 작업지시가 없습니다.</span>
+                        </div>
+
+                        <div v-else class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+                            <div v-for="wo in line.workOrders" :key="wo.workOrderId"
+                                class="border border-gray-300 rounded-2xl p-4 hover:shadow-md transition bg-white relative group">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div class="text-[14px] font-bold text-gray-900">
+                                            {{ wo.workOrderCode }}
+                                        </div>
+                                        <div class="flex gap-2 items-center mt-1">
+                                            <span class="text-[12px] font-bold px-1.5 py-0.5 rounded"
+                                                :class="getStatusClass(wo.status)">
+                                                {{ getStatusLabel(wo.status) }}
+                                            </span>
+                                            <span class="text-[12px] text-gray-400 font-medium">
+                                                {{ wo.createdAt || '--:--' }} 발행
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button @click="openPrint(wo, line)"
+                                        class="cursor-pointer flex items-center gap-1.5 px-2 py-1 border border-gray-200 rounded-lg text-gray-500 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                        </svg>
+                                        <span class="text-[13px] font-bold">출력</span>
+                                    </button>
+                                </div>
+
+                                <div class="space-y-1.5">
+                                    <div v-for="item in wo.items" :key="item.workOrderItemId"
+                                        class="flex justify-between text-[13px] bg-gray-50 px-2.5 py-2 rounded-lg border border-gray-100">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                                            <span v-if="item.ppId"
+                                                class="text-indigo-600 cursor-pointer hover:underline font-medium"
+                                                @click="openPPDetail(item.ppId)">
+                                                {{ item.ppCode }}
+                                            </span>
+
+                                            <span v-else
+                                                class="text-rose-600 cursor-pointer hover:underline font-medium"
+                                                @click="openPRDetail(item.prId)">
+                                                [긴급건] {{ item.prCode }} ↗
+                                            </span>
 
 
-                    </tr>
 
-                    <tr class="line-total-row">
-                        <td colspan="3"></td>
-                        <td>{{ formatQuantity(group.totalRecommended) }}</td>
-                    </tr>
-                </tbody>
-
-            </table>
-
+                                        </div>
+                                        <span class="font-bold text-gray-800">
+                                            {{ formatQuantity(item.plannedQuantity) }}
+                                            <small class="text-gray-400 font-normal">{{ item.unit }}</small>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
 
+        <div v-if="showCreateModal"
+            class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in duration-200">
 
-        <!-- 작업지시 생성 모달 -->
-        <div v-if="showModal" class="modal-backdrop">
-            <div class="modal">
-                <h3 class="modal-title">작업지시 생성</h3>
-
-                <div class="modal-sub">
-                    {{ selectedGroup.lineName }}
-                </div>
-
-                <!-- 작업일자 -->
-                <div class="modal-info">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
                     <div>
-                        <span class="label">작업일자</span>
-                        <span class="value">{{ selectedDate }}</span>
+                        <h3 class="text-xl font-bold text-gray-900">작업지시 발행</h3>
+                        <p class="text-[15px] text-gray-500">{{ selectedGroup.lineName }} | 일자: {{ selectedDate }} </p>
                     </div>
+                    <button @click="showCreateModal = false"
+                        class="cursor-pointer text-gray-400 hover:text-gray-900 text-2xl transition-colors">✕</button>
                 </div>
 
-                <!-- 생산계획별 수량 -->
-                <div class="pp-quantity-section">
-                    <span class="label">생산계획별 작업 수량</span>
-
-                    <table class="pp-quantity-table">
-                        <thead>
-                            <tr>
-                                <th>생산계획</th>
-                                <th>오늘 계획 수량</th>
-                                <th>실제 작업지시 수량</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="pp in selectedGroup.items" :key="pp.ppId">
-                                <td>{{ pp.ppCode }}</td>
-                                <td>
-                                    {{ formatQuantity(pp.dailyPlannedQuantity) }} {{ pp.baseUnit }}
-                                </td>
-                                <td>
-                                    <input type="number" class="qty-input" v-model.number="pp.workQuantity" min="0"
-                                        @input="recalculateTotal" />
-                                    {{ pp.baseUnit }}
-                                </td>
-                            </tr>
-                        </tbody>
-
-                    </table>
-                </div>
-
-
-                <div class="modal-metrics">
-                    <div>
-                        <span class="label">라인 일일 CAPA</span>
-                        <span class="value">
-                            {{ formatQuantity(selectedGroup.dailyCapacity) }}
-                        </span>
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-[16px] font-bold text-gray-600 uppercase tracking-wider">배정 가능 생산계획</h4>
+                        <button @click="addEmergencyRow"
+                            class="cursor-pointer text-[13px] font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-all">
+                            + 긴급 작업 추가
+                        </button>
                     </div>
 
-                    <div>
-                        <span class="label">총 작업지시 수량</span>
-                        <span class="value" :class="{
-                            danger: createQuantity + selectedGroup.totalWoPlanned > selectedGroup.dailyCapacity
-                        }">
-                            {{ formatQuantity(createQuantity) }}
-                        </span>
+                    <div class="max-h-60 overflow-y-auto mb-6 border border-gray-100 rounded-xl custom-scrollbar">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr
+                                    class="text-left text-gray-500 font-bold text-[13px] uppercase border-b border-gray-100">
+                                    <th class="py-3 px-4">계획 코드</th>
+                                    <th class="py-3 text-right">일일 계획</th>
+                                    <th class="py-3 text-right">기지시량</th>
+                                    <th class="py-3 text-right px-4">신규 지시 수량</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr v-for="item in selectedGroup.items" :key="item.ppId" class="hover:bg-gray-50/50">
+                                    <td class="py-3 px-4">
+                                        <!-- PP -->
+                                        <span v-if="!item.isEmergency" class="font-medium text-gray-700">
+                                            {{ item.ppCode }}
+                                        </span>
+
+                                        <div v-else class="relative">
+                                            <select v-model="item.prItemId" class="w-full appearance-none rounded-lg border border-gray-300 bg-white
+               px-3 py-2 text-sm font-medium
+               text-gray-800
+               focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100
+               hover:border-indigo-400 transition">
+
+                                                <!-- placeholder -->
+                                                <option value="" disabled selected hidden>
+                                                    긴급 생산요청 선택
+                                                </option>
+
+                                                <option v-for="t in emergencyTargets" :key="t.prItemId"
+                                                    :value="t.prItemId">
+                                                    {{ t.prCode }} · {{ t.itemName }}
+                                                    (잔여 {{ t.remainingQuantity }}{{ t.unit }})
+                                                </option>
+                                            </select>
+
+                                            <!-- 드롭다운 화살표 -->
+                                            <span
+                                                class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                ▼
+                                            </span>
+                                        </div>
+
+
+                                    </td>
+
+                                    <td class="py-3 text-right text-gray-500">{{
+                                        formatQuantity(item.dailyPlannedQuantity) }}</td>
+                                    <td class="py-3 text-right text-gray-400 italic">{{
+                                        formatQuantity(item.assignedWoQuantity) }}</td>
+                                    <td class="py-3 text-right px-4">
+                                        <input type="number" v-model.number="item.workQuantity"
+                                            @input="recalculateTotal"
+                                            class="w-28 text-right font-bold border-gray-600 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all py-1.5" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
+
+                    <div class="bg-gray-50 border border-gray-100 rounded-xl p-5 flex justify-between items-center">
+                        <div class="space-y-1">
+                            <p class="text-[13px] font-bold text-gray-700 uppercase tracking-wider">신규 지시 합계</p>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-3xl font-bold text-indigo-600">{{ formatQuantity(createQuantity)
+                                    }}</span>
+                                <span class="text-[13px] font-medium text-gray-700">/ 생산능력 {{
+                                    formatQuantity(selectedGroup.dailyCapacity) }} {{ selectedGroup.baseUnit }}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div v-if="(selectedGroup.totalOrdered + createQuantity) > selectedGroup.dailyCapacity"
+                                class="bg-red-50 text-red-600 px-3 py-1 rounded-lg text-[13px] font-bold mb-2 inline-block">
+                                ⚠ 생산능력 초과 (특근 검토 필요)
+                            </div>
+                            <div class="flex items-center gap-1 justify-end text-[13px] font-bold text-gray-700 mb-1.5">
+                                예상 가동률: {{ Math.round(((selectedGroup.totalOrdered + createQuantity) /
+                                    selectedGroup.dailyCapacity) * 100) }}%
+                            </div>
+                            <div class="h-2 w-48 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full transition-all duration-500"
+                                    :class="(selectedGroup.totalOrdered + createQuantity) > selectedGroup.dailyCapacity ? 'bg-red-500' : 'bg-indigo-500'"
+                                    :style="{ width: Math.min(((selectedGroup.totalOrdered + createQuantity) / selectedGroup.dailyCapacity) * 100, 100) + '%' }">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="bomPreview.length" class="mt-4 border border-gray-200 rounded-xl bg-white p-4">
+                        <h4 class="text-[15px] font-bold text-gray-700 mb-3">
+                            예상 원부자재 소요량 (BOM)
+                        </h4>
+
+                        <div class="space-y-2">
+                            <div v-for="rm in bomPreview" :key="rm.materialId" class="flex justify-between text-[13px]">
+                                <span class="text-gray-600">
+                                    <b>[{{ rm.materialCode }}] {{ rm.materialName }}</b>
+                                    (단위 소요량: {{ rm.unitRequirement }} {{ rm.baseUnit }}/{{ selectedGroup.baseUnit }})
+                                </span>
+                                <span class="font-bold text-gray-900">
+                                    {{ rm.totalRequirement.toLocaleString() }}
+                                    <span class="text-gray-400 font-normal">
+                                        {{ rm.baseUnit }}
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
-
-                <div class="modal-actions">
-                    <button class="btn" @click="showModal = false">
-                        취소
+                <div class="p-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
+                    <button @click="showCreateModal = false"
+                        class="cursor-pointer px-6 py-2.5 text-gray-500 font-bold hover:text-gray-700 text-sm">취소</button>
+                    <button @click="handleCreateWorkOrder" :disabled="createQuantity <= 0"
+                        class="cursor-pointer px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 shadow-lg shadow-indigo-100 transition-all">
+                        작업지시 발행
                     </button>
-                    <button class="btn primary"
-                        :disabled="createQuantity <= 0 || createQuantity > selectedGroup.dailyCapacity"
-                        @click="createWorkOrder">
-                        작업지시 생성
-                    </button>
-
                 </div>
             </div>
         </div>
@@ -167,501 +319,309 @@
         <div class="print-modal">
             <div class="print-modal-header">
                 <span>작업지시서 미리보기</span>
-                <button class="close-btn" @click="showPrintModal = false">✕</button>
+                <button class="cursor-pointer close-btn" @click="showPrintModal = false">✕</button>
             </div>
+
             <div class="print-modal-body">
                 <div class="print-area">
-                    <WODocument :group="printData" :workDate="selectedDate" />
+                    <WODocument :group="selectedWoForPrint" :workDate="selectedDate" />
                 </div>
             </div>
+
             <div class="print-modal-footer">
-                <button class="btn primary" @click="handlePrint">
+                <button class="cursor-pointer outline-btn primary-fill" @click="handlePrint">
                     출력하기
                 </button>
             </div>
         </div>
     </div>
+
+    <PPDetailModal v-if="showPPDetail" :ppId="selectedPpId" @close="showPPDetail = false" />
+
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getDailyPlanPreview } from '@/api/production/productionPlan.js'
-import { createWorkOrder as createWorkOrderApi } from '@/api/production/workOrder.js'
+import { createWorkOrder as createWorkOrderApi, getDailyWorkOrders, getEmergencyTargetsByLine } from '@/api/production/workOrder.js'
 import WODocument from '@/components/production/WODocument.vue'
+import PPDetailModal from '@/components/production/PPDetailModal.vue'
+import { useRouter } from 'vue-router'
+import { calculateBomExplosion } from '@/api/material/material.js'
 
-const getKSTDateString = (date = new Date()) => {
-    const kstOffset = 9 * 60 * 60 * 1000
-    const kstDate = new Date(date.getTime() + kstOffset)
-    return kstDate.toISOString().slice(0, 10)
-}
-
-const selectedDate = ref(getKSTDateString())
-const plans = ref([])
-
-const showModal = ref(false)
-const createQuantity = ref(0)
-const recommendedQuantity = ref(0)
-const selectedGroup = ref(null)
-
-const today = getKSTDateString()
-
+const router = useRouter()
+const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const today = new Date().toISOString().slice(0, 10)
 const isNotToday = computed(() => selectedDate.value !== today)
 
-const setToday = () => {
-    selectedDate.value = today
-    fetchDailyPreview()
-}
+const previewPlans = ref([])
+const currentWorkOrders = ref([])
+const showCreateModal = ref(false)
+const selectedGroup = ref(null)
+const createQuantity = ref(0)
+const showPPDetail = ref(false)
+const selectedPpId = ref(null)
+const emergencyTargets = ref([])
+const bomPreview = ref([])
 
-const moveDate = (diff) => {
-    const d = new Date(selectedDate.value + 'T00:00:00')
-    d.setDate(d.getDate() + diff)
-    selectedDate.value = getKSTDateString(d)
-    fetchDailyPreview()
-}
+// 인쇄 관련 상태
+const showPrintModal = ref(false)
+const selectedWoForPrint = ref(null)
 
-const lineGroups = computed(() => {
-    const map = {}
+const openPRDetail = (prId) => {
+    if (!prId) return
 
-    plans.value.forEach(row => {
-        if (!map[row.lineId]) {
-            map[row.lineId] = {
-                lineId: row.lineId,
-                lineName: row.lineName,
-                dailyCapacity: row.dailyCapacity,
-                hasWorkOrder: false,
-                items: [],
-                totalWoPlanned: 0
-            }
-        }
-
-        map[row.lineId].items.push(row)
-        map[row.lineId].totalWoPlanned += row.woPlannedQuantity
-
-        if (row.hasWorkOrder) {
-            map[row.lineId].hasWorkOrder = true
-        }
+    const route = router.resolve({
+        path: `/production/requests/${prId}`,
+        params: { prId }
     })
 
-    return Object.values(map)
-})
-
-
-const fetchDailyPreview = async () => {
-    plans.value = await getDailyPlanPreview(selectedDate.value)
+    window.open(route.href, '_blank')
 }
 
-const openCreateModal = (group) => {
-    selectedGroup.value = {
-        ...group,
-        items: group.items.map(pp => ({
-            ...pp,
-            workQuantity: pp.recommendedQuantity // 기본값
+const lineDashboard = computed(() => {
+    const plans = Array.isArray(previewPlans.value) ? previewPlans.value : [];
+    const dashboardMap = plans.reduce((acc, plan) => {
+        if (!acc[plan.lineId]) {
+            acc[plan.lineId] = {
+                lineId: plan.lineId,
+                lineName: plan.lineName,
+                dailyCapacity: plan.dailyCapacity,
+                materialName: plan.itemName,
+                baseUnit: plan.unit,
+                plans: [],
+                workOrders: [],
+                totalOrdered: 0
+            }
+        }
+        acc[plan.lineId].plans.push(plan)
+        return acc
+    }, {})
+
+    const orders = Array.isArray(currentWorkOrders.value) ? currentWorkOrders.value : [];
+    orders.forEach(lineOrder => {
+        if (dashboardMap[lineOrder.lineId]) {
+            dashboardMap[lineOrder.lineId].workOrders = lineOrder.workOrders || [];
+            dashboardMap[lineOrder.lineId].totalOrdered = (lineOrder.workOrders || []).reduce((total, wo) => {
+                const woSum = wo.items?.reduce((s, i) => s + i.plannedQuantity, 0) || 0;
+                return total + woSum;
+            }, 0);
+        }
+    });
+
+    return Object.values(dashboardMap).map(line => ({
+        ...line,
+        totalUtilization: line.dailyCapacity > 0 ? Math.round((line.totalOrdered / line.dailyCapacity) * 100) : 0
+    }));
+})
+
+const fetchData = async () => {
+    try {
+        const [plansRes, ordersRes] = await Promise.all([
+            getDailyPlanPreview(selectedDate.value),
+            getDailyWorkOrders(selectedDate.value)
+        ])
+        previewPlans.value = plansRes.data || plansRes || [];
+        currentWorkOrders.value = ordersRes.data || ordersRes || [];
+    } catch (e) {
+        console.error("데이터 로딩 실패", e);
+        previewPlans.value = [];
+        currentWorkOrders.value = [];
+    }
+}
+
+const openCreateModal = (line) => {
+    selectedGroup.value = JSON.parse(JSON.stringify(line))
+    selectedGroup.value.items = selectedGroup.value.plans.map(p => ({
+        ...p,
+        workQuantity: Math.max(0, p.dailyPlannedQuantity - (p.assignedWoQuantity || 0))
+    }))
+    recalculateTotal()
+    showCreateModal.value = true
+}
+
+const openPPDetail = (ppId) => {
+    selectedPpId.value = ppId
+    showPPDetail.value = true
+}
+
+
+const recalculateBomPreview = async () => {
+    if (!selectedGroup.value) return
+
+    const materialId = selectedGroup.value.plans[0]?.materialId
+    if (!materialId) return
+
+    const qty = createQuantity.value
+    if (qty <= 0) {
+        bomPreview.value = []
+        return
+    }
+
+    try {
+        const res = await calculateBomExplosion(materialId, qty)
+        bomPreview.value = res.requiredMaterials || []
+    } catch (e) {
+        console.error('BOM 미리보기 실패', e)
+        bomPreview.value = []
+    }
+}
+
+const recalculateTotal = async () => {
+    createQuantity.value =
+        selectedGroup.value.items.reduce(
+            (sum, p) => sum + (Number(p.workQuantity) || 0),
+            0
+        )
+
+    await recalculateBomPreview()
+}
+
+const addEmergencyRow = async () => {
+    const { data } = await getEmergencyTargetsByLine(selectedGroup.value.lineId)
+    emergencyTargets.value = data
+
+    selectedGroup.value.items.push({
+        type: 'EMERGENCY',
+        prItemId: '',
+        workQuantity: 0,
+        isEmergency: true
+    })
+}
+
+const handleCreateWorkOrder = async () => {
+    try {
+        const payload = {
+            lineId: selectedGroup.value.lineId,
+            workDate: selectedDate.value,
+            items: selectedGroup.value.items
+                .filter(item => item.workQuantity > 0)
+                .map(item => {
+                    if (item.isEmergency) {
+                        return {
+                            prItemId: item.prItemId,
+                            quantity: item.workQuantity
+                        }
+                    }
+                    return {
+                        ppId: item.ppId,
+                        quantity: item.workQuantity
+                    }
+                })
+
+        }
+        await createWorkOrderApi(payload)
+        showCreateModal.value = false
+        await fetchData()
+    } catch (e) {
+        alert("작업지시서 발행 중 오류가 발생했습니다.")
+    }
+}
+
+const moveDate = (val) => {
+    const d = new Date(selectedDate.value)
+    d.setDate(d.getDate() + val)
+    selectedDate.value = d.toISOString().slice(0, 10)
+    fetchData()
+}
+
+const setToday = () => { selectedDate.value = today; fetchData() }
+const formatQuantity = (v) => v?.toLocaleString() || '0'
+
+// 인쇄 모달 열기
+const openPrint = (wo, line) => {
+    const firstItem = wo.items[0] || {}
+
+    selectedWoForPrint.value = {
+        workOrderCode: wo.workOrderCode,
+        workDate: selectedDate.value,
+        lineName: line.lineName,
+
+        itemName: firstItem.itemName ?? '미지정',
+        itemCode: firstItem.itemCode ?? '-',
+        unit: firstItem.unit ?? '',
+        dailyCapacity: line.dailyCapacity,
+
+        items: wo.items.map(item => ({
+            type: item.type,
+            refCode: item.type === 'PP'
+                ? item.ppCode
+                : item.prCode,
+            plannedQuantity: item.plannedQuantity
         }))
     }
 
-    recommendedQuantity.value = selectedGroup.value.items.reduce(
-        (sum, r) => sum + r.workQuantity,
-        0
-    )
-
-    createQuantity.value = recommendedQuantity.value
-    showModal.value = true
-}
-
-
-const createWorkOrder = async () => {
-    if (!selectedGroup.value) return
-
-    await createWorkOrderApi({
-        lineId: selectedGroup.value.lineId,
-        workDate: selectedDate.value,
-        items: selectedGroup.value.items.map(pp => ({
-            ppId: pp.ppId,
-            quantity: pp.workQuantity
-        }))
-    })
-
-    showModal.value = false
-    await fetchDailyPreview()
-}
-
-
-
-const formatQuantity = (v) =>
-    v != null ? v.toLocaleString() : '-'
-
-onMounted(fetchDailyPreview)
-
-const showPrintModal = ref(false)
-const printData = ref(null)
-
-const onPrint = (group) => {
-    printData.value = group
     showPrintModal.value = true
 }
 
+
+// 브라우저 인쇄 실행
 const handlePrint = () => {
     window.print();
-    showPrintModal.value = false
-};
-
-const recalculateTotal = () => {
-    const total = selectedGroup.value.items.reduce(
-        (sum, pp) => sum + (pp.workQuantity || 0),
-        0
-    )
-
-    createQuantity.value = total
+    showPrintModal.value = false;
 }
 
+// 상태 한글 변환 함수 추가
+const getStatusLabel = (status) => {
+    const labels = {
+        'WO_READY': '대기중',
+        'WO_RUN': '진행중',
+        'WO_DONE': '완료',
+        'WO_PAUSE': '일시정지'
+    };
+    return labels[status] || status;
+}
 
+const getStatusClass = (status) => {
+    switch (status) {
+        case 'WO_RUN': return 'bg-blue-50 text-blue-600';
+        case 'WO_DONE': return 'bg-emerald-50 text-emerald-600';
+        case 'WO_PAUSE': return 'bg-amber-50 text-amber-600';
+        default: return 'bg-gray-100 text-gray-500';
+    }
+}
+
+onMounted(fetchData)
 </script>
 
+<style scoped>
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f8fafc;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+.animate-in {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+</style>
 
 <style scoped>
-.pr-page {
-    padding: 5px;
-}
-
-/* 헤더 */
-.page-header {
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-}
-
-.page-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #111827;
-}
-
-.page-description {
-    font-size: 14px;
-    color: #6b7280;
-}
-
-.date-box {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 13px;
-}
-
-/* 테이블 */
-.items-section {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 24px;
-}
-
-.items-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.items-table th,
-.items-table td {
-    padding: 12px 16px;
-    font-size: 14px;
-    vertical-align: middle;
-}
-
-.items-table th {
-    text-align: center;
-    background: #f9fafb;
-}
-
-.items-table td:nth-child(1) {
-    text-align: center;
-}
-
-.items-table td:nth-child(n+2) {
-    text-align: center;
-}
-
-.line-section {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 32px;
-    box-sizing: border-box;
-}
-
-/* 코드 영역 */
-.code .primary {
-    font-weight: 600;
-}
-
-.code .secondary {
-    font-size: 12px;
-    color: #6b7280;
-}
-
-/* 진행률 */
-.progress-wrap {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-}
-
-.progress-bar-bg {
-    width: 100px;
-    height: 8px;
-    background: #e5e7eb;
-    border-radius: 4px;
-}
-
-.progress-bar {
-    height: 100%;
-    background: #4C4CDD;
-    border-radius: 4px;
-}
-
-.progress-text {
-    font-size: 12px;
-}
-
-/* 버튼 */
-.btn {
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 13px;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
-    cursor: pointer;
-}
-
-.btn.primary {
-    background: #4C4CDD;
-    color: #ffffff;
-    border-color: #4C4CDD;
-}
-
-.btn.primary:disabled {
-    background: #f3f4f6;
-    color: #9ca3af;
-    cursor: not-allowed;
-    border-color: #9ca3af;
-}
-
-/* 모달 */
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal {
-    background: #ffffff;
-    padding: 24px;
-    width: 520px;
-    max-width: 90vw;
-    border-radius: 8px;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 16px;
-}
-
-.empty-message {
-    padding: 60px 0;
-    color: #9ca3af;
-}
-
-/* 모달 상세 */
-.modal-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.modal-sub {
-    font-size: 13px;
-    color: #6b7280;
-    margin-bottom: 16px;
-}
-
-.modal-info,
-.modal-metrics {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.modal-info .label,
-.modal-metrics .label {
-    font-size: 12px;
-    color: #6b7280;
-    margin-right: 10px;
-}
-
-.modal-info .value,
-.modal-metrics .value {
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.modal-metrics .highlight {
-    color: #4C4CDD;
-}
-
-.modal-input {
-    margin-bottom: 16px;
-}
-
-.modal-input label {
-    display: block;
-    font-size: 13px;
-    margin-bottom: 6px;
-}
-
-.modal-input input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-.modal-input .hint {
-    display: block;
-    margin-top: 4px;
-    font-size: 12px;
-    color: #9ca3af;
-}
-
-.pp-quantity-section {
-    margin-bottom: 16px;
-}
-
-.pp-quantity-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-
-.pp-quantity-table th,
-.pp-quantity-table td {
-    padding: 8px 6px;
-    border-bottom: 1px solid #e5e7eb;
-    text-align: center;
-}
-
-.pp-quantity-table th {
-    background: #f9fafb;
-    font-weight: 600;
-}
-
-.qty-input {
-    width: 70px;
-    padding: 4px 6px;
-    font-size: 13px;
-    text-align: right;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-}
-
-.value.danger {
-    color: #dc2626;
-    font-weight: 700;
-}
-
-.date-controls {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.date-input {
-    padding: 6px 10px;
-    font-size: 13px;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
-}
-
-.date-btn {
-    padding: 6px 10px;
-    font-size: 12px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
-    cursor: pointer;
-}
-
-.date-btn:hover {
-    background: #e5e7eb;
-}
-
-.date-hint {
-    display: block;
-    margin-top: 4px;
-    font-size: 11px;
-    color: #9ca3af;
-    text-align: end;
-
-}
-
-.line-section {
-    margin-bottom: 40px;
-}
-
-.line-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    color: #111827;
-}
-
-.main-row {
-    background: #ffffff;
-}
-
-.sub-row td {
-    text-align: center;
-}
-
-.line-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.line-section {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 32px;
-}
-
-.items-table td {
-    text-align: center;
-}
-
-.line-total-row {
-    background: #f9fafb;
-    font-weight: 600;
-    border-top: 2px solid #e5e7eb;
-}
-
-.line-total-row td {
-    text-align: center;
-}
-
 .print-modal-backdrop {
     position: fixed;
     inset: 0;
@@ -678,11 +638,7 @@ const recalculateTotal = () => {
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-}
-
-.print-modal-body {
-    overflow: auto;
-    padding: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .print-modal-header {
@@ -690,12 +646,26 @@ const recalculateTotal = () => {
     border-bottom: 1px solid #ddd;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+}
+
+.print-modal-body {
+    overflow: auto;
+    padding: 16px;
+    background: #f3f4f6;
+}
+
+.print-area {
+    background: #fff;
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .print-modal-footer {
     padding: 12px 16px;
     border-top: 1px solid #ddd;
-    border-bottom: none;
     display: flex;
     justify-content: flex-end;
 }
@@ -707,30 +677,40 @@ const recalculateTotal = () => {
     cursor: pointer;
 }
 
+.outline-btn {
+    border: 1px solid #4C4CDD;
+    color: #4C4CDD;
+    background: #fff;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+</style>
+
+<style>
 @media print {
-
-    body * {
-        visibility: hidden;
-    }
-
-    .print-modal-backdrop,
-    .print-modal-backdrop *,
-    .print-area,
-    .print-area * {
-        visibility: visible;
+    @page {
+        size: A4;
+        margin: 0;
     }
 
     .print-modal-backdrop {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        background: white !important;
+        position: fixed !important;
+        inset: 0 !important;
+        background: #fff !important;
+        z-index: 9999 !important;
     }
 
     .print-modal {
-        box-shadow: none;
-        width: 100%;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     .print-modal-header,
@@ -740,7 +720,14 @@ const recalculateTotal = () => {
 
     .print-modal-body {
         padding: 0 !important;
-        background: white !important;
+        background: #fff !important;
+        overflow: visible !important;
+    }
+
+    .print-area {
+        width: 210mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
     }
 }
 </style>

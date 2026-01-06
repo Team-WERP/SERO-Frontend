@@ -2,7 +2,7 @@
  <div class="p-1 w-full text-sm">
         <div class="mb-5 flex justify-between items-end">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">생산요청 목록</h1>
+                <h1 class="text-[28px] font-bold text-gray-900 mb-2">생산요청 목록</h1>
                 <p class="text-sm text-gray-500">
                     확정된 생산요청 내역을 조회하고 담당자를 확인할 수 있습니다.
                 </p>
