@@ -68,8 +68,6 @@ const handleLogin = async () => {
             password: password.value
         })
 
-        console.log('로그인 응답:', response)
-
         // 로그인 성공 시 토큰 저장
         const { accessToken } = response.data
 

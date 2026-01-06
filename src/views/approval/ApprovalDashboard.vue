@@ -248,7 +248,6 @@ const fetchUnreadReferenceCount = async () => {
 const fetchTotalHistoryCount = async () => {
     try {
         const response = await getProcessedApprovals({});
-        console.log(response);
         if (response) {
             summaryCards.value[3].count = response.totalElements || 0;
         }
@@ -311,7 +310,6 @@ const fetchRecentApprovals = async (status = 'ALL') => {
 
 const handleTabChange = (status) => {
     currentTab.value = status;
-    console.log(currentTab.value)
     fetchRecentApprovals(status);
 };
 

@@ -165,15 +165,9 @@ const handleLogout = () => {
 const loadDeliveries = async () => {
     loading.value = true
     try {
-        console.log('=== 배송 목록 조회 시작 ===')
 
         // 모든 출고지시 조회 (필터링 없음)
         const result = await getGoodsIssueList({})
-
-        console.log('API 응답:', result)
-        console.log('응답 타입:', typeof result)
-        console.log('응답 개수:', result?.length)
-        console.log('응답이 배열인가?:', Array.isArray(result))
 
         if (!result) {
             console.error('API 응답이 null/undefined')
@@ -193,7 +187,6 @@ const loadDeliveries = async () => {
 
         // API 응답을 배송 관리에 맞게 변환
         deliveries.value = filteredResult.map((item, index) => {
-            console.log(`항목 ${index + 1}:`, item)
 
             // 품목명 포맷: "대표품목" 또는 "대표품목 외 N건"
             let locationText = item.itemName || '배송지'
@@ -216,10 +209,6 @@ const loadDeliveries = async () => {
                 shippedAt: item.shippedAt
             }
         })
-
-        console.log('변환된 배송 목록:', deliveries.value)
-        console.log('변환된 배송 개수:', deliveries.value.length)
-        console.log('=== 배송 목록 조회 완료 ===')
     } catch (error) {
         console.error('배송 목록 조회 실패:', error)
         console.error('에러 상세:', error.response?.data)

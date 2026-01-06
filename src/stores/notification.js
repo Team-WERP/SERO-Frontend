@@ -41,7 +41,6 @@ export const useNotificationStore = defineStore('notification', {
         async fetchUnreadCount() {
             try {
                 this.unreadCount = await getUnreadCount();
-                console.log(this.unreadCount)
             } catch (error) { console.error('카운트 로드 실패:', error); }
         },
 

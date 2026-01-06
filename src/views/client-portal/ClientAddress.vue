@@ -102,7 +102,6 @@ const loadAddresses = async () => {
     try {
         const clientId = userStore.clientId
         allAddresses.value = await getClientAddresses(clientId)
-        console.log('조회된 배송지 목록:', allAddresses.value)
         searchAddresses()
     } catch (error) {
         console.error('배송지 조회 실패:', error)
@@ -149,9 +148,6 @@ const closeModal = () => {
 const handleSubmit = async (formData) => {
     try {
         const clientId = userStore.clientId
-
-        console.log('전송할 데이터:', formData)
-        console.log('클라이언트 ID:', clientId)
 
         if (formData.id) {
             // 수정
