@@ -78,10 +78,7 @@
             </button>
 
             <div class="mt-4 text-center text-[11px] text-gray-400">
-                <p>© 2025 WERP</p>
-                <a class="mt-1 inline-block text-[#4C4CDD] hover:underline">
-                    비밀번호 찾기
-                </a>
+                <p>© 2026 WERP</p>
             </div>
         </div>
     </div>
