@@ -107,6 +107,7 @@
                                 <th class="col-code">품목코드</th>
                                 <th class="col-name">품목명</th>
                                 <th class="col-spec">규격</th>
+                                <th class="col-status">상태</th>
                                 <th class="col-price">기본단가</th>
                                 <th class="col-contract">고객사 단가</th>
                             </tr>
@@ -122,6 +123,11 @@
                                 <td class="col-code">{{ item.itemCode }}</td>
                                 <td class="col-name">{{ item.itemName }}</td>
                                 <td class="col-spec">{{ item.spec || '-' }}</td>
+                                <td class="col-status">
+                                    <span class="status-badge" :class="getStatusClass(item.status)">
+                                        {{ getStatusLabel(item.status) }}
+                                    </span>
+                                </td>
                                 <td class="col-price">{{ formatNumber(item.unitPrice) }}</td>
                                 <td class="col-contract">{{ formatNumber(item.contractPrice) }}</td>
                             </tr>
@@ -143,6 +149,15 @@
             @close="closeItemModal"
             @saved="handleItemSaved"
         />
+
+        <!-- 품목 수정/삭제 모달 -->
+        <ClientItemEditModal
+            :is-open="isEditModalOpen"
+            :client-id="clientId"
+            :item="selectedItem"
+            @close="closeEditModal"
+            @saved="handleItemSaved"
+        />
     </div>
 </template>
 
@@ -151,6 +166,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getClientDetail } from '@/api/client/client'
 import ClientItemModal from './ClientItemModal.vue'
+import ClientItemEditModal from './ClientItemEditModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -159,6 +175,8 @@ const clientId = computed(() => parseInt(route.params.clientId))
 const client = ref(null)
 const loading = ref(true)
 const isItemModalOpen = ref(false)
+const isEditModalOpen = ref(false)
+const selectedItem = ref(null)
 
 // 이미 등록된 품목 ID 목록 (모달에서 제외용)
 const existingItemIds = computed(() => {
@@ -188,6 +206,24 @@ const formatNumber = (value) => {
     return value.toLocaleString('ko-KR')
 }
 
+const getStatusLabel = (status) => {
+    const statusMap = {
+        'TRADE_NORMAL': '정상',
+        'TRADE_STOP_PREP': '거래 중단 예정',
+        'TRADE_STOP': '거래 중단'
+    }
+    return statusMap[status] || '-'
+}
+
+const getStatusClass = (status) => {
+    const classMap = {
+        'TRADE_NORMAL': 'status-normal',
+        'TRADE_STOP_PREP': 'status-stop-prep',
+        'TRADE_STOP': 'status-stop'
+    }
+    return classMap[status] || ''
+}
+
 const goBack = () => {
     router.push('/order/clients')
 }
@@ -200,14 +236,20 @@ const closeItemModal = () => {
     isItemModalOpen.value = false
 }
 
-const handleItemSaved = () => {
-    closeItemModal()
-    loadClientDetail()
+const openPriceModal = (item) => {
+    selectedItem.value = item
+    isEditModalOpen.value = true
 }
 
-const openPriceModal = (item) => {
-    // TODO: 단가 수정 모달 구현
-    alert(`단가 수정 기능은 추후 구현 예정입니다.\n품목: ${item.itemName}`)
+const closeEditModal = () => {
+    isEditModalOpen.value = false
+    selectedItem.value = null
+}
+
+const handleItemSaved = () => {
+    closeItemModal()
+    closeEditModal()
+    loadClientDetail()
 }
 
 onMounted(() => {
@@ -460,8 +502,14 @@ td.col-name {
 
 th.col-spec,
 td.col-spec {
-    width: 220px;
+    width: 180px;
     text-align: left !important;
+}
+
+th.col-status,
+td.col-status {
+    width: 120px;
+    text-align: center !important;
 }
 
 th.col-price,
@@ -470,6 +518,30 @@ th.col-contract,
 td.col-contract {
     width: 140px;
     text-align: right !important;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-badge.status-normal {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.status-stop-prep {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.status-stop {
+    background: #fee2e2;
+    color: #991b1b;
 }
 
 .no-data {

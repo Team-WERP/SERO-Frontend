@@ -154,7 +154,7 @@ onMounted(() => {
 }
 
 .client-table td {
-    padding: 12px 16px;
+    padding: 16px 16px;
     color: #111827;
 }
 

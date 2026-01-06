@@ -31,3 +31,27 @@ export async function createClientItem(clientId, data) {
     const response = await api.post(`/clients-manage/${clientId}/items`, data)
     return response.data
 }
+
+/**
+ * 고객사 거래 품목 단가 수정
+ * @param {number} clientId - 고객사 ID
+ * @param {number} itemId - 거래 품목 ID
+ * @param {object} data - 수정할 정보
+ * @param {number} data.contractPrice - 계약 단가
+ * @returns {Promise} 수정된 거래 품목 정보
+ */
+export async function updateClientItem(clientId, itemId, data) {
+    const response = await api.put(`/clients-manage/${clientId}/items/${itemId}`, data)
+    return response.data
+}
+
+/**
+ * 고객사 거래 품목 삭제
+ * @param {number} clientId - 고객사 ID
+ * @param {number} itemId - 거래 품목 ID
+ * @returns {Promise}
+ */
+export async function deleteClientItem(clientId, itemId) {
+    const response = await api.delete(`/clients-manage/${clientId}/items/${itemId}`)
+    return response.data
+}
