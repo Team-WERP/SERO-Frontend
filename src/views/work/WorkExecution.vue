@@ -29,9 +29,9 @@
                 </h2>
 
                 <div class="space-y-3">
-                    <button v-for="line in lines" :key="line.id" @click="selectLine(line)"
-                        class="w-full py-4 rounded-xl bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 font-bold transition">
-                        {{ line.name }}
+                    <button v-for="line in lines" :key="line.lineId" @click="selectLine(line)"
+                        class="cursor-pointer w-full py-4 rounded-xl bg-gray-100 hover:bg-indigo-50 hover:text-indigo-600 font-bold transition">
+                        {{ line.lineName }}
                     </button>
                 </div>
             </div>
@@ -44,7 +44,7 @@
                 <div class="bg-white rounded-2xl p-5 shadow-sm border-l-8 border-indigo-600">
                     <p class="text-xs font-bold text-gray-500 mb-1">현재 투입 라인</p>
                     <h2 class="text-2xl font-black text-gray-900">
-                        {{ selectedLine.name }}
+                        {{ selectedLine.lineName }}
                     </h2>
                 </div>
 
@@ -167,14 +167,17 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { getDailyWorkOrders } from '@/api/production/workOrder'
+import { getProductionLines } from '@/api/production/productionPlan'
 
 const currentTime = ref('')
 const selectedLine = ref(null)
 
-const lines = [
-    { id: 1, name: '제 1 제조라인' },
-    { id: 2, name: '제 2 제조라인' }
-]
+const dailyWorkOrders = ref([])
+const currentWork = ref(null)
+const waitingWorks = ref([])
+const lines = ref([])
+
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -203,14 +206,37 @@ const handleLogout = () => {
 }
 
 
-onMounted(() => {
+onMounted(async () => {
     initializeUser()
+    lines.value = await getProductionLines()
 })
 
-
-const selectLine = (line) => {
+const selectLine = async (line) => {
     selectedLine.value = line
+    await loadWorkOrders(line.lineId)
 }
+
+const loadWorkOrders = async (lineId) => {
+    const today = new Date().toISOString().slice(0, 10)
+    const result = await getDailyWorkOrders(today)
+
+    const lineData = result.find(l => l.lineId === lineId)
+
+    if (!lineData) {
+        currentWork.value = null
+        waitingWorks.value = []
+        return
+    }
+
+    currentWork.value =
+        lineData.workOrders.find(wo => wo.status === 'WO_RUN') ?? null
+
+    waitingWorks.value =
+        lineData.workOrders.filter(wo =>
+            ['WO_READY', 'WO_CREATED'].includes(wo.status)
+        )
+}
+
 
 
 onMounted(() => {
