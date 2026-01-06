@@ -1,9 +1,6 @@
-아 취소..
-
 <template>
     <div class="p-6 min-h-screen bg-gray-50 font-sans text-gray-800">
 
-        <!-- ================= Header ================= -->
         <header class="flex justify-between items-end mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900 tracking-tight">
@@ -33,20 +30,18 @@
             </div>
         </header>
 
-        <!-- ================= Line Dashboard ================= -->
         <div class="space-y-6">
             <section v-for="line in lineDashboard" :key="line.lineId"
                 class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="grid grid-cols-1 xl:grid-cols-[320px_1fr]">
 
-                    <!-- ===== Line Summary ===== -->
                     <div class="p-6 bg-gray-50 border-r">
                         <div class="flex justify-between items-center mb-4">
-                            <span class="text-xs font-bold text-gray-500">
+                            <span class="text-xs font-bold text-gray-500 uppercase">
                                 LINE {{ line.lineId }}
                             </span>
-                            <span class="text-xs font-bold"
-                                :class="line.totalUtilization > 100 ? 'text-red-500' : 'text-indigo-600'">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded"
+                                :class="line.totalUtilization > 100 ? 'bg-red-50 text-red-600' : 'bg-indigo-50 text-indigo-600'">
                                 {{ line.totalUtilization > 100 ? '특근 가동' : '정상 가동' }}
                             </span>
                         </div>
@@ -55,104 +50,94 @@
                             {{ line.lineName }}
                         </h2>
                         <p class="text-sm text-gray-500 mb-4">
-                            {{ line.materialName }}
+                            생산 품목: {{ line.materialName || '미지정' }}
                         </p>
 
-                        <!-- Utilization -->
                         <div class="mb-4">
                             <div class="flex justify-between text-xs mb-1">
-                                <span class="text-gray-500">작업지시 비율</span>
+                                <span class="text-gray-500 font-medium">지시 대비 가동률</span>
                                 <span class="font-bold"
                                     :class="line.totalUtilization > 100 ? 'text-red-500' : 'text-indigo-600'">
                                     {{ line.totalUtilization }}%
                                 </span>
                             </div>
 
-                            <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full transition-all"
+                            <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="h-full transition-all duration-500"
                                     :class="line.totalUtilization > 100 ? 'bg-red-500' : 'bg-indigo-500'"
                                     :style="{ width: Math.min(line.totalUtilization, 100) + '%' }" />
                             </div>
 
                             <div class="flex justify-between text-[11px] text-gray-400 mt-1">
-                                <span>지시 {{ formatQuantity(line.totalOrdered) }}</span>
+                                <span>총 지시량 {{ formatQuantity(line.totalOrdered) }}</span>
                                 <span>CAPA {{ formatQuantity(line.dailyCapacity) }}</span>
                             </div>
                         </div>
 
                         <button @click="openCreateModal(line)" :disabled="isNotToday" class="w-full py-3 text-sm font-bold rounded-xl transition
                 bg-indigo-600 text-white hover:bg-indigo-700
-                disabled:bg-gray-200 disabled:text-gray-400">
-                            작업지시 생성
+                disabled:bg-gray-200 disabled:text-gray-400 shadow-lg shadow-indigo-100">
+                            신규 작업지시 생성
                         </button>
                     </div>
 
-                    <!-- ===== Work Orders ===== -->
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-sm font-bold text-gray-500">
-                                발행된 작업지시
+                            <h3 class="text-xs font-black text-gray-400 uppercase tracking-wider">
+                                ISSUED WORK ORDERS
                             </h3>
-                            <span class="text-xs text-gray-400">
+                            <span class="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                                 {{ line.workOrders.length }}건
                             </span>
                         </div>
 
                         <div v-if="line.workOrders.length === 0"
-                            class="h-32 flex items-center justify-center text-gray-400 text-sm">
-                            발행된 작업지시가 없습니다.
+                            class="h-40 flex flex-col items-center justify-center text-gray-400 text-sm border-2 border-dashed border-gray-100 rounded-2xl">
+                            <span>해당 일자에 발행된 작업지시가 없습니다.</span>
                         </div>
 
-                        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div v-for="(wo, idx) in line.workOrders" :key="idx"
-                                class="border border-gray-200 rounded-xl p-4 hover:border-indigo-300 transition">
-                                <div class="flex justify-between mb-3">
+                        <div v-else class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+                            <div v-for="wo in line.workOrders" :key="wo.workOrderId"
+                                class="border border-gray-100 rounded-2xl p-4 hover:shadow-md transition bg-white relative group">
+                                <div class="flex justify-between items-start mb-3">
                                     <div>
-                                        <div class="text-sm font-bold text-gray-900">
-                                            {{ wo.woCode }}
+                                        <div class="text-[13px] font-black text-gray-900 font-mono">
+                                            {{ wo.workOrderCode }}
                                         </div>
-                                        <div class="text-xs text-gray-400">
-                                            {{ wo.createdAt || '금일 발행' }}
+                                        <div class="flex gap-2 items-center mt-1">
+                                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                                :class="getStatusClass(wo.workOrderStatus)">
+                                                {{ wo.workOrderStatus }}
+                                            </span>
+                                            <span class="text-[10px] text-gray-400 font-medium">
+                                                {{ wo.workOrderCreatedAt?.split('T')[1].substring(0, 5) || '--:--' }} 발행
+                                            </span>
                                         </div>
                                     </div>
-                                    <button @click="onPrint(wo)" class="text-gray-400 hover:text-indigo-600 text-sm">
-                                        인쇄
+                                    <button @click="onPrint(wo)" class="text-gray-300 hover:text-indigo-600 transition">
+                                        <span class="text-[11px] font-bold">PRINT</span>
                                     </button>
                                 </div>
 
-                                <div class="space-y-2">
-                                    <div v-for="item in wo.items" :key="item.ppId"
-                                        class="flex justify-between text-sm bg-gray-50 px-3 py-2 rounded">
-                                        <div class="flex items-center gap-2">
-                                            <button @click="handlePlanClick(item.ppId)"
-                                                class="font-mono text-indigo-600 hover:underline text-xs">
-                                                {{ item.ppCode || '긴급' }}
-                                            </button>
-                                            <span v-if="item.isEmergency"
-                                                class="text-[10px] bg-amber-100 text-amber-600 px-1.5 rounded">
-                                                긴급
-                                            </span>
+                                <div class="space-y-1.5">
+                                    <div v-for="item in wo.items" :key="item.workOrderItemId"
+                                        class="flex justify-between text-xs bg-slate-50 px-2.5 py-2 rounded-lg">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                                            <span class="font-mono text-gray-600">{{ item.ppCode || '긴급' }}</span>
                                         </div>
-                                        <span class="font-bold text-gray-700">
-                                            {{ formatQuantity(item.quantity) }} {{ line.baseUnit }}
+                                        <span class="font-black text-gray-800">
+                                            {{ formatQuantity(item.plannedQuantity) }} <small class="text-gray-400">{{
+                                                item.unit }}</small>
                                         </span>
                                     </div>
                                 </div>
-
-                                <div class="flex justify-between mt-3 pt-2 border-t text-sm">
-                                    <span class="text-gray-400 font-bold">합계</span>
-                                    <span class="font-bold text-gray-900">
-                                        {{ formatQuantity(wo.totalQty) }} {{ line.baseUnit }}
-                                    </span>
-                                </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </section>
         </div>
-
 
         <div v-if="showCreateModal"
             class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
@@ -160,8 +145,9 @@
                 class="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in duration-200">
                 <div class="p-8 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                     <div>
-                        <h3 class="text-2xl font-black text-slate-900 tracking-tight italic">CREATE WORK ORDER</h3>
-                        <p class="text-sm text-slate-500 font-medium mt-1">{{ selectedGroup.lineName }} / 발행일: {{
+                        <h3 class="text-2xl font-black text-slate-900 tracking-tight italic uppercase">Issue Work Order
+                        </h3>
+                        <p class="text-sm text-slate-500 font-medium mt-1">{{ selectedGroup.lineName }} | 일자: {{
                             selectedDate }}</p>
                     </div>
                     <button @click="showCreateModal = false"
@@ -181,23 +167,24 @@
                             <thead class="sticky top-0 bg-white shadow-sm z-10">
                                 <tr
                                     class="text-left text-slate-400 font-black text-[10px] uppercase border-b border-slate-100">
-                                    <th class="pb-3">Plan Code</th>
-                                    <th class="pb-3 text-right">금일 계획</th>
+                                    <th class="pb-3 px-2">Plan Code</th>
+                                    <th class="pb-3 text-right">일일 계획</th>
                                     <th class="pb-3 text-right">기지시량</th>
                                     <th class="pb-3 text-right w-40 text-blue-600">신규 지시 수량</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-50">
-                                <tr v-for="pp in selectedGroup.items" :key="pp.ppId">
-                                    <td class="py-4">
-                                        <span class="font-mono font-black text-slate-700">{{ pp.ppCode }}</span>
+                                <tr v-for="item in selectedGroup.items" :key="item.ppId">
+                                    <td class="py-4 px-2">
+                                        <span class="font-mono font-black text-slate-700">{{ item.ppCode }}</span>
                                     </td>
                                     <td class="py-4 text-right font-bold text-slate-400">{{
-                                        formatQuantity(pp.dailyPlannedQuantity) }}</td>
+                                        formatQuantity(item.dailyPlannedQuantity) }}</td>
                                     <td class="py-4 text-right font-bold text-slate-300 italic">{{
-                                        formatQuantity(pp.woPlannedQuantity) }}</td>
+                                        formatQuantity(item.assignedWoQuantity) }}</td>
                                     <td class="py-4 text-right">
-                                        <input type="number" v-model.number="pp.workQuantity" @input="recalculateTotal"
+                                        <input type="number" v-model.number="item.workQuantity"
+                                            @input="recalculateTotal"
                                             class="w-32 text-right font-black border-2 border-slate-100 rounded-xl focus:border-blue-600 focus:ring-0 transition-all text-blue-600 py-1.5" />
                                     </td>
                                 </tr>
@@ -207,8 +194,8 @@
 
                     <div class="bg-slate-900 rounded-2xl p-6 text-white flex justify-between items-center shadow-xl">
                         <div class="space-y-1">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">New Instruction
-                                Total</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Total New
+                                Instructions</p>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-4xl font-black italic tracking-tighter text-blue-400">{{
                                     formatQuantity(createQuantity) }}</span>
@@ -219,11 +206,11 @@
                         <div class="text-right">
                             <div v-if="(selectedGroup.totalOrdered + createQuantity) > selectedGroup.dailyCapacity"
                                 class="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-lg text-[11px] font-black mb-2 animate-pulse inline-block">
-                                ⚠ 특근 가동 필요 (Capa 초과)
+                                ⚠ Capa 초과 (특근 필요)
                             </div>
                             <div
                                 class="flex items-center gap-1 justify-end text-[10px] font-bold text-slate-400 mb-1 uppercase">
-                                Expected Utilization: {{ Math.round(((selectedGroup.totalOrdered + createQuantity) /
+                                Expected Load: {{ Math.round(((selectedGroup.totalOrdered + createQuantity) /
                                     selectedGroup.dailyCapacity) * 100) }}%
                             </div>
                             <div class="h-2 w-48 bg-slate-800 rounded-full overflow-hidden">
@@ -250,124 +237,109 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+// API Import (작성하신 파일 경로에 맞게 확인하세요)
 import { getDailyPlanPreview } from '@/api/production/productionPlan.js'
-import { createWorkOrder as createWorkOrderApi } from '@/api/production/workOrder.js'
+import { createWorkOrder as createWorkOrderApi, getDailyWorkOrders } from '@/api/production/workOrder.js'
 
-// --- 유틸리티 및 기본 데이터 ---
-const getKSTDateString = (date = new Date()) => {
-    const kstOffset = 9 * 60 * 60 * 1000
-    const kstDate = new Date(date.getTime() + kstOffset)
-    return kstDate.toISOString().slice(0, 10)
-}
-
-const selectedDate = ref(getKSTDateString())
-const today = getKSTDateString()
+// --- State ---
+const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const today = new Date().toISOString().slice(0, 10)
 const isNotToday = computed(() => selectedDate.value !== today)
 
-const planPlans = ref([]) // 서버 데이터 (PP 정보 + WO 매핑 정보 포함)
+const previewPlans = ref([])    // PPQueryController.getDailyPlanPreview 결과
+const currentWorkOrders = ref([]) // WOQueryController.getDaily 결과
 const showCreateModal = ref(false)
 const selectedGroup = ref(null)
 const createQuantity = ref(0)
 
-// --- 핵심 비즈니스 로직: 라인 대시보드 데이터 가공 ---
+// --- 핵심: 계획 데이터와 지시 데이터를 라인별로 통합 계산 ---
 const lineDashboard = computed(() => {
-    const map = {}
+    // 1. 계획(daily-preview) 데이터를 기준으로 기본 맵 구성
+    // previewPlans.value가 배열이 아닐 경우를 대비해 빈 배열로 처리
+    const plans = Array.isArray(previewPlans.value) ? previewPlans.value : [];
 
-    // 1. 서버 데이터를 라인별로 그룹화 (계획이 있든 없든 라인은 마스터 데이터를 기반으로 나타나야 함)
-    // 실제 운영 시에는 '모든 라인 목록 API'와 '생산계획 API'를 merge해야 하지만, 
-    // 여기서는 planPlans의 데이터 구조를 활용하여 그룹화합니다.
-    planPlans.value.forEach(row => {
-        if (!map[row.lineId]) {
-            map[row.lineId] = {
-                lineId: row.lineId,
-                lineName: row.lineName,
-                materialName: row.materialName,
-                dailyCapacity: row.dailyCapacity,
-                baseUnit: row.baseUnit,
-                items: [],        // 이 라인에 할당된 모든 PP들
-                workOrders: [],   // 이 라인에 발행된 개별 지시서 문서들
+    const dashboardMap = plans.reduce((acc, plan) => {
+        if (!acc[plan.lineId]) {
+            acc[plan.lineId] = {
+                lineId: plan.lineId,
+                lineName: plan.lineName,
+                dailyCapacity: plan.dailyCapacity,
+                materialName: plan.itemName,
+                baseUnit: plan.unit,
+                plans: [],
+                workOrders: [],
                 totalOrdered: 0
             }
         }
+        acc[plan.lineId].plans.push(plan)
+        return acc
+    }, {})
 
-        // 해당 라인의 가용 계획(PP) 추가
-        map[row.lineId].items.push(row)
+    // 2. 이미 발행된 지시(daily) 데이터를 맵에 매핑
+    // currentWorkOrders.value가 배열인지 확인 (에러 방지 핵심)
+    const orders = Array.isArray(currentWorkOrders.value) ? currentWorkOrders.value : [];
 
-        // 만약 이 계획(PP)이 이미 특정 작업지시서(WO)에 포함되어 있다면
-        if (row.hasWorkOrder && row.woId) {
-            let wo = map[row.lineId].workOrders.find(w => w.id === row.woId)
-            if (!wo) {
-                wo = {
-                    id: row.woId,
-                    woCode: row.woCode || `WO-${row.woId}`,
-                    createdAt: row.woCreatedAt,
-                    items: [],
-                    totalQty: 0
-                }
-                map[row.lineId].workOrders.push(wo)
-            }
-            wo.items.push({
-                ppId: row.ppId,
-                ppCode: row.ppCode,
-                quantity: row.woPlannedQuantity,
-                isEmergency: row.isEmergency || false
-            })
-            wo.totalQty += row.woPlannedQuantity
-            map[row.lineId].totalOrdered += row.woPlannedQuantity
+    orders.forEach(lineOrder => {
+        if (dashboardMap[lineOrder.lineId]) {
+            // 백엔드 WorkOrderDailyResponseDTO 구조에 맞춰 데이터 할당
+            dashboardMap[lineOrder.lineId].workOrders = lineOrder.workOrders || [];
+
+            // 해당 라인의 실제 지시 합계 계산
+            dashboardMap[lineOrder.lineId].totalOrdered = (lineOrder.workOrders || []).reduce((total, wo) => {
+                const woSum = wo.items?.reduce((s, i) => s + i.plannedQuantity, 0) || 0;
+                return total + woSum;
+            }, 0);
         }
-    })
+    });
 
-    return Object.values(map).map(line => ({
+    return Object.values(dashboardMap).map(line => ({
         ...line,
         totalUtilization: line.dailyCapacity > 0 ? Math.round((line.totalOrdered / line.dailyCapacity) * 100) : 0
-    }))
+    }));
 })
 
-// --- 스타일 및 시각화 헬퍼 ---
-const utilizationColor = (rate) => {
-    if (rate > 100) return 'text-amber-500 shadow-amber-100'
-    if (rate >= 90) return 'text-emerald-500'
-    return 'text-blue-600'
-}
-
-const progressColor = (rate) => {
-    if (rate > 100) return 'bg-amber-500'
-    if (rate >= 90) return 'bg-emerald-500'
-    return 'bg-blue-600'
-}
-
-// --- 이벤트 핸들러 ---
 const fetchData = async () => {
     try {
-        const data = await getDailyPlanPreview(selectedDate.value)
-        planPlans.value = data || []
+        const [plansRes, ordersRes] = await Promise.all([
+            getDailyPlanPreview(selectedDate.value),
+            getDailyWorkOrders(selectedDate.value)
+        ])
+
+        // Axios 응답 구조에 따라 수정 (보통 res.data에 데이터가 있음)
+        // 만약 인터셉터에서 처리를 했다면 plansRes 자체가 데이터일 것입니다.
+        previewPlans.value = plansRes.data || plansRes || [];
+        currentWorkOrders.value = ordersRes.data || ordersRes || [];
+
+        console.log("Plans:", previewPlans.value); // 데이터 구조 확인용
+        console.log("Orders:", currentWorkOrders.value);
     } catch (e) {
-        console.error("데이터 로딩 실패", e)
+        console.error("데이터 로딩 실패", e);
+        previewPlans.value = [];
+        currentWorkOrders.value = [];
     }
 }
 
 const openCreateModal = (line) => {
-    // 깊은 복사로 원본 보호 및 지시 입력값 초기화
     selectedGroup.value = JSON.parse(JSON.stringify(line))
-    selectedGroup.value.items.forEach(pp => {
-        // 기본값: 남은 계획량 전체 (계획량 - 이미 지시된 양)
-        pp.workQuantity = Math.max(0, pp.dailyPlannedQuantity - (pp.woPlannedQuantity || 0))
-    })
+    selectedGroup.value.items = selectedGroup.value.plans.map(p => ({
+        ...p,
+        // 기본값: 일일 계획량 - 이미 지시된 양
+        workQuantity: Math.max(0, p.dailyPlannedQuantity - (p.assignedWoQuantity || 0))
+    }))
     recalculateTotal()
     showCreateModal.value = true
 }
 
 const recalculateTotal = () => {
-    createQuantity.value = selectedGroup.value.items.reduce((sum, p) => sum + (p.workQuantity || 0), 0)
+    createQuantity.value = selectedGroup.value.items.reduce((sum, p) => sum + (Number(p.workQuantity) || 0), 0)
 }
 
 const addEmergencyRow = () => {
-    // 계획 외 긴급 생산 추가 (PP 연결 없이 지시서 아이템 추가)
     selectedGroup.value.items.push({
         ppId: null,
         ppCode: '긴급/특근작업',
         dailyPlannedQuantity: 0,
-        woPlannedQuantity: 0,
+        assignedWoQuantity: 0,
         workQuantity: 0,
         isEmergency: true
     })
@@ -375,38 +347,46 @@ const addEmergencyRow = () => {
 
 const handleCreateWorkOrder = async () => {
     try {
-        // 필터링: 수량이 입력된 것만 서버로 전송
         const payload = {
             lineId: selectedGroup.value.lineId,
             workDate: selectedDate.value,
             items: selectedGroup.value.items
-                .filter(pp => pp.workQuantity > 0)
-                .map(pp => ({
-                    ppId: pp.ppId, // null이면 계획 외 지시로 처리됨 (백엔드 스펙에 따름)
-                    quantity: pp.workQuantity,
-                    isEmergency: pp.isEmergency || false
+                .filter(item => item.workQuantity > 0)
+                .map(item => ({
+                    ppId: item.ppId, // null이면 긴급/계획외 지시
+                    quantity: item.workQuantity,
+                    isEmergency: item.isEmergency || false
                 }))
         }
 
         await createWorkOrderApi(payload)
         showCreateModal.value = false
-        fetchData()
+        await fetchData() // 재조회 시 우측 리스트에 새로운 작업지시 카드 나타남
     } catch (e) {
         alert("작업지시서 발행 중 오류가 발생했습니다.")
     }
 }
 
+// Utility
 const moveDate = (val) => {
-    const d = new Date(selectedDate.value + 'T00:00:00')
+    const d = new Date(selectedDate.value)
     d.setDate(d.getDate() + val)
-    selectedDate.value = getKSTDateString(d)
+    selectedDate.value = d.toISOString().slice(0, 10)
     fetchData()
 }
 
 const setToday = () => { selectedDate.value = today; fetchData() }
 const formatQuantity = (v) => v?.toLocaleString() || '0'
-const onPrint = (wo) => console.log("Printing WO Document:", wo)
-const handlePlanClick = (ppId) => console.log("Redirecting to PP Detail:", ppId)
+const onPrint = (wo) => alert(`인쇄 준비: ${wo.workOrderCode}`)
+
+const getStatusClass = (status) => {
+    switch (status) {
+        case 'STARTED': return 'bg-blue-100 text-blue-600';
+        case 'COMPLETED': return 'bg-emerald-100 text-emerald-600';
+        case 'PAUSED': return 'bg-amber-100 text-amber-600';
+        default: return 'bg-gray-100 text-gray-500';
+    }
+}
 
 onMounted(fetchData)
 </script>
@@ -420,7 +400,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -432,13 +412,8 @@ input[type="number"]::-webkit-outer-spin-button {
     border-radius: 10px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
-/* 애니메이션 */
 .animate-in {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.25s ease-out;
 }
 
 @keyframes fadeIn {

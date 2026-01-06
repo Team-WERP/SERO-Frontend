@@ -24,3 +24,6 @@ export const getWorkOrderHistory = (woId) =>
 
 export const previewWorkOrderResult = (woId, payload) =>
     api.post(`/work-orders/${woId}/result/preview`, payload)
+
+export const getDailyWorkOrders = (date) =>
+    api.get('/work-orders/daily', { params: { date } })
