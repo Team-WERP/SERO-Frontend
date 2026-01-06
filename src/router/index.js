@@ -180,6 +180,11 @@ const router = createRouter({
                     meta: { roles: ["AC_SAL", "AC_SYS"] },
                 },
                 {
+                    path: "order/clients/:clientId",
+                    component: () => import("@/views/order/ClientDetail.vue"),
+                    meta: { roles: ["AC_SAL", "AC_SYS"] },
+                },
+                {
                     path: "order/management/:orderId",
                     component: OrderDetail,
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
