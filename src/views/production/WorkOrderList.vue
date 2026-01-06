@@ -349,9 +349,18 @@ import PPDetailModal from '@/components/production/PPDetailModal.vue'
 import { useRouter } from 'vue-router'
 import { calculateBomExplosion } from '@/api/material/material.js'
 
+const getKstDate = () => {
+    return new Intl.DateTimeFormat('fr-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        timeZone: 'Asia/Seoul'
+    }).format(new Date());
+};
+
 const router = useRouter()
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
-const today = new Date().toISOString().slice(0, 10)
+const today = getKstDate();
+const selectedDate = ref(today);
 const isNotToday = computed(() => selectedDate.value !== today)
 
 const previewPlans = ref([])

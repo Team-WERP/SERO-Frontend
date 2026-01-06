@@ -43,11 +43,20 @@ const fetchData = async () => {
     }
 }
 
-const today = async () => {
-    const d = new Date().toISOString().slice(0, 10)
+const getKstDate = () => {
+    return new Intl.DateTimeFormat('fr-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        timeZone: 'Asia/Seoul'
+    }).format(new Date());
+};
+
+const today = () => {
+    const d = getKstDate()
     filter.startDate = d
     filter.endDate = d
-    await fetchData()
+    fetchData()
 }
 
 const resetFilter = async () => {
