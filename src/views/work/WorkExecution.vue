@@ -81,11 +81,24 @@
                             <h3 class="text-lg font-bold text-gray-800">
                                 현재 진행 작업
                             </h3>
-                            <span
-                                class="text-sm font-mono text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-full">
-                                {{ currentWork.workOrderCode }}
-                            </span>
+
+                            <div class="flex items-center gap-2">
+                                <!-- 작업 상태 배지 -->
+                                <span class="px-3 py-1 rounded-full text-xs font-bold" :class="{
+                                    'bg-emerald-100 text-emerald-700': currentWork.status === 'WO_RUN',
+                                    'bg-amber-100 text-amber-700': currentWork.status === 'WO_PAUSE'
+                                }">
+                                    {{ currentWork.status === 'WO_RUN' ? '작업 중' : '일시 정지' }}
+                                </span>
+
+                                <!-- 작업지시 코드 -->
+                                <span
+                                    class="text-sm font-mono text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-full">
+                                    {{ currentWork.workOrderCode }}
+                                </span>
+                            </div>
                         </div>
+
 
                         <div class="p-8">
                             <div class="flex flex-col md:flex-row justify-between gap-8 mb-10">
@@ -105,29 +118,34 @@
                                 <!-- 진행률 -->
                                 <div
                                     class="flex flex-col items-center justify-center bg-indigo-50 rounded-3xl p-6 min-w-[200px] border border-indigo-100">
-                                    <p class="text-sm font-bold text-indigo-600 mb-2">진행률</p>
-
-                                    <div class="text-5xl font-black text-indigo-700">
-                                        {{ progressRate }}<span class="text-2xl">%</span>
-                                    </div>
-
-                                    <div class="w-full h-2 bg-indigo-200 rounded-full mt-4 overflow-hidden">
-                                        <div class="bg-indigo-600 h-full" :style="{ width: progressRate + '%' }"></div>
-                                    </div>
+                                    <p class="text-xs font-bold text-gray-500 mt-4">
+                                        작업 경과 시간
+                                    </p>
+                                    <p class="text-2xl font-mono font-bold text-indigo-700">
+                                        {{ formattedElapsedTime }}
+                                    </p>
                                 </div>
                             </div>
 
                             <!-- 액션 -->
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <button
-                                    class="col-span-2 py-6 bg-indigo-600 text-white rounded-2xl font-black text-xl hover:bg-indigo-700 active:scale-95">
-                                    실적 등록
+                                    class="col-span-2 py-6 bg-slate-600 text-white rounded-2xl font-black text-xl hover:bg-slate-700">
+                                    이력 보기
                                 </button>
 
-                                <button
-                                    class="py-6 bg-amber-500 text-white rounded-2xl font-black text-lg hover:bg-amber-600 active:scale-95">
+                                <button v-if="currentWork.status === 'WO_RUN'"
+                                    class="py-6 bg-amber-500 text-white rounded-2xl font-black text-lg"
+                                    @click="openPauseModal">
                                     일시 정지
                                 </button>
+
+                                <button v-else-if="currentWork.status === 'WO_PAUSE'"
+                                    class="py-6 bg-emerald-600 text-white rounded-2xl font-black text-lg"
+                                    @click="openResumeModal">
+                                    작업 재개
+                                </button>
+
 
                                 <button
                                     class="py-6 bg-rose-600 text-white rounded-2xl font-black text-lg hover:bg-rose-700 active:scale-95">
@@ -236,13 +254,61 @@
         </div>
     </div>
 
+    <div v-if="showPauseModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
+            <h3 class="text-xl font-black mb-4 text-gray-900">
+                작업을 일시 정지할까요?
+            </h3>
+
+            <textarea v-model="workNote" placeholder="사유를 간단히 입력해주세요 (선택)"
+                class="w-full border rounded-xl p-3 text-sm mb-6 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                rows="3"></textarea>
+
+            <div class="flex gap-3">
+                <button @click="closeAllWorkModals" class="flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-600">
+                    취소
+                </button>
+
+                <button @click="confirmPauseWork" class="flex-1 py-3 rounded-xl bg-amber-500 text-white font-black">
+                    일시 정지
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div v-if="showResumeModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
+            <h3 class="text-xl font-black mb-4 text-gray-900">
+                작업을 재개할까요?
+            </h3>
+
+            <textarea v-model="workNote" placeholder="재개 메모 (선택)"
+                class="w-full border rounded-xl p-3 text-sm mb-6 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                rows="3"></textarea>
+
+            <div class="flex gap-3">
+                <button @click="closeAllWorkModals" class="flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-600">
+                    취소
+                </button>
+
+                <button @click="confirmResumeWork" class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-black">
+                    작업 재개
+                </button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getDailyWorkOrders, startWorkOrder } from '@/api/production/workOrder'
+import { getDailyWorkOrders, startWorkOrder, pauseWorkOrder, resumeWorkOrder, endWorkOrder, getWorkOrderHistory } from '@/api/production/workOrder'
 import { getProductionLines } from '@/api/production/productionPlan'
 
 const currentTime = ref('')
@@ -253,9 +319,16 @@ const waitingWorks = ref([])
 const lines = ref([])
 const showStartModal = ref(false)
 const selectedWaitingWork = ref(null)
+const showPauseModal = ref(false)
+const showResumeModal = ref(false)
+const workNote = ref('')
+
 
 const router = useRouter()
 const userStore = useUserStore()
+
+const workElapsedSeconds = ref(0)
+let workTimer = null
 
 const initializeUser = () => {
     const token = localStorage.getItem('accessToken')
@@ -328,14 +401,24 @@ const loadWorkOrders = async (lineId) => {
     }
 
     currentWork.value =
-        lineData.workOrders.find(wo => wo.status === 'WO_RUN')
-            ? normalize(lineData.workOrders.find(wo => wo.status === 'WO_RUN'))
+        lineData.workOrders.find(wo => wo.status === 'WO_RUN' || wo.status === 'WO_PAUSE')
+            ? normalize(lineData.workOrders.find(wo => wo.status === 'WO_RUN' || wo.status === 'WO_PAUSE'))
             : null
 
     waitingWorks.value =
         lineData.workOrders
             .filter(wo => wo.status === 'WO_READY')
             .map(normalize)
+
+    if (currentWork.value) {
+        if (currentWork.value.status === 'WO_RUN') {
+            await initElapsedTime(currentWork.value.workOrderId)
+        } else {
+            stopTickTimer()
+        }
+    } else {
+        stopTickTimer()
+    }
 
 }
 
@@ -359,9 +442,122 @@ const startSelectedWork = async () => {
     if (!selectedWaitingWork.value) return
 
     await startWorkOrder(selectedWaitingWork.value.workOrderId)
+    workElapsedSeconds.value = 0
+    startTimer()
+
     closeStartModal()
     await loadWorkOrders(selectedLine.value.lineId)
 }
 
+const initElapsedTime = async (woId) => {
+    const res = await getWorkOrderHistory(woId)
+    const histories = Array.isArray(res.data) ? res.data : []
+
+    workElapsedSeconds.value = calculateElapsedSeconds(histories)
+    startTickTimer()
+}
+
+const startTickTimer = () => {
+    if (workTimer) return
+    workTimer = setInterval(() => {
+        workElapsedSeconds.value++
+    }, 1000)
+}
+
+const stopTickTimer = () => {
+    if (workTimer) {
+        clearInterval(workTimer)
+        workTimer = null
+    }
+}
+
+const calculateElapsedSeconds = (histories) => {
+    let total = 0
+    let runningFrom = null
+
+    histories.forEach(h => {
+        if (h.action === 'START' || h.action === 'RESUME') {
+            runningFrom = new Date(h.actedAt)
+        }
+
+        if (h.action === 'PAUSE' || h.action === 'END') {
+            if (runningFrom) {
+                total += (new Date(h.actedAt) - runningFrom) / 1000
+                runningFrom = null
+            }
+        }
+    })
+    if (runningFrom) {
+        total += (Date.now() - runningFrom.getTime()) / 1000
+    }
+    return Math.floor(total)
+}
+
+const formattedElapsedTime = computed(() => {
+    const sec = workElapsedSeconds.value
+    const h = String(Math.floor(sec / 3600)).padStart(2, '0')
+    const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0')
+    const s = String(sec % 60).padStart(2, '0')
+    return `${h}:${m}:${s}`
+})
+
+const pauseWork = async () => {
+    if (!currentWork.value) return
+
+    await pauseWorkOrder(currentWork.value.workOrderId)
+
+    stopTickTimer()
+    await loadWorkOrders(selectedLine.value.lineId)
+}
+
+const resumeWork = async () => {
+    if (!currentWork.value) return
+
+    await resumeWorkOrder(currentWork.value.workOrderId)
+
+    await initElapsedTime(currentWork.value.workOrderId)
+    await loadWorkOrders(selectedLine.value.lineId)
+}
+
+const openPauseModal = () => {
+    workNote.value = ''
+    showPauseModal.value = true
+}
+
+const openResumeModal = () => {
+    workNote.value = ''
+    showResumeModal.value = true
+}
+
+const closeAllWorkModals = () => {
+    showPauseModal.value = false
+    showResumeModal.value = false
+    workNote.value = ''
+}
+
+const confirmPauseWork = async () => {
+    await pauseWorkOrder(currentWork.value.workOrderId, {
+        note: workNote.value
+    })
+
+    closeAllWorkModals()
+    stopTickTimer()
+    await loadWorkOrders(selectedLine.value.lineId)
+}
+
+const confirmResumeWork = async () => {
+    await resumeWorkOrder(currentWork.value.workOrderId, {
+        note: workNote.value
+    })
+
+    closeAllWorkModals()
+    await initElapsedTime(currentWork.value.workOrderId)
+    await loadWorkOrders(selectedLine.value.lineId)
+}
+
+
+onUnmounted(() => {
+    stopTickTimer()
+})
 
 </script>
