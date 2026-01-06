@@ -1,8 +1,8 @@
 <template>
-    <div class="p-6 max-w-[1600px] mx-auto bg-gray-50 min-h-screen font-sans">
+    <div class="p-1 min-h-screen">
         <header class="flex justify-between items-end mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">생산 및 작업 실행 통합 관리</h1>
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">작업지시 통합 관리</h1>
                 <p class="text-gray-500 mt-1 text-sm">생산 계획 확인부터 작업지시 생성, 실시간 실적 등록까지 한 번에 관리합니다.</p>
             </div>
 
@@ -57,10 +57,9 @@
                                 </p>
                             </div>
 
-                            <!-- 🔹 일일 생산량 사용률 -->
                             <div class="mb-4">
                                 <div class="flex justify-between text-xs mb-1">
-                                    <span class="text-gray-500">오늘 생산 사용률</span>
+                                    <span class="text-gray-500">일일 최대 생산량 대비 작업지시 비율</span>
                                     <span class="font-bold"
                                         :class="group.utilizationRate > 100 ? 'text-red-500' : 'text-indigo-600'">
                                         {{ group.utilizationRate }}%
@@ -102,6 +101,14 @@
 
                             <!-- 버튼 -->
                             <div class="flex justify-end gap-2 mt-4">
+                                <button @click="onPrint(group)"
+                                    :disabled="!group.hasWorkOrder || group.woPlannedQty <= 0"
+                                    class="px-3 py-1.5 text-xs font-bold rounded-md border transition" :class="(!group.hasWorkOrder || group.woPlannedQty <= 0)
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100'">
+                                    작업지시서 인쇄
+                                </button>
+
                                 <button @click="openCreateModal(group)" :disabled="group.hasWorkOrder || isNotToday"
                                     class="px-3 py-1.5 text-xs font-bold rounded-md transition shadow-sm" :class="group.hasWorkOrder
                                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
@@ -277,7 +284,7 @@
                     <div>
                         <h3 class="text-lg font-black uppercase tracking-tight">📝 생산 실적 등록</h3>
                         <p class="text-indigo-100 text-xs mt-0.5">{{ selectedWO?.woCode }} | {{ selectedWO?.materialName
-                            }}</p>
+                        }}</p>
                     </div>
                     <button @click="activeModal = null" class="text-white/80 hover:text-white text-2xl">✕</button>
                 </header>
@@ -329,12 +336,33 @@
         </div>
 
     </div>
+
+    <div v-if="showPrintModal" class="fixed inset-0 bg-black/50 z-[2000] flex items-center justify-center">
+        <div class="bg-white w-[900px] max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center px-4 py-3 border-b">
+                <span class="font-bold">작업지시서 미리보기</span>
+                <button @click="showPrintModal = false">✕</button>
+            </div>
+
+            <div class="p-4 overflow-auto">
+                <WODocument :group="printData" :workDate="selectedDate" />
+            </div>
+
+            <div class="px-4 py-3 border-t flex justify-end">
+                <button class="px-4 py-2 bg-indigo-600 text-white rounded" @click="handlePrint">
+                    출력하기
+                </button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { getDailyPlanPreview, getMonthlyPlans } from '@/api/production/productionPlan.js'
 import { getWorkOrdersByDate, startWorkOrder, pauseWorkOrder, resumeWorkOrder, endWorkOrder, getWorkOrderHistory, previewWorkOrderResult, createWorkOrder as createWorkOrderApi } from '@/api/production/workOrder.js'
+import WODocument from '@/components/production/WODocument.vue'
 
 // --- 1. 기본 데이터 및 날짜 상태 ---
 const getKSTDateString = (date = new Date()) => {
@@ -345,6 +373,8 @@ const getKSTDateString = (date = new Date()) => {
 const selectedDate = ref(getKSTDateString())
 const today = getKSTDateString()
 const isNotToday = computed(() => selectedDate.value !== today)
+const showPrintModal = ref(false)
+const printData = ref(null)
 
 // --- 2. 목록 데이터 ---
 const planPlans = ref([]) // 상단 계획 데이터
@@ -436,7 +466,16 @@ const lineGroups = computed(() => {
 
 // --- 7. 작업 제어 핸들러 ---
 const openCreateModal = (group) => {
-    selectedGroup.value = { ...group, items: group.items.map(pp => ({ ...pp, workQuantity: pp.recommendedQuantity })) }
+    selectedGroup.value = {
+        ...group,
+        items: group.items.map(pp => ({
+            ...pp,
+            workQuantity: Math.max(
+                0,
+                pp.dailyPlannedQuantity - (pp.woPlannedQuantity || 0)
+            )
+        }))
+    }
     recalculateTotal()
     activeModal.value = 'CREATE'
 }
@@ -449,6 +488,42 @@ const createWorkOrder = async () => {
     })
     activeModal.value = null
     await fetchAllData() // 생성 후 새로고침
+}
+
+const onPrint = (group) => {
+    // 🔒 작업지시가 하나도 없으면 출력 불가
+    if (!group.hasWorkOrder || group.woPlannedQty <= 0) return
+
+    printData.value = {
+        lineId: group.lineId,
+        lineName: group.lineName,
+
+        items: group.items
+            .filter(pp => (pp.woPlannedQuantity ?? 0) > 0)
+            .map(pp => ({
+                ppId: pp.ppId,
+                ppCode: pp.ppCode,
+                materialName: pp.materialName,
+                materialCode: pp.materialCode,
+                baseUnit: pp.baseUnit,
+
+                dailyPlannedQuantity: pp.dailyPlannedQuantity,
+                woPlannedQuantity: pp.woPlannedQuantity
+            }))
+    }
+
+    showPrintModal.value = true
+}
+
+
+const handlePrint = () => {
+    window.print()
+    showPrintModal.value = false
+}
+
+const openHistory = async (wo) => {
+    selectedWO.value = wo
+    activeModal.value = 'HISTORY'
 }
 
 const openStart = async (wo) => {
