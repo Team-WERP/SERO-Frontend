@@ -92,12 +92,7 @@ export const useMenuStore = defineStore("menu", {
                     role: ["AC_PRO", "AC_SYS"],
                 },
                 {
-                    name: "작업지시 실적 등록",
-                    path: "/production/work-results/input",
-                    role: ["AC_PRO", "AC_SYS"],
-                },
-                {
-                    name: "작업지시 실적 관리",
+                    name: "생산 실적 관리",
                     path: "/production/work-results/management",
                     role: ["AC_PRO", "AC_SYS"],
                 },
