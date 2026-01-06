@@ -17,7 +17,8 @@
                         :disabled="isEditMode"
                         maxlength="20"
                     />
-                    <p class="help-text">그룹 코드는 한 번 작성하면 수정이 불가능 합니다.</p>
+                    <p v-if="!isEditMode" class="help-text">영문 대문자와 언더스코어(_)만 사용 가능합니다</p>
+                    <p v-else class="help-text warning">그룹 코드는 한 번 등록하면 수정이 불가능합니다</p>
                 </div>
 
                 <div class="form-group">
@@ -247,6 +248,11 @@ const handleSubmit = () => {
     margin-top: 6px;
     font-size: 12px;
     color: #6b7280;
+}
+
+.help-text.warning {
+    color: #dc2626;
+    font-weight: 500;
 }
 
 .modal-footer {

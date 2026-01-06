@@ -375,11 +375,10 @@ const closeCodeDetailModal = () => {
 const handleCodeDetailSubmit = async (data) => {
     try {
         if (codeDetailModal.value.data) {
-            // 수정
+            // 수정 - description 필드로 영문명 전송
             await updateCode(data.code, {
                 name: data.name,
-                codeNameEng: data.codeNameEng,
-                ref1: data.ref1,
+                description: data.description,
                 sortOrder: data.sortOrder,
                 isUsed: data.isUsed
             })

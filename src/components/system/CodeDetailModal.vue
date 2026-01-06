@@ -27,7 +27,8 @@
                         :disabled="isEditMode"
                         maxlength="50"
                     />
-                    <p class="help-text">공통 코드는 한번 등록하면 수정이 불가능 합니다다</p>
+                    <p v-if="!isEditMode" class="help-text">영문 대문자, 숫자, 언더스코어(_)만 사용 가능합니다</p>
+                    <p v-else class="help-text warning">공통 코드는 한 번 등록하면 수정이 불가능합니다</p>
                 </div>
 
                 <div class="form-group">
@@ -169,10 +170,14 @@ const handleSubmit = () => {
         return
     }
 
-    // isUsed를 Y/N으로 변환
+    // typeCode를 codeTypeCode로 변환하고 제출
     const submitData = {
-        ...formData.value,
-        isUsed: formData.value.isUsed ? 'Y' : 'N'
+        typeCode: formData.value.codeTypeCode,
+        code: formData.value.code,
+        name: formData.value.name,
+        description: formData.value.codeNameEng,
+        sortOrder: formData.value.sortOrder,
+        isUsed: formData.value.isUsed // boolean 그대로 전송
     }
 
     emit('submit', submitData)
@@ -308,6 +313,11 @@ const handleSubmit = () => {
     margin-top: 6px;
     font-size: 12px;
     color: #6b7280;
+}
+
+.help-text.warning {
+    color: #dc2626;
+    font-weight: 500;
 }
 
 .checkbox-label {
