@@ -847,8 +847,7 @@ watch(
 /* ===== 페이지 전체 ===== */
 .gi-detail-page {
     position: relative;
-    padding: 20px;
-    max-width: 1400px;
+    padding: 8px;
     margin: 0 auto;
     padding-bottom: 100px;
 }

@@ -1,5 +1,5 @@
 <template>
-    <div class="p-2 w-full font-sans text-sm">
+    <div class="p-2 w-full font-sans">
       <div class="mb-5 flex justify-between items-end">
         <div>
           <h1 class="text-[30px] font-bold text-gray-900 mb-2">출고지시 관리</h1>
@@ -16,14 +16,14 @@
       </div>
   
       <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
-        <h2 class="text-md font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <h2 class="text-sm font-bold text-gray-800 mb-6 flex items-center gap-2">
           <span class="w-1 h-5 bg-indigo-600 rounded-full"></span>
           필터 및 검색
         </h2>
   
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4 items-end text-sm">
             <div class="lg:col-span-2">
-                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide text-[13px]">납기일</label>
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">납기일</label>
                 <div class="flex items-center gap-2">
                 <input type="date" v-model="startDate" 
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white" />
@@ -34,7 +34,7 @@
             </div>
 
             <div>
-                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide text-[13px]">창고</label>
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">창고</label>
                 <select v-model="warehouseId" @change="fetchGIList"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white cursor-pointer">
                 <option value="">전체</option>
@@ -43,7 +43,7 @@
             </div>
 
             <div>
-                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide text-[13px]">상태</label>
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">상태</label>
                 <select v-model="selectedStatus" @change="fetchGIList"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white cursor-pointer">
                 <option value="">전체</option>
@@ -52,13 +52,13 @@
             </div>
 
             <div>
-                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide text-[13px]">출고지시번호</label>
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">출고지시번호</label>
                 <input type="text" v-model="searchKeyword" placeholder="GI-xxxx" @keyup.enter="fetchGIList"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all" />
             </div>
 
             <div>
-                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide text-[13px]">요청자 필터</label>
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">요청자 필터</label>
                 <button @click="toggleMyGI"
                 :class="[
                     'w-full py-2 px-2 rounded-lg text-sm transition-all border outline-none whitespace-nowrap',
