@@ -153,17 +153,17 @@
 
                         <!-- 대기 작업 있음 -->
                         <div v-if="waitingWorks.length" class="space-y-4">
-                            <div v-for="wo in waitingWorks" :key="wo.workOrderId"
+                            <div v-for="wo in waitingWorks" :key="wo.workOrderId" @click="openStartModal(wo)"
                                 class="bg-white/10 rounded-2xl p-4 cursor-pointer hover:bg-white/20 transition">
-                                <p class="text-xs font-bold text-indigo-300 mb-1">
+                                <p class="text-[17px] font-bold text-indigo-300 mb-1">
                                     {{ wo.workOrderCode }}
                                 </p>
 
-                                <h4 class="font-bold text-sm mb-2">
+                                <h4 class="font-bold text-[16px] mb-2">
                                     {{ wo.materialName }}
                                 </h4>
 
-                                <span class="text-xs text-gray-300">
+                                <span class="text-[15px] text-gray-300">
                                     목표: {{ wo.targetQty }} {{ wo.unit }}
                                 </span>
                             </div>
@@ -178,22 +178,81 @@
             </div>
         </div>
     </div>
+
+    <!-- ===== 작업 시작 모달 ===== -->
+    <div v-if="showStartModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-fade-in">
+
+            <!-- 제목 -->
+            <h3 class="text-2xl font-black text-gray-900 mb-4">
+                작업을 시작할까요?
+            </h3>
+
+            <!-- 작업 정보 -->
+            <div class="bg-gray-50 rounded-2xl p-4 mb-6 space-y-2">
+                <p class="text-sm text-gray-500">작업 지시</p>
+                <p class="font-mono font-bold text-indigo-600">
+                    {{ selectedWaitingWork?.workOrderCode }}
+                </p>
+
+                <p class="text-sm text-gray-500 mt-2">품목</p>
+                <p class="font-bold text-gray-800">
+                    {{ selectedWaitingWork?.materialName }}
+                </p>
+
+                <p class="text-sm text-gray-500 mt-2">목표 수량</p>
+                <p class="font-semibold">
+                    {{ selectedWaitingWork?.targetQty }} {{ selectedWaitingWork?.unit }}
+                </p>
+            </div>
+
+            <!-- 작업자 -->
+            <div class="flex items-center gap-3 mb-8">
+                <div
+                    class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black">
+                    {{ userInitial }}
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">작업자</p>
+                    <p class="font-bold text-gray-900">
+                        {{ userName }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="flex gap-3">
+                <button @click="closeStartModal"
+                    class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200">
+                    취소
+                </button>
+
+                <button @click="startSelectedWork"
+                    class="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700 active:scale-95">
+                    작업 시작
+                </button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getDailyWorkOrders } from '@/api/production/workOrder'
+import { getDailyWorkOrders, startWorkOrder } from '@/api/production/workOrder'
 import { getProductionLines } from '@/api/production/productionPlan'
 
 const currentTime = ref('')
 const selectedLine = ref(null)
 
-const dailyWorkOrders = ref([])
 const currentWork = ref(null)
 const waitingWorks = ref([])
 const lines = ref([])
+const showStartModal = ref(false)
+const selectedWaitingWork = ref(null)
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -280,11 +339,29 @@ const loadWorkOrders = async (lineId) => {
 
 }
 
-
-
 onMounted(() => {
     setInterval(() => {
         currentTime.value = new Date().toTimeString().split(' ')[0]
     }, 1000)
 })
+
+const openStartModal = (wo) => {
+    selectedWaitingWork.value = wo
+    showStartModal.value = true
+}
+
+const closeStartModal = () => {
+    showStartModal.value = false
+    selectedWaitingWork.value = null
+}
+
+const startSelectedWork = async () => {
+    if (!selectedWaitingWork.value) return
+
+    await startWorkOrder(selectedWaitingWork.value.workOrderId)
+    closeStartModal()
+    await loadWorkOrders(selectedLine.value.lineId)
+}
+
+
 </script>
