@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-gray-50 p-8 font-sans text-gray-800">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div v-for="(card, index) in summaryCards" :key="index"
-                class="rounded-xl p-6 flex items-center justify-between shadow-sm border border-transparent transition-all hover:shadow-md"
+                class="rounded-xl p-6 flex items-center justify-between border border-transparent transition-all "
                 :class="card.bgColor">
                 <div>
                     <p class="text-sm text-gray-500 mb-1 font-medium">{{ card.title }}</p>
@@ -18,7 +18,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
+            <div class="lg:col-span-5 bg-white rounded-xl  border border-gray-100 flex flex-col h-full">
                 <div class="p-5 border-b border-gray-100 flex justify-between items-center">
                     <h2 class="text-lg font-bold flex items-center gap-2 text-gray-800">
                         <span class="text-blue-600">📥</span> 결재 할 문서
@@ -61,13 +61,13 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-7 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
+            <div class="lg:col-span-7 bg-white rounded-xl  border border-gray-100 flex flex-col h-full">
                 <div class="p-5 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
                     <h2 class="text-lg font-bold text-gray-800">최근 결재 내역</h2>
                     <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
                         <button v-for="tab in tabs" :key="tab.value" @click="handleTabChange(tab.value)"
                             class="px-3 py-1 text-xs rounded-md transition-all font-medium"
-                            :class="currentTab === tab.value ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'">
+                            :class="currentTab === tab.value ? 'bg-white  text-blue-600' : 'text-gray-500 hover:text-gray-700'">
                             {{ tab.label }}
                         </button>
                     </div>

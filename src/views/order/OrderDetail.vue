@@ -1,5 +1,9 @@
 <template>
-  <div v-if="order" class="min-h-screen bg-[#F9FAFB] p-6 font-sans">
+  <div v-if="isLoading" class="flex h-screen items-center justify-center bg-slate-50">
+    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
+  </div>
+
+  <div v-else-if="order" class="min-h-screen bg-[#F9FAFB] p-6 font-sans">
     <nav class="mb-2 text-gray-500">
       <router-link to="/order/management" class="font-medium text-[#4C4CDD] hover:underline">
         주문 관리
@@ -7,7 +11,6 @@
       <span class="mx-2 text-gray-400">›</span>
       <span class="font-normal">{{ order.orderCode }}</span>
     </nav>
-
     <div class="mb-6 flex flex-col justify-between gap-6 md:flex-row md:items-start">
       <div class="title-left">
         <div class="flex items-center gap-3">
@@ -137,12 +140,8 @@
 
           <div class="relative rounded-xl border border-gray-200 bg-white min-h-[300px] overflow-hidden">
             <div v-if="isApprovalLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
-              <svg class="animate-spin h-10 w-10 text-[#4C4CDD]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-              </svg>
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
             </div>
-
             <template v-if="approvalData">
               <div class="flex items-center justify-center gap-4 py-12 px-6 bg-white border-b border-gray-50">
   <div class="flex flex-col items-center">
@@ -248,13 +247,8 @@
       </div>
 
       <div v-if="activeTab === 'PRODUCTION'" class="relative min-h-[500px]">    
-        <div v-if="isLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px] transition-all">
-          <div class="flex flex-col items-center gap-3">
-            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-            </svg>
-          </div>
+        <div v-if="isLoading" class="flex h-screen items-center justify-center bg-slate-50">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
         </div>
         <div class="mb-8">
           <div class="flex justify-between items-end mb-3">
@@ -355,7 +349,7 @@
                       <td class="py-4 font-medium truncate px-2">{{ doc[section.codeField] }}</td>
                       <td class="py-4 truncate">
                         {{ doc[section.nameField] }}
-                        <span v-if="(doc.itemTypeCount || doc.itemCount) > 1" class="text-gray-400 text-xs ml-1">
+                        <span v-if="(doc.itemTypeCount || doc.itemCount) > 1" class="text-slate-500 text-xs ml-1">
                           외 {{ (doc.itemTypeCount || doc.itemCount) - 1 }}건
                         </span>
                       </td>

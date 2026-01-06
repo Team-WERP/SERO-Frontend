@@ -509,7 +509,7 @@ th {
 }
 
 .total-amount {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 700;
     color: #000;
 }

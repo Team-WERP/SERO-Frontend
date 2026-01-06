@@ -187,10 +187,10 @@
 
                                     <div class="flex flex-col items-center">
                                         <div :class="[
-                                            'flex h-16 w-16 items-center justify-center rounded-full text-sm font-bold mb-3 transition-all border-2',
-                                            appr.status === 'ALS_APPR' ? 'bg-[#D1FAE5] text-[#238869] border-[#A7F3D0]' :
-                                                appr.status === 'ALS_RVW' ? 'bg-[#DBEAFE] text-[#3223DD] border-[#BFDBFE]' :
-                                                    'bg-gray-100 text-gray-400 border-gray-200'
+                                            'flex h-16 w-16 items-center justify-center rounded-full text-sm font-bold mb-3 transition-all',
+                                            appr.status === 'ALS_APPR' ? 'bg-[#D1FAE5] text-[#238869]' :
+                                                appr.status === 'ALS_RVW' ? 'bg-[#DBEAFE] text-[#3223DD]' :
+                                                    'bg-gray-100 text-gray-400'
                                         ]">
                                             {{ getLineTypeLabel(appr.lineType) }}
                                         </div>
@@ -220,26 +220,26 @@
                                         <tbody class="divide-y divide-gray-200">
                                             <tr class="hover:bg-gray-50 transition-colors text-center">
                                                 <td class="py-4">기안</td>
-                                                <td class="py-4 font-bold text-gray-900">{{ approvalData.drafterName }}
+                                                <td class="py-4">{{ approvalData.drafterName }}
                                                 </td>
                                                 <td class="py-4">{{ getPositionLabel(approvalData.drafterPositionCode)
                                                 }}</td>
                                                 <td class="py-4">{{ approvalData.drafterDepartment }}</td>
-                                                <td class="py-4 text-[#10B981] font-bold">승인</td>
+                                                <td class="py-4 text-[#10B981]">승인</td>
                                                 <td class="py-4">{{ approvalData.draftedAt }}</td>
                                                 <td class="px-4 py-4 text-gray-400">-</td>
                                             </tr>
                                             <tr v-for="appr in approvalData.approvers" :key="appr.approvalLineId"
                                                 class="hover:bg-gray-50 transition-colors text-center">
                                                 <td class="py-4">{{ getLineTypeLabel(appr.lineType) }}</td>
-                                                <td class="py-4 font-bold text-gray-900">{{ appr.approverName }}</td>
+                                                <td class="py-4">{{ appr.approverName }}</td>
                                                 <td class="py-4">{{ getPositionLabel(appr.approverPositionCode) }}</td>
                                                 <td class="py-4">{{ appr.approverDepartment }}</td>
-                                                <td :class="['py-4 font-bold', getLineStatusClass(appr.status)]">
+                                                <td :class="['py-4', getLineStatusClass(appr.status)]">
                                                     {{ getLineStatusLabel(appr.status) }}
                                                 </td>
                                                 <td class="py-4">{{ appr.processedAt || '-' }}</td>
-                                                <td class="px-4 py-4 truncate text-gray-400" :title="appr.note">
+                                                <td class="px-4 py-4 truncate" :title="appr.note">
                                                     {{ appr.note || '-' }}
                                                 </td>
                                             </tr>
@@ -613,7 +613,7 @@ const closePrint = () => {
 }
 
 .title {
-    font-size: 25px;
+    font-size: 28px;
     font-weight: 700;
     color: #000;
     display: flex;
@@ -697,7 +697,7 @@ const closePrint = () => {
 .tab {
     background: transparent;
     border: none;
-    font-size: 18px;
+    font-size: 15px;
     cursor: pointer;
     padding: 8px 4px;
     color: #000;
@@ -821,6 +821,7 @@ const closePrint = () => {
     display: grid;
     grid-template-columns:
         60px minmax(120px, 1.2fr) minmax(200px, 2fr) minmax(140px, 1.2fr) minmax(80px, 0.6fr) minmax(120px, 1fr);
+    align-items: center;
 }
 
 .items-table {
@@ -868,7 +869,7 @@ const closePrint = () => {
     font-weight: 400;
     color: #000;
     padding: 0 14px;
-    text-align: left;
+    text-align: center;
 }
 
 .cell.no {
@@ -876,7 +877,7 @@ const closePrint = () => {
 }
 
 .cell.qty {
-    text-align: left;
+    text-align: center;
 }
 
 .tfoot {

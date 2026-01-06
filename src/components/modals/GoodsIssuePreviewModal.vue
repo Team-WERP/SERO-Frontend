@@ -602,7 +602,7 @@ const printGoodsIssue = () => {
 }
 
 .recipient-info .value {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: bold;
     color: #111827;
 }
