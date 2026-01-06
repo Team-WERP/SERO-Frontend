@@ -18,15 +18,15 @@
 
                 <div class="flex items-center gap-2 bg-white p-1 rounded-lg shadow-sm border border-gray-200">
                     <button @click="setToday"
-                        class="px-3 py-1.5 text-[13px] font-semibold hover:bg-gray-100 rounded transition">
+                        class="cursor-pointer px-3 py-1.5 text-[13px] font-semibold hover:bg-gray-100 rounded transition">
                         오늘
                     </button>
                     <button @click="moveDate(-1)"
-                        class="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-900">◀</button>
+                        class="cursor-pointer p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-900">◀</button>
                     <input type="date" v-model="selectedDate" @change="fetchData"
                         class="border-none focus:ring-0 text-sm font-bold bg-transparent" />
                     <button @click="moveDate(1)"
-                        class="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-900">▶</button>
+                        class="cursor-pointer p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-900">▶</button>
                 </div>
             </div>
         </header>
@@ -76,7 +76,7 @@
                         </div>
 
                         <button @click="openCreateModal(line)" :disabled="isNotToday"
-                            class="w-full py-3 text-sm font-bold rounded-xl transition-all
+                            class="cursor-pointer w-full py-3 text-sm font-bold rounded-xl transition-all
                             bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[0.98]
                             disabled:bg-gray-200 disabled:text-gray-400 disabled:transform-none shadow-md shadow-indigo-100">
                             신규 작업지시 생성
@@ -117,7 +117,7 @@
                                         </div>
                                     </div>
                                     <button @click="openPrint(wo, line)"
-                                        class="flex items-center gap-1.5 px-2 py-1 border border-gray-200 rounded-lg text-gray-500 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm">
+                                        class="cursor-pointer flex items-center gap-1.5 px-2 py-1 border border-gray-200 rounded-lg text-gray-500 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -158,14 +158,14 @@
                         <p class="text-[15px] text-gray-500">{{ selectedGroup.lineName }} | 일자: {{ selectedDate }} </p>
                     </div>
                     <button @click="showCreateModal = false"
-                        class="text-gray-400 hover:text-gray-900 text-2xl transition-colors">✕</button>
+                        class="cursor-pointer text-gray-400 hover:text-gray-900 text-2xl transition-colors">✕</button>
                 </div>
 
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="text-[16px] font-bold text-gray-600 uppercase tracking-wider">배정 가능 생산계획</h4>
                         <button @click="addEmergencyRow"
-                            class="text-[13px] font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-all">
+                            class="cursor-pointer text-[13px] font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-all">
                             + 긴급 작업 추가
                         </button>
                     </div>
@@ -205,7 +205,7 @@
                             <p class="text-[13px] font-bold text-gray-700 uppercase tracking-wider">신규 지시 합계</p>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-3xl font-bold text-indigo-600">{{ formatQuantity(createQuantity)
-                                    }}</span>
+                                }}</span>
                                 <span class="text-[13px] font-medium text-gray-700">/ 생산능력 {{
                                     formatQuantity(selectedGroup.dailyCapacity) }}</span>
                             </div>
@@ -231,9 +231,9 @@
 
                 <div class="p-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
                     <button @click="showCreateModal = false"
-                        class="px-6 py-2.5 text-gray-500 font-bold hover:text-gray-700 text-sm">취소</button>
+                        class="cursor-pointer px-6 py-2.5 text-gray-500 font-bold hover:text-gray-700 text-sm">취소</button>
                     <button @click="handleCreateWorkOrder" :disabled="createQuantity <= 0"
-                        class="px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 shadow-lg shadow-indigo-100 transition-all">
+                        class="cursor-pointer px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 shadow-lg shadow-indigo-100 transition-all">
                         작업지시 발행
                     </button>
                 </div>
@@ -245,7 +245,7 @@
         <div class="print-modal">
             <div class="print-modal-header">
                 <span>작업지시서 미리보기</span>
-                <button class="close-btn" @click="showPrintModal = false">✕</button>
+                <button class="cursor-pointer close-btn" @click="showPrintModal = false">✕</button>
             </div>
 
             <div class="print-modal-body">
@@ -255,7 +255,7 @@
             </div>
 
             <div class="print-modal-footer">
-                <button class="outline-btn primary-fill" @click="handlePrint">
+                <button class="cursor-pointer outline-btn primary-fill" @click="handlePrint">
                     출력하기
                 </button>
             </div>
