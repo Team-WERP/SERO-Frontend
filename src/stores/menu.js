@@ -24,11 +24,6 @@ export const useMenuStore = defineStore("menu", {
                     role: ["AC_CLI"],
                 },
                 {
-                    name: "주문배송조회",
-                    path: "/client-portal/order-delivery",
-                    role: ["AC_CLI"],
-                },
-                {
                     name: "거래품목조회",
                     path: "/client-portal/items",
                     role: ["AC_CLI"],
@@ -140,16 +135,6 @@ export const useMenuStore = defineStore("menu", {
                     role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
                 },
                 {
-                    name: "기업정보관리",
-                    path: "/master/company",
-                    role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
-                },
-                {
-                    name: "사원정보조회",
-                    path: "/master/employees",
-                    role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
-                },
-                {
                     name: "공통코드 조회",
                     path: "/master/common-code",
                     role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
@@ -199,17 +184,7 @@ export const useMenuStore = defineStore("menu", {
                     name: "공통코드 관리",
                     path: "/system/common-code",
                     role: ["AC_SYS"],
-                },
-                {
-                    name: "사원 정보 관리",
-                    path: "/system/employees",
-                    role: ["AC_SYS"],
-                },
-                {
-                    name: "사용자 권한 관리",
-                    path: "/system/roles",
-                    role: ["AC_SYS"],
-                },
+                }
             ],
         },
     }),

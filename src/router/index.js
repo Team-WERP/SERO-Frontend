@@ -14,7 +14,6 @@ import ClientDashboard from "@/views/client-portal/ClientDashboard.vue";
 import ClientOrderCreate from "@/views/client-portal/ClientOrderCreate.vue";
 import ClientOrderList from "@/views/client-portal/ClientOrderList.vue";
 import ClientOrderDetail from "@/views/client-portal/ClientOrderDetail.vue";
-import ClientOrderDelivery from "@/views/client-portal/ClientOrderDelivery.vue";
 import ClientItemList from "@/views/client-portal/ClientItemList.vue";
 import ClientAddress from "@/views/client-portal/ClientAddress.vue";
 import ClientCompanyInfo from "@/views/client-portal/ClientCompanyInfo.vue";
@@ -48,8 +47,6 @@ import GoodsIssueDetail from "@/views/warehouse/GoodsIssueDetail.vue";
 // 기준정보
 import ItemBomManagement from "@/views/master/ItemBomManagement.vue";
 import ItemBomDetail from "@/views/master/ItemBomDetail.vue";
-import MasterCompanyInfo from "@/views/master/MasterCompanyInfo.vue";
-import EmployeeList from "@/views/master/EmployeeList.vue";
 import CommonCodeManagement from "@/views/master/CommonCodeManagement.vue";
 
 // 전자결재
@@ -67,8 +64,6 @@ import NoticeList from "@/views/notices/NoticeList.vue";
 
 // 시스템 관리
 import SystemCommonCode from "@/views/system/SystemCommonCode.vue";
-import SystemEmployeeManagement from "@/views/system/SystemEmployeeManagement.vue";
-import RoleManagement from "@/views/system/RoleManagement.vue";
 import StockByWarehouse from "@/views/warehouse/StockByWarehouse.vue";
 import DeliveryTracking from "@/views/warehouse/DeliveryTracking.vue";
 
@@ -134,11 +129,6 @@ const router = createRouter({
                 {
                     path: "client-portal/orders/:orderId",
                     component: ClientOrderDetail,
-                    meta: { roles: ["AC_CLI"] },
-                },
-                {
-                    path: "client-portal/order-delivery",
-                    component: ClientOrderDelivery,
                     meta: { roles: ["AC_CLI"] },
                 },
                 {
@@ -277,8 +267,6 @@ const router = createRouter({
                 // ---------------------
                 { path: "/master/bom", component: ItemBomManagement },
                 { path: "/master/bom/:id", component: ItemBomDetail },
-                { path: "/master/company", component: MasterCompanyInfo },
-                { path: "/master/employees", component: EmployeeList },
                 {
                     path: "/master/common-code",
                     component: CommonCodeManagement,
@@ -286,16 +274,6 @@ const router = createRouter({
                 {
                     path: "master/bom",
                     component: ItemBomManagement,
-                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
-                },
-                {
-                    path: "master/company",
-                    component: MasterCompanyInfo,
-                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
-                },
-                {
-                    path: "master/employees",
-                    component: EmployeeList,
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
                 },
                 {
@@ -307,16 +285,6 @@ const router = createRouter({
                 {
                     path: "system/common-code",
                     component: SystemCommonCode,
-                    meta: { roles: ["AC_SYS"] },
-                },
-                {
-                    path: "system/employees",
-                    component: SystemEmployeeManagement,
-                    meta: { roles: ["AC_SYS"] },
-                },
-                {
-                    path: "system/roles",
-                    component: RoleManagement,
                     meta: { roles: ["AC_SYS"] },
                 },
                 // 전자결재
