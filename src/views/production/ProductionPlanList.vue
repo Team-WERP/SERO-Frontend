@@ -55,7 +55,7 @@
                             <div class="text-[13px] text-slate-400 flex flex-col mt-1">
                                 <span>제품명: {{ line.materialName || '미지정' }}</span>
                                 <span class="truncate">일일 최대: {{ formatNumber(line.dailyCapacity) }}{{ line.unit
-                                    }}</span>
+                                }}</span>
                             </div>
                         </div>
 
@@ -76,10 +76,12 @@
                                         :style="barStyle(plan)" @click="openPlan(plan)"
                                         @mouseenter="showTooltip($event, plan)" @mouseleave="hideTooltip">
                                         <div class="p-1 px-2 flex flex-col h-full justify-center">
-                                            <span class="text-[13px] font-bold truncate">{{ plan.prCode }}</span>
-                                            <!-- <span v-if="plan.durationDays > 1" class="text-[11px] opacity-90">
-                                                {{ formatNumber(plan.productionQuantity) }}{{ plan.unit }}
-                                            </span> -->
+                                            <span class="text-[13px] font-bold truncate">
+                                                {{ plan.ppCode }}
+                                            </span>
+                                            <span class="absolute top-1 right-1 text-[11px] opacity-70">
+                                                ↗
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -221,7 +223,7 @@ const showTooltip = (e, plan) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const dailyQty = calcDailyQuantity(plan)
 
-    const text = `기간: ${plan.startDate} ~ ${plan.endDate} (${plan.durationDays}일)\n관련 생산요청: ${plan.prCode}\n총 수량: ${formatNumber(plan.productionQuantity)} ${plan.unit}\n예상 일일 생산량: ${formatNumber(dailyQty)} ${plan.unit}`
+    const text = `기간: ${plan.startDate} ~ ${plan.endDate} (${plan.durationDays}일)\n총 수량: ${formatNumber(plan.productionQuantity)} ${plan.unit}\n예상 일일 생산량: ${formatNumber(dailyQty)} ${plan.unit}`
 
     let x = rect.left + rect.width / 2
     let y = rect.bottom + 8
