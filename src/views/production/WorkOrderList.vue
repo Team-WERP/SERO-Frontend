@@ -132,7 +132,16 @@
                                         class="flex justify-between text-[13px] bg-gray-50 px-2.5 py-2 rounded-lg border border-gray-100">
                                         <div class="flex items-center gap-1.5">
                                             <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                                            <span class="text-gray-600">{{ item.ppCode || '긴급건' }}</span>
+                                            <span v-if="item.ppId"
+                                                class="text-indigo-600 cursor-pointer hover:underline font-medium"
+                                                @click="openPPDetail(item.ppId)">
+                                                {{ item.ppCode }}
+                                            </span>
+
+                                            <span v-else class="text-gray-400">
+                                                긴급건
+                                            </span>
+
                                         </div>
                                         <span class="font-bold text-gray-800">
                                             {{ formatQuantity(item.plannedQuantity) }}
@@ -261,6 +270,9 @@
             </div>
         </div>
     </div>
+
+    <PPDetailModal v-if="showPPDetail" :ppId="selectedPpId" @close="showPPDetail = false" />
+
 </template>
 
 <script setup>
@@ -268,6 +280,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getDailyPlanPreview } from '@/api/production/productionPlan.js'
 import { createWorkOrder as createWorkOrderApi, getDailyWorkOrders } from '@/api/production/workOrder.js'
 import WODocument from '@/components/production/WODocument.vue'
+import PPDetailModal from '@/components/production/PPDetailModal.vue'
 
 const selectedDate = ref(new Date().toISOString().slice(0, 10))
 const today = new Date().toISOString().slice(0, 10)
@@ -278,6 +291,8 @@ const currentWorkOrders = ref([])
 const showCreateModal = ref(false)
 const selectedGroup = ref(null)
 const createQuantity = ref(0)
+const showPPDetail = ref(false)
+const selectedPpId = ref(null)
 
 // 인쇄 관련 상태
 const showPrintModal = ref(false)
@@ -342,6 +357,11 @@ const openCreateModal = (line) => {
     }))
     recalculateTotal()
     showCreateModal.value = true
+}
+
+const openPPDetail = (ppId) => {
+    selectedPpId.value = ppId
+    showPPDetail.value = true
 }
 
 const recalculateTotal = () => {

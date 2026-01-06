@@ -5,11 +5,16 @@
             <!-- PP DETAIL -->
             <div class="pp-section" v-if="detail">
                 <div class="modal-top">
-                    <div class="modal-title">🗓️ {{ detail.ppCode }}</div>
+                    <div class="modal-title">🗓️ 생산계획 상세 보기</div>
                     <button class="close-btn" @click="emit('close')">✕</button>
                 </div>
 
                 <div class="pp-grid">
+                    <div class="k">생산계획 번호</div>
+                    <div class="v">
+                        {{ detail.ppCode }}
+                    </div>
+
                     <div class="k">기간</div>
                     <div class="v">
                         {{ detail.startDate }} ~ {{ detail.endDate }}
@@ -239,8 +244,8 @@ watch(() => props.ppId, loadDetail, { immediate: true })
 }
 
 .modal-title {
-    font-size: 18px;
-    font-weight: 800;
+    font-size: 19px;
+    font-weight: 700;
     color: #111827;
 }
 
