@@ -50,10 +50,37 @@
             <div class="flex-1 bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden">
                 <div class="p-5 px-6 border-b border-gray-200 flex justify-between items-center bg-white">
                     <h2 class="text-18 font-semibold text-gray-900">공정 단계</h2>
-                    <span v-if="selectedLineMaterial"
-                        class="px-3 py-1.5 bg-blue-50 text-indigo-600 rounded-md text-[13px] font-semibold">
-                        {{ selectedLineMaterial.materialName }} ({{ selectedLineMaterial.lineName }})
-                    </span>
+                </div>
+
+                <!-- 공정 요약 바 -->
+                <div v-if="selectedLineMaterial"
+                    class="mx-6 mt-4 mb-5 p-4 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-between">
+                    <!-- 좌측: 제품 정보 -->
+                    <div>
+                        <div class="text-sm font-semibold text-gray-900">
+                            {{ selectedLineMaterial.materialName }}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-0.5">
+                            {{ selectedLineMaterial.materialCode }} · {{ selectedLineMaterial.lineName }}
+                        </div>
+                    </div>
+
+                    <!-- 우측: 요약 지표 -->
+                    <div class="flex gap-6 text-sm">
+                        <div class="text-center">
+                            <div class="text-gray-400 text-xs mb-0.5">총 단계</div>
+                            <div class="font-bold text-gray-900">
+                                {{ totalSteps }}단계
+                            </div>
+                        </div>
+                        <div class="w-px bg-gray-300"></div>
+                        <div class="text-center">
+                            <div class="text-gray-400 text-xs mb-0.5">총 소요시간</div>
+                            <div class="font-bold text-indigo-600">
+                                {{ totalTimeLabel }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div v-if="!selectedLineMaterial"
@@ -114,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { getLineMaterialList, getProductionProcessList } from '@/api/production/productionProcess'
 
 const lineMaterialList = ref([])
@@ -139,6 +166,23 @@ const selectLineMaterial = async (item) => {
         console.error('공정 정보 로드 실패', error)
     }
 }
+
+const totalSteps = computed(() => processList.value.length)
+
+const totalTime = computed(() =>
+    processList.value.reduce(
+        (sum, p) => sum + (p.standardTime || 0),
+        0
+    )
+)
+
+const totalTimeLabel = computed(() => {
+    const min = totalTime.value
+    const h = Math.floor(min / 60)
+    const m = min % 60
+    return h > 0 ? `${h}시간 ${m}분` : `${m}분`
+})
+
 </script>
 
 <style scoped>
