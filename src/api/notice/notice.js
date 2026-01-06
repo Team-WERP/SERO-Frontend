@@ -27,3 +27,8 @@ export const getNotices = async (params = {}) => {
 export const getNoticesByClientEmployee = async (params = {}) => {
     return api.get("/clients/notices", { params }).then((res) => res.data);
 };
+
+// 공지사항 삭제 조회 API
+export const deleteNotice = async (noticeId) => {
+    return api.delete(`/notices/${noticeId}`).then((res) => res.data);
+};

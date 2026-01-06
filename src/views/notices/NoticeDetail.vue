@@ -15,9 +15,13 @@
                         class="px-3 py-1.5 bg-white border border-slate-300 rounded hover:bg-slate-50 transition-colors cursor-pointer">
                         목록
                     </button>
-                    <button v-if="canEdit" @click="goEdit"
+                    <!-- <button v-if="canEdit" @click="goEdit"
                         class="px-3 py-1.5 bg-[#4C4CDD] text-white border border-[#4C4CDD] rounded hover:bg-[#4346a8] transition-colors cursor-pointer">
                         수정
+                    </button> -->
+                    <button v-if="canEdit" @click="deleteNotice"
+                        class="px-3 py-1.5 bg-[#4C4CDD] text-white border border-[#4C4CDD] rounded hover:bg-[#4346a8] transition-colors cursor-pointer">
+                        삭제
                     </button>
                 </div>
             </header>
@@ -180,7 +184,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
-import { getNoticeDetail, getNoticeDetailByClientEmployee } from '@/api/notice/notice.js';
+import { getNoticeDetail, getNoticeDetailByClientEmployee, deleteNotice as deleteNoticeAPI } from '@/api/notice/notice.js';
 import { EMPLOYEE_POSITION } from '@/constants/approval.js';
 
 const route = useRoute();
@@ -356,6 +360,21 @@ const getCategoryLabel = (code) => {
     return map[code] || '공지';
 };
 
+const deleteNotice = async () => {
+    if (!notice.value) return;
+
+    const confirmed = confirm('공지사항을 삭제하시겠습니까?');
+    if (!confirmed) return;
+
+    try {
+        await deleteNoticeAPI(notice.value.noticeId);
+        alert('공지사항이 삭제되었습니다.');
+    } catch (e) {
+        console.error(e);
+        alert('공지사항 삭제에 실패했습니다.');
+    }
+}
+
 const getCategoryBadgeClass = (code) => {
     // 시스템
     if (code === 'NOTICE_SYSTEM') return 'bg-gray-800 text-white';
@@ -368,8 +387,6 @@ const getCategoryBadgeClass = (code) => {
 };
 
 const getPositionName = (code) => {
-    EMPLOYEE_POSITION
-
     if (!code) return '';
 
     return EMPLOYEE_POSITION.CODE[code];
