@@ -74,14 +74,16 @@
 
                 <!-- ===== Current Work ===== -->
                 <div class="xl:col-span-2 space-y-6">
-                    <section class="bg-white rounded-3xl shadow-sm border overflow-hidden">
+
+                    <!-- 진행 중 작업 있음 -->
+                    <section v-if="currentWork" class="bg-white rounded-3xl shadow-sm border overflow-hidden">
                         <div class="p-6 border-b bg-gray-50 flex justify-between items-center">
                             <h3 class="text-lg font-bold text-gray-800">
                                 현재 진행 작업
                             </h3>
                             <span
                                 class="text-sm font-mono text-indigo-600 font-bold bg-indigo-50 px-3 py-1 rounded-full">
-                                WO-250315-001
+                                {{ currentWork.workOrderCode }}
                             </span>
                         </div>
 
@@ -90,43 +92,43 @@
                                 <div class="flex-1">
                                     <p class="text-sm font-bold text-gray-400 mb-2">품목명</p>
                                     <h1 class="text-3xl font-black text-gray-900 mb-4">
-                                        구동모터 A-Type
-                                        <span class="text-indigo-600">(MC-A01)</span>
+                                        {{ currentWork.materialName }}
                                     </h1>
 
                                     <div class="flex gap-4">
                                         <div class="bg-gray-100 px-4 py-2 rounded-xl text-sm font-bold text-gray-600">
-                                            공정: 권선/절연
-                                        </div>
-                                        <div class="bg-gray-100 px-4 py-2 rounded-xl text-sm font-bold text-gray-600">
-                                            목표: 1,000 EA
+                                            목표: {{ currentWork.targetQty }} {{ currentWork.unit }}
                                         </div>
                                     </div>
                                 </div>
 
+                                <!-- 진행률 -->
                                 <div
                                     class="flex flex-col items-center justify-center bg-indigo-50 rounded-3xl p-6 min-w-[200px] border border-indigo-100">
-                                    <p class="text-sm font-bold text-indigo-600 mb-2">
-                                        진행률
-                                    </p>
+                                    <p class="text-sm font-bold text-indigo-600 mb-2">진행률</p>
+
                                     <div class="text-5xl font-black text-indigo-700">
-                                        65<span class="text-2xl">%</span>
+                                        {{ progressRate }}<span class="text-2xl">%</span>
                                     </div>
+
                                     <div class="w-full h-2 bg-indigo-200 rounded-full mt-4 overflow-hidden">
-                                        <div class="bg-indigo-600 h-full w-[65%]"></div>
+                                        <div class="bg-indigo-600 h-full" :style="{ width: progressRate + '%' }"></div>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- 액션 -->
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <button
-                                    class="col-span-2 py-6 bg-indigo-600 text-white rounded-2xl font-black text-xl shadow hover:bg-indigo-700 active:scale-95">
+                                    class="col-span-2 py-6 bg-indigo-600 text-white rounded-2xl font-black text-xl hover:bg-indigo-700 active:scale-95">
                                     실적 등록
                                 </button>
+
                                 <button
                                     class="py-6 bg-amber-500 text-white rounded-2xl font-black text-lg hover:bg-amber-600 active:scale-95">
                                     일시 정지
                                 </button>
+
                                 <button
                                     class="py-6 bg-rose-600 text-white rounded-2xl font-black text-lg hover:bg-rose-700 active:scale-95">
                                     작업 종료
@@ -134,7 +136,13 @@
                             </div>
                         </div>
                     </section>
+
+                    <!-- 진행 중 작업 없음 -->
+                    <section v-else class="bg-white rounded-3xl shadow-sm border p-10 text-center text-gray-400">
+                        현재 진행 중인 작업이 없습니다.
+                    </section>
                 </div>
+
 
                 <!-- ===== Side ===== -->
                 <div class="space-y-6">
@@ -143,18 +151,27 @@
                             다음 작업 대기열
                         </h3>
 
-                        <div class="space-y-4">
-                            <div v-for="i in 3" :key="i" class="bg-white/10 rounded-2xl p-4">
+                        <!-- 대기 작업 있음 -->
+                        <div v-if="waitingWorks.length" class="space-y-4">
+                            <div v-for="wo in waitingWorks" :key="wo.workOrderId"
+                                class="bg-white/10 rounded-2xl p-4 cursor-pointer hover:bg-white/20 transition">
                                 <p class="text-xs font-bold text-indigo-300 mb-1">
-                                    우선순위 {{ i }}
+                                    {{ wo.workOrderCode }}
                                 </p>
+
                                 <h4 class="font-bold text-sm mb-2">
-                                    소나타 DN8 범퍼 조립
+                                    {{ wo.materialName }}
                                 </h4>
+
                                 <span class="text-xs text-gray-300">
-                                    목표: 500 EA
+                                    목표: {{ wo.targetQty }} {{ wo.unit }}
                                 </span>
                             </div>
+                        </div>
+
+                        <!-- 대기 작업 없음 -->
+                        <div v-else class="text-gray-400 text-sm text-center py-6">
+                            대기 중인 작업이 없습니다.
                         </div>
                     </section>
                 </div>
@@ -205,6 +222,14 @@ const handleLogout = () => {
     router.push('/work/login')
 }
 
+const getTodayKST = () => {
+    const now = new Date()
+    const kstOffset = 9 * 60 * 60 * 1000
+    const kstDate = new Date(now.getTime() + kstOffset)
+
+    return kstDate.toISOString().slice(0, 10)
+}
+
 
 onMounted(async () => {
     initializeUser()
@@ -217,24 +242,42 @@ const selectLine = async (line) => {
 }
 
 const loadWorkOrders = async (lineId) => {
-    const today = new Date().toISOString().slice(0, 10)
-    const result = await getDailyWorkOrders(today)
+    const today = getTodayKST()
+    const res = await getDailyWorkOrders(today)
+    const linesData = res.data
 
-    const lineData = result.find(l => l.lineId === lineId)
-
+    const lineData = linesData.find(l => l.lineId === lineId)
     if (!lineData) {
+        console.warn('lineData 없음', lineId, linesData)
         currentWork.value = null
         waitingWorks.value = []
         return
     }
 
+    const normalize = (wo) => {
+        const mainItem = wo.items?.[0] ?? {}
+
+        return {
+            workOrderId: wo.workOrderId,
+            workOrderCode: wo.workOrderCode,
+            status: wo.status,
+            materialName: mainItem.itemName ?? '-',
+            targetQty: mainItem.plannedQuantity ?? 0,
+            producedQty: mainItem.producedQuantity ?? 0,
+            unit: mainItem.unit ?? ''
+        }
+    }
+
     currentWork.value =
-        lineData.workOrders.find(wo => wo.status === 'WO_RUN') ?? null
+        lineData.workOrders.find(wo => wo.status === 'WO_RUN')
+            ? normalize(lineData.workOrders.find(wo => wo.status === 'WO_RUN'))
+            : null
 
     waitingWorks.value =
-        lineData.workOrders.filter(wo =>
-            ['WO_READY', 'WO_CREATED'].includes(wo.status)
-        )
+        lineData.workOrders
+            .filter(wo => wo.status === 'WO_READY')
+            .map(normalize)
+
 }
 
 
