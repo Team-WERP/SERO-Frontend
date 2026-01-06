@@ -78,7 +78,7 @@
 
                             <div class="flex justify-between text-[13px] text-gray-500 mt-2">
                                 <span>총 지시량 {{ formatQuantity(line.totalOrdered) }}</span>
-                                <span>생산능력 {{ formatQuantity(line.dailyCapacity) }}</span>
+                                <span>생산능력 {{ formatQuantity(line.dailyCapacity) }} {{ line.baseUnit }}</span>
                             </div>
                         </div>
 
@@ -259,7 +259,7 @@
                                 <span class="text-3xl font-bold text-indigo-600">{{ formatQuantity(createQuantity)
                                     }}</span>
                                 <span class="text-[13px] font-medium text-gray-700">/ 생산능력 {{
-                                    formatQuantity(selectedGroup.dailyCapacity) }}</span>
+                                    formatQuantity(selectedGroup.dailyCapacity) }} {{ selectedGroup.baseUnit }}</span>
                             </div>
                         </div>
                         <div class="text-right">
@@ -279,6 +279,28 @@
                             </div>
                         </div>
                     </div>
+
+                    <div v-if="bomPreview.length" class="mt-4 border border-gray-200 rounded-xl bg-white p-4">
+                        <h4 class="text-[15px] font-bold text-gray-700 mb-3">
+                            예상 원부자재 소요량 (BOM)
+                        </h4>
+
+                        <div class="space-y-2">
+                            <div v-for="rm in bomPreview" :key="rm.materialId" class="flex justify-between text-[13px]">
+                                <span class="text-gray-600">
+                                    <b>[{{ rm.materialCode }}] {{ rm.materialName }}</b>
+                                    (단위 소요량: {{ rm.unitRequirement }} {{ rm.baseUnit }}/{{ selectedGroup.baseUnit }})
+                                </span>
+                                <span class="font-bold text-gray-900">
+                                    {{ rm.totalRequirement.toLocaleString() }}
+                                    <span class="text-gray-400 font-normal">
+                                        {{ rm.baseUnit }}
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="p-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
@@ -325,6 +347,7 @@ import { createWorkOrder as createWorkOrderApi, getDailyWorkOrders, getEmergency
 import WODocument from '@/components/production/WODocument.vue'
 import PPDetailModal from '@/components/production/PPDetailModal.vue'
 import { useRouter } from 'vue-router'
+import { calculateBomExplosion } from '@/api/material/material.js'
 
 const router = useRouter()
 const selectedDate = ref(new Date().toISOString().slice(0, 10))
@@ -339,6 +362,7 @@ const createQuantity = ref(0)
 const showPPDetail = ref(false)
 const selectedPpId = ref(null)
 const emergencyTargets = ref([])
+const bomPreview = ref([])
 
 // 인쇄 관련 상태
 const showPrintModal = ref(false)
@@ -421,8 +445,36 @@ const openPPDetail = (ppId) => {
     showPPDetail.value = true
 }
 
-const recalculateTotal = () => {
-    createQuantity.value = selectedGroup.value.items.reduce((sum, p) => sum + (Number(p.workQuantity) || 0), 0)
+
+const recalculateBomPreview = async () => {
+    if (!selectedGroup.value) return
+
+    const materialId = selectedGroup.value.plans[0]?.materialId
+    if (!materialId) return
+
+    const qty = createQuantity.value
+    if (qty <= 0) {
+        bomPreview.value = []
+        return
+    }
+
+    try {
+        const res = await calculateBomExplosion(materialId, qty)
+        bomPreview.value = res.requiredMaterials || []
+    } catch (e) {
+        console.error('BOM 미리보기 실패', e)
+        bomPreview.value = []
+    }
+}
+
+const recalculateTotal = async () => {
+    createQuantity.value =
+        selectedGroup.value.items.reduce(
+            (sum, p) => sum + (Number(p.workQuantity) || 0),
+            0
+        )
+
+    await recalculateBomPreview()
 }
 
 const addEmergencyRow = async () => {
