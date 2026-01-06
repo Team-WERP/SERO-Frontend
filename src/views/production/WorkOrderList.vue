@@ -1,10 +1,9 @@
 <template>
-    <div class="p-6 min-h-screen bg-gray-50 font-sans text-gray-800">
-
+    <div>
         <header class="flex justify-between items-end mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900 tracking-tight">
-                    작업지시 통합 관리
+                    작업지시 관리
                 </h1>
                 <p class="text-sm text-gray-500 mt-1">
                     생산계획 확인부터 작업지시 발행까지 한 화면에서 관리합니다.
@@ -109,11 +108,11 @@
                                         </div>
                                         <div class="flex gap-2 items-center mt-1">
                                             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                                                :class="getStatusClass(wo.workOrderStatus)">
-                                                {{ getStatusLabel(wo.workOrderStatus) }}
+                                                :class="getStatusClass(wo.status)">
+                                                {{ getStatusLabel(wo.status) }}
                                             </span>
                                             <span class="text-[10px] text-gray-400 font-medium">
-                                                {{ wo.workOrderCreatedAt?.split('T')[1].substring(0, 5) || '--:--' }} 발행
+                                                {{ wo.createdAt || '--:--' }} 발행
                                             </span>
                                         </div>
                                     </div>
@@ -366,19 +365,19 @@ const onPrint = (wo) => alert(`인쇄 준비: ${wo.workOrderCode}`)
 // 상태 한글 변환 함수 추가
 const getStatusLabel = (status) => {
     const labels = {
-        'PENDING': '대기중',
-        'STARTED': '진행중',
-        'COMPLETED': '완료',
-        'PAUSED': '일시정지'
+        'WO_READY': '대기중',
+        'WO_RUN': '진행중',
+        'WO_DONE': '완료',
+        'WO_PAUSE': '일시정지'
     };
     return labels[status] || status;
 }
 
 const getStatusClass = (status) => {
     switch (status) {
-        case 'STARTED': return 'bg-blue-50 text-blue-600';
-        case 'COMPLETED': return 'bg-emerald-50 text-emerald-600';
-        case 'PAUSED': return 'bg-amber-50 text-amber-600';
+        case 'WO_RUN': return 'bg-blue-50 text-blue-600';
+        case 'WO_DONE': return 'bg-emerald-50 text-emerald-600';
+        case 'WO_PAUSE': return 'bg-amber-50 text-amber-600';
         default: return 'bg-gray-100 text-gray-500';
     }
 }
