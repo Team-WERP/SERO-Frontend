@@ -218,8 +218,13 @@ onMounted(async () => {
 
         notice.value = response;
     } catch (error) {
-        console.error("공지사항 조회 실패", error);
-        alert('공지사항 정보를 불러오는데 실패했습니다.');
+        if (error.response && error.response.status === 404) {
+            alert('삭제되거나 존재하지 않는 공지사항입니다.');
+        } else {
+            alert('공지사항 목록 조회 중 오류가 발생했습니다.');
+        }
+
+        console.error('공지사항 상세 조회 실패:', error);
         router.back();
     } finally {
         loading.value = false;
