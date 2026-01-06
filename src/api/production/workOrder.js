@@ -11,10 +11,14 @@ export const startWorkOrder = (woId, note) =>
     api.post(`/work-orders/${woId}/start`, null, { params: { note } })
 
 export const pauseWorkOrder = (woId, note) =>
-    api.post(`/work-orders/${woId}/pause`, null, { params: { note } })
+    api.post(`/work-orders/${woId}/pause`, null, {
+        params: { note }
+    })
 
 export const resumeWorkOrder = (woId, note) =>
-    api.post(`/work-orders/${woId}/resume`, null, { params: { note } })
+    api.post(`/work-orders/${woId}/resume`, null, {
+        params: { note }
+    })
 
 export const endWorkOrder = (woId, payload) =>
     api.post(`/work-orders/${woId}/end`, payload)

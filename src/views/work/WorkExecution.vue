@@ -130,25 +130,28 @@
                             <!-- 액션 -->
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <button
-                                    class="col-span-2 py-6 bg-slate-600 text-white rounded-2xl font-black text-xl hover:bg-slate-700">
+                                    class="cursor-pointer col-span-2 py-6 bg-slate-600 text-white rounded-2xl font-black text-xl hover:bg-slate-700"
+                                    @click="openHistoryModal">
                                     이력 보기
                                 </button>
 
+
+
                                 <button v-if="currentWork.status === 'WO_RUN'"
-                                    class="py-6 bg-amber-500 text-white rounded-2xl font-black text-lg"
+                                    class="cursor-pointer py-6 bg-amber-500 text-white rounded-2xl font-black text-lg"
                                     @click="openPauseModal">
                                     일시 정지
                                 </button>
 
                                 <button v-else-if="currentWork.status === 'WO_PAUSE'"
-                                    class="py-6 bg-emerald-600 text-white rounded-2xl font-black text-lg"
+                                    class="cursor-pointer py-6 bg-emerald-600 text-white rounded-2xl font-black text-lg"
                                     @click="openResumeModal">
                                     작업 재개
                                 </button>
 
 
                                 <button
-                                    class="py-6 bg-rose-600 text-white rounded-2xl font-black text-lg hover:bg-rose-700 active:scale-95">
+                                    class="cursor-pointer py-6 bg-rose-600 text-white rounded-2xl font-black text-lg hover:bg-rose-700 active:scale-95">
                                     작업 종료
                                 </button>
                             </div>
@@ -242,12 +245,12 @@
             <!-- 버튼 -->
             <div class="flex gap-3">
                 <button @click="closeStartModal"
-                    class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200">
+                    class="cursor-pointer flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200">
                     취소
                 </button>
 
                 <button @click="startSelectedWork"
-                    class="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700 active:scale-95">
+                    class="cursor-pointer flex-1 py-3 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700 active:scale-95">
                     작업 시작
                 </button>
             </div>
@@ -266,7 +269,8 @@
                 rows="3"></textarea>
 
             <div class="flex gap-3">
-                <button @click="closeAllWorkModals" class="flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-600">
+                <button @click="closeAllWorkModals"
+                    class="cursor-pointer flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-600">
                     취소
                 </button>
 
@@ -291,16 +295,78 @@
                 rows="3"></textarea>
 
             <div class="flex gap-3">
-                <button @click="closeAllWorkModals" class="flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-600">
+                <button @click="closeAllWorkModals"
+                    class="cursor-pointer flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-600">
                     취소
                 </button>
 
-                <button @click="confirmResumeWork" class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-black">
+                <button @click="confirmResumeWork"
+                    class="cursor-pointer flex-1 py-3 rounded-xl bg-emerald-600 text-white font-black">
                     작업 재개
                 </button>
             </div>
         </div>
     </div>
+
+    <!-- ===== 작업 이력 모달 ===== -->
+    <div v-if="showHistoryModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8">
+
+            <!-- 헤더 -->
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-black text-gray-900 flex items-center gap-2">
+                    <span class="text-indigo-600">⏱</span>
+                    작업 로그
+                </h3>
+                <button @click="closeHistoryModal" class="text-gray-400 hover:text-gray-700 text-xl">
+                    ✕
+                </button>
+            </div>
+
+            <!-- 타임라인 -->
+            <div class="relative pl-6 space-y-6 max-h-[420px] overflow-y-auto">
+
+                <!-- 세로 라인 -->
+                <div class="absolute left-[10px] top-0 bottom-0 w-px bg-gray-200"></div>
+
+                <div v-for="(h, idx) in workHistories" :key="idx" class="relative">
+
+                    <!-- 점 -->
+                    <div class="absolute left-[-2px] w-4 h-4 rounded-full" :class="actionColor(h.action)">
+                    </div>
+
+                    <!-- 내용 -->
+                    <div class="ml-6">
+                        <p class="font-bold text-gray-900">
+                            {{ actionLabel(h.action) }}
+                        </p>
+                        <p class="text-sm text-gray-500">
+                            {{ h.actedAt }}
+                        </p>
+
+                        <div v-if="h.note" class="mt-2 bg-gray-50 rounded-xl p-3 text-sm text-gray-700">
+                            {{ h.note }}
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="!workHistories.length" class="text-center text-gray-400 py-10">
+                    작업 이력이 없습니다.
+                </div>
+            </div>
+
+            <!-- 하단 -->
+            <div class="flex justify-end mt-8">
+                <button @click="closeHistoryModal"
+                    class="px-6 py-2 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200">
+                    닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
 
 </template>
 
@@ -322,7 +388,8 @@ const selectedWaitingWork = ref(null)
 const showPauseModal = ref(false)
 const showResumeModal = ref(false)
 const workNote = ref('')
-
+const showHistoryModal = ref(false)
+const workHistories = ref([])
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -536,9 +603,10 @@ const closeAllWorkModals = () => {
 }
 
 const confirmPauseWork = async () => {
-    await pauseWorkOrder(currentWork.value.workOrderId, {
-        note: workNote.value
-    })
+    await pauseWorkOrder(
+        currentWork.value.workOrderId,
+        workNote.value
+    )
 
     closeAllWorkModals()
     stopTickTimer()
@@ -546,14 +614,57 @@ const confirmPauseWork = async () => {
 }
 
 const confirmResumeWork = async () => {
-    await resumeWorkOrder(currentWork.value.workOrderId, {
-        note: workNote.value
-    })
+    await resumeWorkOrder(
+        currentWork.value.workOrderId,
+        workNote.value
+    )
+
 
     closeAllWorkModals()
     await initElapsedTime(currentWork.value.workOrderId)
     await loadWorkOrders(selectedLine.value.lineId)
 }
+
+const openHistoryModal = async () => {
+    if (!currentWork.value) return
+
+    const res = await getWorkOrderHistory(currentWork.value.workOrderId)
+    const histories = Array.isArray(res.data) ? res.data : []
+
+    workHistories.value = histories
+        .slice()
+        .sort((a, b) => new Date(b.actedAt) - new Date(a.actedAt))
+
+    showHistoryModal.value = true
+}
+
+
+const closeHistoryModal = () => {
+    showHistoryModal.value = false
+    workHistories.value = []
+}
+
+const actionLabel = (action) => {
+    switch (action) {
+        case 'START': return '가동 시작'
+        case 'PAUSE': return '일시 정지'
+        case 'RESUME': return '작업 재개'
+        case 'END': return '작업 종료'
+        default: return action
+    }
+}
+
+const actionColor = (action) => {
+    switch (action) {
+        case 'START': return 'bg-indigo-500'
+        case 'PAUSE': return 'bg-amber-500'
+        case 'RESUME': return 'bg-emerald-500'
+        case 'END': return 'bg-rose-500'
+        default: return 'bg-gray-400'
+    }
+}
+
+
 
 
 onUnmounted(() => {
