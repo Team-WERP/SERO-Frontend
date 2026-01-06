@@ -207,7 +207,7 @@ const router = createRouter({
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_SYS"] },
                 },
                 {
-                    path: "production/plans",
+                    path: "production/plans/:id?",
                     component: ProductionPlanList,
                     meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },

@@ -42,3 +42,7 @@ export const getWorkOrderResults = (params) =>
             keyword: params.keyword ?? null
         }
     })
+
+export const getWorkOrderDetail = (woId) =>
+    api.get(`/work-orders/${woId}/detail`)
+        .then(res => res.data)

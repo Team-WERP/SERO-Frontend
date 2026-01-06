@@ -1,9 +1,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { getWorkOrderResults } from '@/api/production/workOrder'
-
-const router = useRouter()
+import WorkOrderDetailModal from '@/components/production/WorkOrderDetailModal.vue'
 
 const filter = reactive({
     startDate: null,
@@ -17,6 +15,15 @@ const listData = ref([])
 const loading = ref(false)
 const formatQty = (v) => (v != null ? v.toLocaleString() : '-')
 const formatDate = (v) => (v ? v.slice(0, 16).replace('T', ' ') : '-')
+
+const showDetailModal = ref(false)
+const selectedWoId = ref(null)
+
+const openDetail = (item) => {
+    selectedWoId.value = item.woId
+    showDetailModal.value = true
+}
+
 
 const fetchData = async () => {
     try {
@@ -49,10 +56,6 @@ const resetFilter = async () => {
     filter.line = 'all'
     filter.keyword = ''
     await fetchData()
-}
-
-const goDetail = (item) => {
-    router.push(`/production/work-orders/${item.woId}`)
 }
 
 onMounted(fetchData)
@@ -155,7 +158,7 @@ onMounted(fetchData)
                             class="hover:bg-indigo-50/30 transition-colors">
                             <td class="p-4 text-center">{{ index + 1 }}</td>
                             <td class="p-4 font-semibold text-slate-900 text-center cursor-pointer hover:underline"
-                                @click="goDetail(item)">
+                                @click="openDetail(item)">
                                 {{ item.woCode }}
                             </td>
                             <td class="p-4 text-center">{{ item.lineName }}</td>
@@ -183,4 +186,6 @@ onMounted(fetchData)
             </div>
         </div>
     </div>
+
+    <WorkOrderDetailModal v-if="showDetailModal" :wo-id="selectedWoId" @close="showDetailModal = false" />
 </template>
