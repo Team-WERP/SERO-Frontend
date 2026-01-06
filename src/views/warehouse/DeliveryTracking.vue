@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gray-50 font-sans p-6 relative">
+    <div class="min-h-screen bg-gray-50 font-sans relative">
 
   
       <header class="mb-8">
