@@ -31,7 +31,6 @@ import ProductionDashboard from "@/views/production/ProductionDashboard.vue";
 import ProductionRequestList from "@/views/production/ProductionRequestList.vue";
 import ProductionPlanList from "@/views/production/ProductionPlanList.vue";
 import WorkOrderList from "@/views/production/WorkOrderList.vue";
-import WorkResultInput from "@/views/production/WorkResultInput.vue";
 import WorkResultList from "@/views/production/WorkResultList.vue";
 import ProcessFlowManagement from "@/views/production/ProcessFlowManagement.vue";
 import PRDraftDetailView from "@/views/production/PRDraftDetailView.vue";
@@ -215,11 +214,6 @@ const router = createRouter({
                 {
                     path: "production/work-orders",
                     component: WorkOrderList,
-                    meta: { roles: ["AC_PRO", "AC_SYS"] },
-                },
-                {
-                    path: "production/work-results/input",
-                    component: WorkResultInput,
                     meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },
                 {
