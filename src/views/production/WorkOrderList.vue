@@ -11,24 +11,31 @@
             </div>
 
             <div class="flex flex-col items-end gap-2">
-                <span v-if="isNotToday"
-                    class="text-[13px] text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                <span v-if="isNotToday" class="text-[13px] text-rose-700 font-medium px-2 py-1">
                     ※ 작업지시는 당일만 생성 가능합니다
                 </span>
 
-                <div class="flex items-center gap-2 bg-white p-1 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center gap-1.5">
                     <button @click="setToday"
-                        class="cursor-pointer px-3 py-1.5 text-[13px] font-semibold hover:bg-gray-100 rounded transition">
+                        class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
                         오늘
                     </button>
+
                     <button @click="moveDate(-1)"
-                        class="cursor-pointer p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-900">◀</button>
+                        class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+                        ◀
+                    </button>
+
                     <input type="date" v-model="selectedDate" @change="fetchData"
-                        class="border-none focus:ring-0 text-sm font-bold bg-transparent" />
+                        class="px-2.5 py-1.5 text-sm font-semibold border border-gray-300 rounded-md bg-white text-gray-900 outline-none hover:border-indigo-500 cursor-pointer" />
+
                     <button @click="moveDate(1)"
-                        class="cursor-pointer p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-900">▶</button>
+                        class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+                        ▶
+                    </button>
                 </div>
             </div>
+
         </header>
 
         <div class="space-y-6">
@@ -250,7 +257,7 @@
                             <p class="text-[13px] font-bold text-gray-700 uppercase tracking-wider">신규 지시 합계</p>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-3xl font-bold text-indigo-600">{{ formatQuantity(createQuantity)
-                                }}</span>
+                                    }}</span>
                                 <span class="text-[13px] font-medium text-gray-700">/ 생산능력 {{
                                     formatQuantity(selectedGroup.dailyCapacity) }}</span>
                             </div>
