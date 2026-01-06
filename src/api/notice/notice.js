@@ -7,3 +7,13 @@ export const registNotice = async (formData) => {
     });
     return res.data;
 };
+
+// 본사 직원용 공지사항 상세 조회 API
+export const getNoticeDetail = async (noticeId) => {
+    return api.get(`/notices/${noticeId}`).then((res) => res.data);
+}
+
+// 고객사 직원용 공지사항 상세 조회 API
+export const getNoticeDetailByClientEmployee = async (noticeId) => {
+    return api.get(`/clients/notices/${noticeId}`).then((res) => res.data);
+}
