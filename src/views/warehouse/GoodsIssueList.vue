@@ -2,7 +2,7 @@
     <div class="p-2 w-full font-sans">
       <div class="mb-5 flex justify-between items-end">
         <div>
-          <h1 class="text-[30px] font-bold text-gray-900 mb-2">출고지시 관리</h1>
+          <h1 class="text-[28px] font-bold text-gray-900 mb-2">출고지시 관리</h1>
           <p class="text-sm text-gray-500">확정된 출고지시서를 조회합니다.</p>
         </div>
         <div class="flex gap-3 items-end">
