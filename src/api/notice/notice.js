@@ -17,3 +17,8 @@ export const getNoticeDetail = async (noticeId) => {
 export const getNoticeDetailByClientEmployee = async (noticeId) => {
     return api.get(`/clients/notices/${noticeId}`).then((res) => res.data);
 }
+
+// 본사 직원용 공지사항 목록 조회 API
+export const getNotices = async (params = {}) => {
+    return api.get("/notices", { params }).then((res) => res.data);
+}
