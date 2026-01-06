@@ -16,7 +16,7 @@
       </div>
   
       <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
-        <h2 class="text-sm font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <h2 class="text-md font-bold text-gray-800 mb-6 flex items-center gap-2">
           <span class="w-1 h-5 bg-indigo-600 rounded-full"></span>
           필터 및 검색
         </h2>
@@ -68,7 +68,7 @@
                 </button>
             </div>
 
-            <div class="flex gap-2 h-[42px]">
+            <div class="flex gap-2">
                 <button @click="fetchGIList" 
                 class="flex-1 bg-indigo-700 text-white px-3 py-2 rounded-lg font-bold hover:bg-indigo-800 transition-all text-sm whitespace-nowrap">
                 검색

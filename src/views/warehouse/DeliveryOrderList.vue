@@ -11,7 +11,7 @@
         </div>
 
         <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
-            <h2 class="text-sm font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <h2 class="text-md font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <span class="w-1 h-5 bg-indigo-600 rounded-full"></span>
                 필터 및 검색
             </h2>
@@ -77,7 +77,7 @@
                 <button @click="fetchDOList" class="flex-1 bg-indigo-700 text-white px-3 py-2 rounded-lg font-bold hover:bg-indigo-800 transition-all text-sm whitespace-nowrap">
                     검색
                 </button>
-                <button @click="resetFilters" class="flex-1 bg-gray-100 text-gray-600 px-4 py-2 rounded-lg font-bold hover:bg-gray-200 border border-gray-300 transition-all text-sm whitespace-nowrap">
+                <button @click="resetFilters" class="flex-1 bg-gray-100 text-gray-600 px-3 py-2 rounded-lg font-bold hover:bg-gray-200 border border-gray-300 transition-all text-sm whitespace-nowrap">
                     초기화
                 </button>
                 </div>

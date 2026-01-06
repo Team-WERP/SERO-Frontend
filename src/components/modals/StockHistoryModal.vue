@@ -303,7 +303,7 @@ const formatDateTime = (value) => {
 }
 
 .section-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     color: #111827;
     margin-bottom: 16px;
@@ -328,9 +328,9 @@ const formatDateTime = (value) => {
 }
 
 .info-item .value {
-    font-size: 14px;
+    font-size: 13px;
     color: #111827;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .stock-summary {
@@ -463,7 +463,7 @@ const formatDateTime = (value) => {
     text-align: center;
     padding: 40px;
     color: #9ca3af;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .no-data {

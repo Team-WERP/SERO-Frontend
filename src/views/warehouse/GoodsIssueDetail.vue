@@ -235,12 +235,15 @@
                     <div class="approval-flow flex items-center justify-center p-[30px_20px] bg-gray-50 rounded-lg mb-5">
     
                     <div class="flow-step flex flex-col items-center gap-3">
-                        <div class="w-20 h-20 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 bg-emerald-100 text-emerald-900 border-emerald-500">
+                        <div class="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 bg-emerald-100 text-emerald-900 border-emerald-500">
                             기안
                         </div>
-                        <div class="text-center">
-                            <div class="text-[13px] text-gray-500 font-medium">
-                                {{ giDetail.managerName || '기안' }} · {{ giDetail.managerDepartment || '-' }}
+                        <div class="text-center text-sm">
+                            <div class="font-semibold">
+                                {{ giDetail.managerName || '기안' }} 
+                            </div>
+                            <div class="text-xs text-gray-500 font-medium">
+                                {{ giDetail.managerPosition }}  / {{ giDetail.managerDepartment || '-' }}
                             </div>
                         </div>
                     </div>
@@ -254,7 +257,7 @@
                         ]"></div>
                         
                         <div class="flow-step flex flex-col items-center gap-3">
-                            <div class="w-20 h-20 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300" 
+                            <div class="w-16 h-16 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300" 
                                 :class="[
                                     line.status === 'ALS_APPR' ? 'bg-emerald-100 text-emerald-900' : 
                                     line.status === 'ALS_RVW' ? 'bg-blue-100 text-blue-900 border-blue-500' : 
@@ -262,9 +265,12 @@
                                 ]">
                                 {{ getLineTypeLabel(line.lineType) }}
                             </div>
-                            <div class="text-center">
-                                <div class="text-[13px] text-gray-500 font-medium">
-                                    {{ line.approverName }} · {{ line.approverDepartment }}
+                            <div class="text-center text-sm">
+                                <div class="font-semibold">
+                                    {{ line.approverName }} 
+                                </div>
+                                <div class="text-xs text-gray-500 font-medium">
+                                {{line.approverPosition}} / {{ line.approverDepartment }}
                                 </div>
                             </div>
                         </div>
