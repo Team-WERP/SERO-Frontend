@@ -120,11 +120,6 @@ export const useMenuStore = defineStore("menu", {
                     path: "/warehouse/goods-issues",
                     role: ["AC_SAL", "AC_WHS", "AC_SYS"],
                 },
-                {
-                    name: "배송상태 추적",
-                    path: "/warehouse/tracking",
-                    role: ["AC_SAL", "AC_WHS", "AC_SYS"],
-                },
             ],
 
             // 5. 기준정보

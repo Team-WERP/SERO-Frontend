@@ -72,7 +72,6 @@ import SystemEmployeeManagement from "@/views/system/SystemEmployeeManagement.vu
 import SystemCommonCodeManagement from "@/views/system/SystemCommonCodeManagement.vue";
 import RoleManagement from "@/views/system/RoleManagement.vue";
 import StockByWarehouse from "@/views/warehouse/StockByWarehouse.vue";
-import DeliveryTracking from "@/views/warehouse/DeliveryTracking.vue";
 
 // 에러
 import Forbidden from "@/views/error/Forbidden.vue";
@@ -262,11 +261,6 @@ const router = createRouter({
                 {
                     path: "warehouse/goods-issues/:id",
                     component: GoodsIssueDetail,
-                    meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
-                },
-                {
-                    path: "warehouse/tracking",
-                    component: DeliveryTracking,
                     meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
                 },
                 {
