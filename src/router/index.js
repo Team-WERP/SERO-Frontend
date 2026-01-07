@@ -34,6 +34,8 @@ import WorkResultList from "@/views/production/WorkResultList.vue";
 import ProcessFlowManagement from "@/views/production/ProcessFlowManagement.vue";
 import PRDraftDetailView from "@/views/production/PRDraftDetailView.vue";
 import PRDetail from "@/views/production/PRDetail.vue";
+import WorkLogin from "@/views/work/WorkLogin.vue";
+import WorkExecution from "@/views/work/WorkExecution.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
@@ -88,6 +90,12 @@ const router = createRouter({
         {
             path: "/delivery/login",
             component: DriverLogin,
+            meta: { public: true, hideLayout: true, noPadding: true },
+        },
+        {
+            path: "/work/login",
+            name: "WorkLogin",
+            component: WorkLogin,
             meta: { public: true, hideLayout: true, noPadding: true },
         },
         // 존재하지 않는 페이지 접근
@@ -223,6 +231,16 @@ const router = createRouter({
                     path: "production/requests/:prId",
                     component: PRDetail,
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_SYS"] },
+                },
+                {
+                    path: "work/execution",
+                    name: "WorkExecution",
+                    component: WorkExecution,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true,
+                        roles: ["AC_PRO", "AC_SYS"]
+                    },
                 },
 
                 // 재고·물류
