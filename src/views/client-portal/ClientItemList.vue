@@ -9,6 +9,11 @@
             </div>
         </div>
 
+
+        <div v-if="loading" class="flex h-screen items-center justify-center bg-slate-50">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        </div>
+
         <!-- 검색 영역 -->
         <div class="search-section">
             <div class="search-row">
@@ -91,6 +96,7 @@ const userStore = useUserStore()
 const searchKeyword = ref('')
 const selectedFilter = ref('')
 const items = ref([])
+const loading = ref(true);
 
 // 모달 관련
 const isModalOpen = ref(false)
@@ -119,6 +125,8 @@ const searchItems = async () => {
     } catch (error) {
         console.error('품목 조회 실패:', error)
         items.value = []
+    } finally {
+        loading.value = false;
     }
 }
 
