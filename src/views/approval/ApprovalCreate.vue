@@ -530,14 +530,14 @@ const buildApprovalFormData = (formData) => {
     // 2. [수신자] 리스트 변환
     const recipientList = recipientLines.value.map(line => ({
         approverId: line.id,
-        lineType: line.lineType, // AT_RCPT (수신) 등
+        lineType: "AT_RCPT", // AT_RCPT (수신) 등
         sequence: null // 수신자는 순서 없음 (필요시 추가)
     }));
 
     // 3. [참조자] 리스트 변환
     const referenceList = referenceLines.value.map(line => ({
         approverId: line.id,
-        lineType: line.lineType, // AT_REF (참조) 등
+        lineType: "AT_REF", // AT_REF (참조) 등
         sequence: null // 참조자는 순서 없음
     }));
 

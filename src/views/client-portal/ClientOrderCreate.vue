@@ -422,7 +422,16 @@ const handleSubmit = async () => {
     return;
   }
 
-  if (confirm('주문을 제출하시겠습니까?')) {
+  let confirmMessage = '주문을 제출하시겠습니까?';
+
+  if (availabilityResult.value && !availabilityResult.value.deliverable) {
+    confirmMessage = `요청하신 납기일에 배송이 불가능할 것으로 예상됩니다.\n(예상 가능일: ${availabilityResult.value.expectedDate})\n\n그래도 주문을 진행하시겠습니까?`;
+  } 
+  else if (!availabilityResult.value) {
+    confirmMessage = '납기 가능 여부를 조회하지 않았습니다.\n계속해서 주문을 제출하시겠습니까?';
+  }
+
+  if (confirm(confirmMessage)) {
     const orderPayload = {
       shippedAt: form.value.requestDate.replace('T', ' '),
       poCode: form.value.poNumber,
