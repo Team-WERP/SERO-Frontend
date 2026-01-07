@@ -151,7 +151,8 @@
 
 
                                 <button
-                                    class="cursor-pointer py-6 bg-rose-600 text-white rounded-2xl font-black text-lg hover:bg-rose-700 active:scale-95">
+                                    class="cursor-pointer py-6 bg-rose-600 text-white rounded-2xl font-black text-lg hover:bg-rose-700 active:scale-95"
+                                    @click="openEndModal">
                                     작업 종료
                                 </button>
                             </div>
@@ -367,14 +368,153 @@
         </div>
     </div>
 
+    <!-- ===== 작업 종료(실적 등록) 모달 ===== -->
+    <div v-if="showEndModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl
+           max-h-[90vh] flex flex-col overflow-hidden">
+
+            <!-- ===== Header ===== -->
+            <div class="flex items-center gap-3 px-8 py-6 border-b">
+                <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600
+               flex items-center justify-center font-black">
+                    ■
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-2xl font-black text-gray-900">
+                        작업 종료 · 실적 등록
+                    </h3>
+                    <p class="text-sm text-gray-500">
+                        종료 후에는 실적 수정이 제한됩니다
+                    </p>
+                </div>
+                <button @click="showEndModal = false" class="text-gray-400 hover:text-gray-700 text-xl">
+                    ✕
+                </button>
+            </div>
+
+            <!-- ===== Body ===== -->
+            <div class="flex-1 overflow-y-auto px-8 py-6">
+
+                <!-- ===== 총 실적 요약 ===== -->
+                <section class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+                        <p class="text-sm font-bold text-emerald-700 mb-2">
+                            양품 수량
+                        </p>
+                        <input type="number" v-model.number="endForm.goodQuantity" class="w-full text-3xl font-black text-right
+                   bg-transparent outline-none" />
+                    </div>
+
+                    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-5">
+                        <p class="text-sm font-bold text-rose-700 mb-2">
+                            불량 수량
+                        </p>
+                        <input type="number" v-model.number="endForm.defectiveQuantity" class="w-full text-3xl font-black text-right
+                   bg-transparent outline-none" />
+                    </div>
+                </section>
+
+                <!-- ===== 아이템별 생산 ===== -->
+                <section class="bg-gray-50 rounded-2xl p-5 mb-6">
+                    <h4 class="font-bold mb-3">
+                        아이템별 생산 수량
+                    </h4>
+
+                    <div class="max-h-48 overflow-y-auto">
+                        <table class="w-full text-sm border rounded-xl overflow-hidden bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">품목</th>
+                                    <th class="px-3 py-2 text-right">계획</th>
+                                    <th class="px-3 py-2 text-right">생산</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="i in previewItems" :key="i.workOrderItemId" class="border-t">
+                                    <td class="px-3 py-2">
+                                        {{ i.itemName }}
+                                    </td>
+                                    <td class="px-3 py-2 text-right">
+                                        {{ i.plannedQuantity }}
+                                    </td>
+                                    <td class="px-3 py-2 text-right">
+                                        <input type="number" v-model.number="i.producedQuantity"
+                                            class="w-24 border rounded px-2 py-1 text-right" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ===== 자재 사용 ===== -->
+                <section class="bg-gray-50 rounded-2xl p-5 mb-6">
+                    <h4 class="font-bold mb-3">
+                        자재 사용량
+                    </h4>
+
+                    <div class="max-h-48 overflow-y-auto">
+                        <table class="w-full text-sm border rounded-xl overflow-hidden bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">자재</th>
+                                    <th class="px-3 py-2 text-right">예상</th>
+                                    <th class="px-3 py-2 text-right">실사용</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="m in previewMaterials" :key="m.materialId" class="border-t">
+                                    <td class="px-3 py-2">
+                                        {{ m.materialName }}
+                                    </td>
+                                    <td class="px-3 py-2 text-right">
+                                        {{ m.expectedQuantity }}
+                                    </td>
+                                    <td class="px-3 py-2 text-right">
+                                        <input type="number" v-model.number="m.actualQuantity"
+                                            class="w-24 border rounded px-2 py-1 text-right" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ===== 메모 ===== -->
+                <section>
+                    <label class="text-sm font-bold text-gray-600">
+                        작업 종료 메모 (선택)
+                    </label>
+                    <textarea v-model="endForm.note" rows="3" placeholder="특이사항이 있으면 기록해주세요"
+                        class="w-full mt-1 border rounded-xl p-3 text-sm resize-none" />
+                </section>
+
+            </div>
+
+            <!-- ===== Footer (고정) ===== -->
+            <div class="flex justify-end gap-3 px-8 py-4
+             border-t bg-white">
+                <button @click="showEndModal = false" class="px-6 py-3 rounded-xl bg-gray-100 font-bold">
+                    취소
+                </button>
+                <button @click="submitEnd" class="px-8 py-3 rounded-xl bg-rose-600
+               text-white font-black hover:bg-rose-700">
+                    종료 처리
+                </button>
+            </div>
+
+        </div>
+    </div>
 
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { ref, onMounted, computed, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getDailyWorkOrders, startWorkOrder, pauseWorkOrder, resumeWorkOrder, endWorkOrder, getWorkOrderHistory } from '@/api/production/workOrder'
+import {
+    getDailyWorkOrders, startWorkOrder, pauseWorkOrder, resumeWorkOrder, endWorkOrder, getWorkOrderHistory, previewWorkOrderResult
+} from '@/api/production/workOrder'
 import { getProductionLines } from '@/api/production/productionPlan'
 
 const currentTime = ref('')
@@ -390,6 +530,15 @@ const showResumeModal = ref(false)
 const workNote = ref('')
 const showHistoryModal = ref(false)
 const workHistories = ref([])
+
+const showEndModal = ref(false)
+const endForm = ref({
+    goodQuantity: 0,
+    defectiveQuantity: 0,
+    note: ''
+})
+const previewItems = ref([])
+const previewMaterials = ref([])
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -461,7 +610,7 @@ const loadWorkOrders = async (lineId) => {
             workOrderCode: wo.workOrderCode,
             status: wo.status,
             materialName: mainItem.itemName ?? '-',
-            targetQty: mainItem.plannedQuantity ?? 0,
+            targetQty: wo.quantity ?? 0,
             producedQty: mainItem.producedQuantity ?? 0,
             unit: mainItem.unit ?? ''
         }
@@ -510,7 +659,7 @@ const startSelectedWork = async () => {
 
     await startWorkOrder(selectedWaitingWork.value.workOrderId)
     workElapsedSeconds.value = 0
-    startTimer()
+    startTickTimer()
 
     closeStartModal()
     await loadWorkOrders(selectedLine.value.lineId)
@@ -662,6 +811,61 @@ const actionColor = (action) => {
         case 'END': return 'bg-rose-500'
         default: return 'bg-gray-400'
     }
+}
+
+const openEndModal = async () => {
+    if (!currentWork.value) return
+
+    endForm.value.goodQuantity = currentWork.value.targetQty
+    endForm.value.defectiveQuantity = 0
+    endForm.value.note = ''
+
+    const { data } = await previewWorkOrderResult(
+        currentWork.value.workOrderId,
+        { goodQuantity: endForm.value.goodQuantity }
+    )
+
+    previewItems.value = data.items || []
+    previewMaterials.value = data.materials || []   // ✅ 추가
+
+    showEndModal.value = true
+}
+
+watch(
+    () => endForm.value.goodQuantity,
+    async (qty) => {
+        if (!currentWork.value) return
+
+        const { data } = await previewWorkOrderResult(
+            currentWork.value.workOrderId,
+            { goodQuantity: qty }
+        )
+
+        previewItems.value = data.items || []
+        previewMaterials.value = data.materials || [] // ✅ 추가
+    }
+)
+
+const submitEnd = async () => {
+    await endWorkOrder(currentWork.value.workOrderId, {
+        goodQuantity: endForm.value.goodQuantity,
+        defectiveQuantity: endForm.value.defectiveQuantity,
+        endTime: new Date().toISOString(),
+        note: endForm.value.note,
+
+        items: previewItems.value.map(i => ({
+            workOrderItemId: i.workOrderItemId,
+            producedQuantity: i.producedQuantity
+        })),
+
+        materials: previewMaterials.value.map(m => ({
+            materialId: m.materialId,
+            actualQuantity: m.actualQuantity
+        }))
+    })
+
+    showEndModal.value = false
+    await loadWorkOrders(selectedLine.value.lineId)
 }
 
 
