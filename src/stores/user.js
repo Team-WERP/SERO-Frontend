@@ -36,7 +36,7 @@ export const useUserStore = defineStore("user", {
             if (state.user?.position.includes("JP_MGR")) return "부장";
             if (state.user?.position.includes("JP_SM")) return "과장";
             if (state.user?.position.includes("JP_AM")) return "대리";
-            if (state.user?.position.includes("JP_STF")) return "직원";
+            if (state.user?.position.includes("JP_STF")) return "사원";
 
             return "";
         },
