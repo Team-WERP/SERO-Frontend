@@ -262,7 +262,7 @@ const resetSearch = () => {
 
 // --- Watcher (URL 감지 및 데이터 로드) ---
 // immediate: true 덕분에 처음 페이지 로드될 때도 실행됨
-watch(() => route.query, (newQuery) => {
+watch(() => route.fullPath, (newQuery) => {
     // URL 변경 사항을 변수에 동기화
     currentPage.value = Number(newQuery.page) || 1;
     searchFilter.value.keyword = newQuery.keyword || '';
@@ -279,7 +279,7 @@ const getPositionName = (code) => {
     return EMPLOYEE_POSITION.CODE[code];
 };
 
-const goDetail = (id) => router.push(`/clients/notices/${id}`);
+const goDetail = (id) => router.push(`/client-portal/notices/${id}`);
 
 const isPinnedActive = (start, end) => {
     if (!start) return false;
