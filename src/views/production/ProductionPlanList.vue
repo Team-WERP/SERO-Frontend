@@ -55,7 +55,7 @@
                             <div class="text-[13px] text-slate-400 flex flex-col mt-1">
                                 <span>제품명: {{ line.materialName || '미지정' }}</span>
                                 <span class="truncate">일일 최대: {{ formatNumber(line.dailyCapacity) }}{{ line.unit
-                                }}</span>
+                                    }}</span>
                             </div>
                         </div>
 
@@ -157,8 +157,7 @@
 
         <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :defaultLineId="selectedLineId"
             :month="month" @close="showPlanModal = false" @created="onCreated" />
-        <PPDetailModal v-if="showDetailModal && selectedPpId !== null" :ppId="selectedPpId"
-            @close="showDetailModal = false" />
+        <PPDetailModal v-if="showDetailModal && selectedPpId !== null" :ppId="selectedPpId" @close="closeDetailModal" />
 
         <Teleport to="body">
             <div v-show="tooltip.visible"
@@ -172,11 +171,14 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PlanCreateModal from '@/components/production/PlanCreateModal.vue'
 import PPDetailModal from '@/components/production/PPDetailModal.vue'
 import { getProductionLines, getMonthlyPlans, getUnassignedTargets, getDailyLineSummary } from '@/api/production/productionPlan'
 
 // --- Constants & Refs ---
+const route = useRoute()
+const router = useRouter()
 const month = ref(toMonthValue(new Date()))
 const lines = ref([])
 const plans = ref([])
@@ -197,6 +199,35 @@ const tooltip = ref({
     x: 0,
     y: 0,
     text: ''
+})
+
+
+const openPlan = (plan) => {
+    router.push(`/production/plans/${plan.ppId}`)
+}
+
+const closeDetailModal = () => {
+    router.push('/production/plans')
+}
+
+const checkRouteParam = () => {
+    const id = route.params.id
+    if (id) {
+        selectedPpId.value = parseInt(id)
+        showDetailModal.value = true
+    } else {
+        showDetailModal.value = false
+        selectedPpId.value = null
+    }
+}
+
+watch(() => route.params.id, () => {
+    checkRouteParam()
+}, { immediate: true })
+
+onMounted(async () => {
+    await reloadAll()
+    checkRouteParam()
 })
 
 const getLoadTailwindClass = (lineId, day) => {
@@ -377,10 +408,7 @@ const openCreate = (u) => {
     selectedLineId.value = u.productionLineId
     showPlanModal.value = true
 }
-const openPlan = (plan) => {
-    selectedPpId.value = plan.ppId
-    showDetailModal.value = true
-}
+
 
 function assignPlanLanes(plans) {
     const lanes = []
@@ -420,7 +448,6 @@ const reloadAll = async () => {
 const onCreated = () => { showPlanModal.value = false; reloadAll() }
 
 watch(month, reloadAll)
-onMounted(reloadAll)
 
 function toMonthValue(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`

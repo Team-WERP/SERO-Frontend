@@ -30,7 +30,6 @@ import ProductionDashboard from "@/views/production/ProductionDashboard.vue";
 import ProductionRequestList from "@/views/production/ProductionRequestList.vue";
 import ProductionPlanList from "@/views/production/ProductionPlanList.vue";
 import WorkOrderList from "@/views/production/WorkOrderList.vue";
-import WorkResultInput from "@/views/production/WorkResultInput.vue";
 import WorkResultList from "@/views/production/WorkResultList.vue";
 import ProcessFlowManagement from "@/views/production/ProcessFlowManagement.vue";
 import PRDraftDetailView from "@/views/production/PRDraftDetailView.vue";
@@ -67,7 +66,6 @@ import NoticeDetail from "@/views/notices/NoticeDetail.vue";
 // 시스템 관리
 import SystemCommonCodeManagement from "@/views/system/SystemCommonCodeManagement.vue";
 import StockByWarehouse from "@/views/warehouse/StockByWarehouse.vue";
-import DeliveryTracking from "@/views/warehouse/DeliveryTracking.vue";
 
 // 에러
 import Forbidden from "@/views/error/Forbidden.vue";
@@ -197,18 +195,13 @@ const router = createRouter({
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_SYS"] },
                 },
                 {
-                    path: "production/plans",
+                    path: "production/plans/:id?",
                     component: ProductionPlanList,
                     meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },
                 {
                     path: "production/work-orders",
                     component: WorkOrderList,
-                    meta: { roles: ["AC_PRO", "AC_SYS"] },
-                },
-                {
-                    path: "production/work-results/input",
-                    component: WorkResultInput,
                     meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },
                 {
@@ -257,11 +250,6 @@ const router = createRouter({
                 {
                     path: "warehouse/goods-issues/:id",
                     component: GoodsIssueDetail,
-                    meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
-                },
-                {
-                    path: "warehouse/tracking",
-                    component: DeliveryTracking,
                     meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
                 },
                 {

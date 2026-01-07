@@ -2,8 +2,11 @@
     <div class="driver-login-page">
         <div class="login-container">
             <div class="login-card">
+                <p class="logo-subtitle">새로운 길로, 새로</p>
                 <div class="logo-section">
                     <img src="@/assets/logo.png" alt="SERO Logo" class="logo-image" />
+                </div>
+                <div class="header-section">
                     <h2 class="subtitle">SERO 배송 파트너</h2>
                     <p class="description">오늘도 안전한 배송 부탁드립니다!</p>
                 </div>
@@ -32,11 +35,9 @@
                     </button>
                 </form>
 
-                <div class="footer-links">
-                    <a href="#" class="link">비밀번호 찾기</a>
-                    <span class="separator">|</span>
-                    <a href="#" class="link">기사님 등록 문의</a>
-                </div>
+                <button @click="devLogin" class="dev-login-btn">
+                    배송 기사로 로그인
+                </button>
             </div>
         </div>
     </div>
@@ -68,11 +69,16 @@ const handleLogin = async () => {
             password: password.value
         })
 
-        // 로그인 성공 시 토큰 저장
-        const { accessToken } = response.data
+        console.log('로그인 응답:', response)
+
+        // 로그인 성공 시 토큰과 이름 저장
+        const { accessToken, name } = response.data
 
         if (accessToken) {
             localStorage.setItem('accessToken', accessToken)
+            if (name) {
+                localStorage.setItem('name', name)
+            }
 
             // userStore 초기화
             userStore.setFromToken(accessToken)
@@ -85,6 +91,38 @@ const handleLogin = async () => {
     } catch (error) {
         console.error('로그인 실패:', error)
         alert('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')
+    } finally {
+        loading.value = false
+    }
+}
+
+// 개발용 빠른 로그인
+const devLogin = async () => {
+    try {
+        loading.value = true
+        const response = await login('hq', {
+            email: 'driver@werp.com',
+            password: 'kang'
+        })
+
+        console.log('로그인 응답:', response)
+
+        const { accessToken, name } = response.data
+
+        if (accessToken) {
+            localStorage.setItem('accessToken', accessToken)
+            if (name) {
+                localStorage.setItem('name', name)
+            }
+
+            userStore.setFromToken(accessToken)
+            router.push('/delivery/management')
+        } else {
+            alert('로그인에 성공했지만 토큰을 받지 못했습니다.')
+        }
+    } catch (error) {
+        console.error('개발용 로그인 실패:', error)
+        alert('로그인에 실패했습니다.')
     } finally {
         loading.value = false
     }
@@ -103,26 +141,38 @@ const handleLogin = async () => {
 
 .login-container {
     width: 100%;
-    max-width: 440px;
+    max-width: 430px;
 }
 
 .login-card {
     background: #ffffff;
     border-radius: 16px;
-    padding: 40px 32px;
+    padding: 40px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.logo-subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 8px 0;
 }
 
 .logo-section {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
 }
 
 .logo-image {
-    width: 120px;
+    width: 160px;
     height: auto;
-    margin: 0 auto 16px;
+    margin: 0 auto;
     display: block;
+}
+
+.header-section {
+    text-align: center;
+    margin-bottom: 24px;
 }
 
 .subtitle {
@@ -139,26 +189,25 @@ const handleLogin = async () => {
 }
 
 .login-form {
-    margin-bottom: 24px;
+    margin-bottom: 0;
 }
 
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .form-input {
     width: 100%;
-    padding: 14px 16px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 15px;
+    padding: 10px 16px;
+    border: 1px solid #dcdfea;
+    border-radius: 11px;
+    font-size: 14px;
     transition: all 0.2s;
+    outline: none;
 }
 
 .form-input:focus {
-    outline: none;
     border-color: #4C4CDD;
-    box-shadow: 0 0 0 3px rgba(76, 76, 221, 0.1);
 }
 
 .form-input::placeholder {
@@ -167,50 +216,43 @@ const handleLogin = async () => {
 
 .login-btn {
     width: 100%;
-    padding: 16px;
+    padding: 10px 16px;
     background: #4C4CDD;
     color: #ffffff;
     border: none;
-    border-radius: 8px;
-    font-size: 16px;
+    border-radius: 12px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    margin-top: 8px;
 }
 
 .login-btn:hover:not(:disabled) {
-    background: #3d3dbb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(76, 76, 221, 0.3);
+    opacity: 0.95;
 }
 
 .login-btn:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
-.footer-links {
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-}
-
-.link {
-    font-size: 14px;
-    color: #6b7280;
-    text-decoration: none;
-    transition: color 0.2s;
-}
-
-.link:hover {
+.dev-login-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background: #ffffff;
     color: #4C4CDD;
+    border: 1px solid #4C4CDD;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 32px;
 }
 
-.separator {
-    color: #d1d5db;
-    font-size: 14px;
+.dev-login-btn:hover {
+    background: #f9fafb;
 }
 
 /* 반응형 */
@@ -220,7 +262,7 @@ const handleLogin = async () => {
     }
 
     .logo-image {
-        width: 100px;
+        width: 140px;
     }
 
     .subtitle {
