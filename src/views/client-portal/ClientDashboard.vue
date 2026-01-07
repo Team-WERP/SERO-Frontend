@@ -43,23 +43,27 @@
       </div>
 
       <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200">
-        <div class="flex justify-between items-center mb-6 border-b border-gray-300 pb-4">
+        <div class="flex justify-between items-center mb-2 border-b border-gray-300 pb-2">
           <div class="flex items-center gap-2">
             <span class="w-1.5 h-5 bg-[#4C4CDD] rounded-full"></span>
             <h3 class="font-bold text-slate-800">공지 & 시스템 알림</h3>
           </div>
-          <button @click="goToNotices" class="text-[13px] text-[#4C4CDD] hover:underline">더 보기</button>
+          <button @click="goToNotices" class="text-sm text-[#4C4CDD] hover:underline">더 보기</button>
         </div>
-        <div v-if="dashboardData.notices.length > 0" class="space-y-4">
-          <div v-for="notice in dashboardData.notices" :key="notice.id" @click="goToNoticeDetail(notice)"
-            class="p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-slate-100">
-            <div class="flex items-center gap-2 mb-1">
-              <span v-if="notice.isEmergency"
-                class="bg-rose-100 text-rose-600 text-[10px] font-bold px-1.5 py-0.5 rounded">중요</span>
-              <h4 class="text-sm font-semibold text-slate-700 truncate">{{ notice.title }}</h4>
-            </div>
+
+        <div v-if="dashboardData.notices.length > 0" class="divide-y divide-slate-100"> <div v-for="notice in dashboardData.notices" :key="notice.id" @click="goToNoticeDetail(notice)"
+            class="py-3 px-2 hover:bg-slate-50 cursor-pointer transition-colors group"> <div class="flex items-center gap-3">
+              <span v-if="notice.emergency"
+                class="shrink-0 bg-rose-100 text-rose-600 text-[10px] font-bold px-1.5 py-0.5 rounded">긴급</span>
+              
+              <h4 class="text-sm font-medium text-slate-600 truncate group-hover:text-[#4C4CDD]">
+                {{ notice.title }}
+              </h4>
+              
+              </div>
           </div>
         </div>
+
         <div v-else class="h-[240px] flex flex-col items-center justify-center text-slate-400">
           <img src="@/assets/새로이새로미.png" alt="No Approval" class="mb-4 h-24 w-auto opacity-40" />
           <span class="text-sm">등록된 공지사항이 없습니다.</span>

@@ -5,14 +5,14 @@
         </div>
 
         <div v-else>
-            <header class="flex justify-between items-center mb-4">
+            <header class="max-w-7xl mx-auto flex justify-between items-center mb-6">
                 <h1 class="text-[28px] font-bold flex items-center gap-2">
                     <span class="w-1.5 h-8 bg-[#4C4CDD] rounded inline-block"></span>
                     공지사항
                 </h1>
                 <div class="flex gap-2 font-medium">
                     <button @click="goWrite"
-                        class="px-3 py-1.5 bg-white border border-[#e5e7eb] rounded hover:bg-slate-50 transition-colors cursor-pointer duration-200">
+                        class="px-4 py-2 bg-white border border-[#e5e7eb] rounded hover:bg-slate-50 transition-colors cursor-pointer duration-200 text-[#4C4CDD] font-semibold">
                         + 글 작성하기
                     </button>
                 </div>
