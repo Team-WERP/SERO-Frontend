@@ -225,7 +225,7 @@
                                                 <td class="py-4">{{ approvalData.drafterName }}
                                                 </td>
                                                 <td class="py-4">{{ getPositionLabel(approvalData.drafterPositionCode)
-                                                    }}</td>
+                                                }}</td>
                                                 <td class="py-4">{{ approvalData.drafterDepartment }}</td>
                                                 <td class="py-4 text-[#10B981]">승인</td>
                                                 <td class="py-4">{{ approvalData.draftedAt }}</td>
@@ -365,7 +365,7 @@ const currentStepIndex = computed(() => {
 
     if (!status) return -1;
 
-    if (['PR_TMP', 'PR_RVW', 'PR_APPR_PEND', 'PR_APPR_RJCT'].includes(status)) return 0;
+    if (['PR_TMP', 'PR_RVW', 'PR_APPR_PEND', 'PR_APPR_RJCT', 'PR_APPR_DONE'].includes(status)) return 0;
 
     if (status === 'PR_PLANNED' || (status === 'PR_APPR_DONE' && (!progress || progress === 'PLANNING' || progress === 'PLANNED'))) {
         return 1;

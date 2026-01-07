@@ -70,7 +70,7 @@
                         <div v-if="formData.isPinned"
                             class="flex items-center gap-2 ml-3 px-2 py-1 bg-slate-100 border border-slate-200 rounded-sm transition-all">
                             <span class="text-xs font-medium text-slate-500">종료일</span>
-                            <input type="date" v-model="formData.pinEndDate"
+                            <input type="date" v-model="formData.pinnedEndAt"
                                 class="bg-transparent border-none p-0 text-xs text-slate-700 focus:ring-0 cursor-pointer w-[90px]">
 
                             <span class="text-[11px] text-slate-400 tracking-tight whitespace-nowrap">
