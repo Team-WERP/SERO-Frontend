@@ -66,3 +66,10 @@ export async function getClientItemPriceHistory(clientId, itemId) {
     const response = await api.get(`/clients-manage/${clientId}/items/${itemId}/price-history`)
     return response.data
 }
+
+// 고객사의 당사 기업정보 조회
+export async function getClientCompanyDetail(clientId) {
+    const response = await api.get(`/clients/${clientId}/details`)
+    return response.data
+}
+
