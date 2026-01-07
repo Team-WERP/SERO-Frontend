@@ -13,21 +13,11 @@
 
                 <form @submit.prevent="handleLogin" class="login-form">
                     <div class="form-group">
-                        <input
-                            v-model="email"
-                            type="email"
-                            class="form-input"
-                            placeholder="이메일"
-                        />
+                        <input v-model="email" type="email" class="form-input" placeholder="이메일" />
                     </div>
 
                     <div class="form-group">
-                        <input
-                            v-model="password"
-                            type="password"
-                            class="form-input"
-                            placeholder="비밀번호"
-                        />
+                        <input v-model="password" type="password" class="form-input" placeholder="비밀번호" />
                     </div>
 
                     <button type="submit" class="login-btn" :disabled="loading">

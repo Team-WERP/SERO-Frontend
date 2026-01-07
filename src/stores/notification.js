@@ -53,7 +53,7 @@ export const useNotificationStore = defineStore('notification', {
 
             try {
                 // 1. 서버 API 호출 (백엔드 컨트롤러의 /read-all 엔드포인트)
-                await markAllAsRead(); 
+                await markAllAsRead();
 
                 // 2. 프론트엔드 로컬 상태 강제 업데이트
                 // 배열 전체를 순회하여 read를 true로 변경
@@ -61,10 +61,10 @@ export const useNotificationStore = defineStore('notification', {
                     ...n,
                     read: true
                 }));
-                
+
                 // 3. 개수 초기화
                 this.unreadCount = 0;
-                
+
             } catch (error) {
                 console.error('모든 알림 읽음 처리 실패:', error);
                 // 에러 발생 시 상태 롤백을 위해 다시 조회 시도
@@ -105,8 +105,20 @@ export const useNotificationStore = defineStore('notification', {
         setConnected(status) { this.isConnected = status; },
         setEventSource(es) { this.eventSource = es; },
         disconnect() {
-            if (this.eventSource) { this.eventSource.close(); this.eventSource = null; }
+            if (!this.isConnected) return; // 이미 끊겼으면 무시
+
+            // eventSource가 있다면 close
+            if (this.eventSource) {
+                this.eventSource.close();
+                this.eventSource = null;
+            }
+
+            // AbortController가 있으면 abort
+            this.controller?.abort();
+
+            // 상태 초기화
             this.isConnected = false;
+            this.reset();
         },
         reset() { this.disconnect(); this.notifications = []; this.unreadCount = 0; }
     }
