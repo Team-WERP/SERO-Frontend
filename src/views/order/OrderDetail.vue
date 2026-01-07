@@ -36,7 +36,6 @@
               {{ idx + 1 }}
             </div>
             <span class="mt-1 text-[11px] font-medium text-gray-900">{{ step }}</span>
-            <span class="text-[10px] text-gray-400">{{ getStepDate(idx) }}</span>
           </div>
           <div v-if="idx !== steps.length - 1" class="mb-6 h-[2px] w-12 bg-gray-300"></div>
         </div>

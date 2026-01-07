@@ -1,5 +1,7 @@
 <template>
-    <div class="pr-detail-wrap relative"> <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
+    <div class="pr-detail-wrap relative">
+        <div v-if="isLoading"
+            class="fixed inset-0 z-[9999] flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
             <div class="flex flex-col items-center gap-3">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4C4CDD]"></div>
             </div>
@@ -31,8 +33,8 @@
             </div>
 
             <div v-if="islLoading" class="flex h-screen items-center justify-center bg-slate-50">
-                            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
-                        </div>
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
+            </div>
 
             <!-- stepper -->
             <div class="flex items-center gap-4">
@@ -43,10 +45,10 @@
                             {{ idx + 1 }}
                         </div>
                         <span class="mt-1 text-[11px] font-medium text-gray-900">{{ step }}</span>
-                        <span class="text-[10px] text-gray-400">
+                        <!-- <span class="text-[10px] text-gray-400">
                             {{ idx === 0 ? header.requestedAt?.slice(0, 10) : (idx === 3 && header.status === 'PR_DONE'
                                 ? header.updatedAt?.slice(0, 10) : '-') }}
-                        </span>
+                        </span> -->
                     </div>
                     <div v-if="idx !== steps.length - 1" class="mb-6 h-[2px] w-12 bg-gray-200"></div>
                 </div>
@@ -223,7 +225,7 @@
                                                 <td class="py-4">{{ approvalData.drafterName }}
                                                 </td>
                                                 <td class="py-4">{{ getPositionLabel(approvalData.drafterPositionCode)
-                                                }}</td>
+                                                    }}</td>
                                                 <td class="py-4">{{ approvalData.drafterDepartment }}</td>
                                                 <td class="py-4 text-[#10B981]">승인</td>
                                                 <td class="py-4">{{ approvalData.draftedAt }}</td>
@@ -462,7 +464,7 @@ const getLineStatusClass = (status) => {
 
 
 onMounted(async () => {
-    try{
+    try {
         isLoading.value = true;
         const res = await getPRDetail(prId);
         header.value = res.header;
@@ -472,12 +474,12 @@ onMounted(async () => {
         if (header.value.approvalCode) {
             fetchApprovalSummary();
         }
-    }catch(error) {
+    } catch (error) {
         console.error('API Error:', error);
     } finally {
         isLoading.value = false;
     }
-    
+
 });
 
 const showAssignManagerBtn = computed(() => {
