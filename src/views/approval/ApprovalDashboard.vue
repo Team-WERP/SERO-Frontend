@@ -2,10 +2,10 @@
     <div class="min-h-screen bg-gray-50 p-8 font-sans text-gray-800">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div v-for="(card, index) in summaryCards" :key="index"
-                class="rounded-xl p-6 flex items-center justify-between border border-transparent transition-all "
-                :class="card.bgColor">
+                class=" rounded-xl p-6 flex items-center justify-between border border-transparent transition-all cursor-pointer hover:shadow-sm"
+                :class="card.bgColor" @click=goToApprovalPage(card.goToPage)>
                 <div>
-                    <p class="text-sm text-gray-500 mb-1 font-medium">{{ card.title }}</p>
+                    <p class=" text-sm text-gray-500 mb-1 font-medium">{{ card.title }}</p>
                     <div class="flex items-end gap-1">
                         <span class="text-3xl font-bold" :class="card.textColor">{{ card.count }}</span>
                         <span class="text-sm text-gray-500 mb-1">건</span>
@@ -21,7 +21,8 @@
             <div class="lg:col-span-5 bg-white rounded-xl  border border-gray-100 flex flex-col h-full">
                 <div class="p-5 border-b border-gray-100 flex justify-between items-center">
                     <h2 class="text-lg font-bold flex items-center gap-2 text-gray-800">
-                        <span class="text-blue-600">📥</span> 결재 할 문서
+                        <!-- <span class="text-blue-600">📥</span>  -->
+                        결재할 문서
                     </h2>
                     <a href="/approval/requested" class="text-xs text-blue-500 hover:underline">더보기</a>
                 </div>
@@ -66,7 +67,7 @@
                     <h2 class="text-lg font-bold text-gray-800">최근 결재 내역</h2>
                     <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
                         <button v-for="tab in tabs" :key="tab.value" @click="handleTabChange(tab.value)"
-                            class="px-3 py-1 text-xs rounded-md transition-all font-medium"
+                            class="px-3 py-1 text-xs rounded-md transition-all font-medium cursor-pointer"
                             :class="currentTab === tab.value ? 'bg-white  text-blue-600' : 'text-gray-500 hover:text-gray-700'">
                             {{ tab.label }}
                         </button>
@@ -175,6 +176,7 @@ const summaryCards = ref([
         count: 0,
         bgColor: 'bg-blue-50',
         textColor: 'text-blue-600',
+        goToPage: '/approval/submitted',
         icon: `<svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
     },
     {
@@ -183,6 +185,7 @@ const summaryCards = ref([
         count: 0,
         bgColor: 'bg-purple-50',
         textColor: 'text-purple-600',
+        goToPage: '/approval/requested',
         icon: `<svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>`
     },
     {
@@ -191,14 +194,16 @@ const summaryCards = ref([
         count: 0,
         bgColor: 'bg-green-50',
         textColor: 'text-green-600',
+        goToPage: '/approval/received',
         icon: `<svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2z"></path></svg>`
     },
     {
         id: 'total_hist',
-        title: '전체 결재내역 보기',
+        title: '전체 결재 내역',
         count: 0,
         bgColor: 'bg-gray-100',
         textColor: 'text-gray-600',
+        goToPage: '/approval/archived',
         icon: `<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`
     }
 ]);
@@ -248,7 +253,6 @@ const fetchUnreadReferenceCount = async () => {
 const fetchTotalHistoryCount = async () => {
     try {
         const response = await getProcessedApprovals({});
-        console.log(response);
         if (response) {
             summaryCards.value[3].count = response.totalElements || 0;
         }
@@ -311,12 +315,16 @@ const fetchRecentApprovals = async (status = 'ALL') => {
 
 const handleTabChange = (status) => {
     currentTab.value = status;
-    console.log(currentTab.value)
+
     fetchRecentApprovals(status);
 };
 
 const goToDetail = (approval) => {
     router.push(`/approval/${approval.id}`);
+}
+
+const goToApprovalPage = (url) => {
+    router.push(url);
 }
 
 // 날짜 포맷 (YYYY.MM.DD)
