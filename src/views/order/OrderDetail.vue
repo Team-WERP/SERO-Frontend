@@ -361,7 +361,7 @@
                       <td class="py-4 text-gray-600">{{ doc[section.dateField] }}</td>
                       <td class="py-4 text-center">
                         <button 
-                          v-if="!(section.type === 'PRODUCTION' && doc.status === 'PR_TMP')" 
+                          v-if="!(section.type === 'PRODUCTION' && doc.status === 'PR_TMP' || doc.status === 'PR_RVW' && doc.managerName == null || doc.status === 'GI_RVW')" 
                           @click="openDocument(doc)" 
                           class="text-gray-400 hover:text-[#4C4CDD] transition-all"
                           title="문서 보기"
@@ -753,7 +753,7 @@ const openPrintModal = () => {
 
 const getLinkPath = (type, doc) => {
   if (!doc) return '#';
-  
+  console.log(doc);
   switch (type) {
     case 'PRODUCTION':
     if (doc.status === 'PR_TMP') {
