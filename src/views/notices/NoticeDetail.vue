@@ -195,10 +195,11 @@ const notice = ref(null);
 const loading = ref(true);
 
 const canEdit = computed(() => {
-    if (!notice.value) return false;
+    if (!notice.value || userStore.hasAuthority('AC_CLI')) return false;
 
     // 예: 작성자 본인이거나 시스템 관리자일 때
     return userStore.user?.id === notice.value.creatorId || userStore.hasAuthority('AC_SYS');
+
 });
 
 onMounted(async () => {
