@@ -368,6 +368,8 @@ const deleteNotice = async () => {
     try {
         await deleteNoticeAPI(notice.value.noticeId);
         alert('공지사항이 삭제되었습니다.');
+
+        router.push('/notices');
     } catch (e) {
         console.error(e);
         alert('공지사항 삭제에 실패했습니다.');
