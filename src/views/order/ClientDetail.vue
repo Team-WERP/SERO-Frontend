@@ -9,7 +9,9 @@
             <h1 class="page-title">{{ client?.companyName }}</h1>
         </div>
 
-        <div v-if="loading" class="loading">로딩 중...</div>
+        <div v-if="loading" class="flex h-screen items-center justify-center bg-slate-50">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
+        </div>
 
         <div v-else-if="client" class="content-wrapper">
             <!-- 3단 레이아웃 -->
@@ -131,10 +133,31 @@
                                 </td>
                                 <td class="col-price">{{ formatNumber(item.unitPrice) }}</td>
                                 <td class="col-contract">{{ formatNumber(item.contractPrice) }}</td>
-                                <td class="col-actions" @click.stop>
-                                    <span class="emoji-btn" @click="openHistoryModal(item)" title="가격 변경 이력 보기">
-                                        📋
-                                    </span>
+                                <td class="px-4 py-3 text-center" @click.stop>
+                                    <button 
+                                        type="button"
+                                        @click="openHistoryModal(item)" 
+                                        title="가격 변경 이력 보기"
+                                        class="text-gray-400 hover:text-[#4C4CDD] transition-colors"
+                                    >
+                                        <svg 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        width="20" 
+                                        height="20" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        stroke-width="2" 
+                                        stroke-linecap="round" 
+                                        stroke-linejoin="round"
+                                        >
+                                        <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+                                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                                        <path d="M9 12h6"/>
+                                        <path d="M9 16h6"/>
+                                        <path d="M9 8h6"/>
+                                        </svg>
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -300,6 +323,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 6px;
+    margin-bottom: 10px;
 }
 
 .breadcrumb-item {
@@ -328,7 +352,7 @@ onMounted(() => {
 }
 
 .page-title {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
     color: #111827;
     line-height: 1.2;

@@ -315,7 +315,6 @@ const fetchRecentApprovals = async (status = 'ALL') => {
 
 const handleTabChange = (status) => {
     currentTab.value = status;
-
     fetchRecentApprovals(status);
 };
 

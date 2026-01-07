@@ -592,17 +592,8 @@ const currentStepIndex = computed(() => {
 
 // 부분 출고 지원: 미출고 수량이 남아있는지 확인
 const hasUnshippedQuantity = computed(() => {
-  console.log('hasUnshippedQuantity 체크:', {
-    hasOrderItems: !!order.value?.items,
-    orderItemsCount: order.value?.items?.length,
-    hasItemHistory: !!itemHistory.value?.items,
-    itemHistoryCount: itemHistory.value?.items?.length,
-    orderItems: order.value?.items,
-    itemHistory: itemHistory.value?.items
-  });
 
   if (!order.value?.items || !itemHistory.value?.items) {
-    console.log('→ 데이터 없음, false 반환');
     return false;
   }
 
@@ -610,21 +601,9 @@ const hasUnshippedQuantity = computed(() => {
     const history = itemHistory.value.items.find(h => h.itemId === item.id);
     const shippedQty = history?.doQuantity || 0;
     const unshippedQty = item.quantity - shippedQty;
-
-    console.log(`품목 ${item.itemName}:`, {
-      itemId: item.id,
-      quantity: item.quantity,
-      historyFound: !!history,
-      doQuantity: history?.doQuantity,
-      shippedQty,
-      unshippedQty,
-      hasRemaining: unshippedQty > 0
-    });
-
     return unshippedQty > 0;
   });
 
-  console.log('→ 최종 결과:', result);
   return result;
 });
 
@@ -643,13 +622,6 @@ const canCreateDeliveryOrProduction = computed(() => {
 
   const statusAllowed = allowedStatuses.includes(order.value.status);
   const hasRemaining = hasUnshippedQuantity.value;
-
-  console.log('canCreateDeliveryOrProduction:', {
-    status: order.value.status,
-    statusAllowed,
-    hasUnshippedQuantity: hasRemaining,
-    result: statusAllowed && hasRemaining
-  });
 
   return statusAllowed && hasRemaining;
 });

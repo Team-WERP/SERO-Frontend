@@ -19,7 +19,9 @@
                 </div>
 
                 <div class="history-list">
-                    <div v-if="loading" class="loading">이력을 불러오는 중...</div>
+                    <div v-if="loading" class="flex h-screen items-center justify-center bg-slate-50">
+                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
+                    </div>
 
                     <div v-else-if="!priceHistory || priceHistory.length === 0" class="no-data">
                         단가 변경 이력이 없습니다.
