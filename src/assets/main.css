@@ -13,6 +13,22 @@ body {
     box-sizing: border-box;
 }
 
+/* ===== 전역 커서 포인터 스타일 ===== */
+button,
+[type='button'],
+[type='submit'],
+[type='reset'],
+a,
+select,
+input[type='checkbox'],
+input[type='radio'],
+label,
+.cursor-pointer,
+[role='button'],
+[onclick] {
+    cursor: pointer;
+}
+
 /* ===== 공통 사이드 메뉴 링크 ===== */
 .side-menu-link {
     height: 38px;
@@ -24,6 +40,7 @@ body {
     color: #4b5563;
     text-decoration: none;
     transition: background-color 0.15s ease, color 0.15s ease;
+    cursor: pointer;
 }
 
 .side-menu-link:hover {
