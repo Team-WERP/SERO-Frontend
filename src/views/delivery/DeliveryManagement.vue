@@ -8,7 +8,10 @@
                     <div class="user-avatar">
                         <span>{{ userInitial }}</span>
                     </div>
-                    <span class="user-name">{{ userName }}</span>
+                    <div class="user-details">
+                        <span class="user-name">{{ userName }}</span>
+                        <span class="user-position">{{ userRole }}<span v-if="userPosition"> · {{ userPosition }}</span></span>
+                    </div>
                 </div>
                 <button class="logout-btn" @click="handleLogout">로그아웃</button>
             </div>
@@ -146,9 +149,21 @@ const initializeUser = () => {
 }
 
 // 사용자 정보
-const userName = computed(() => userStore.userName || '사용자')
+const userName = computed(() => {
+    // localStorage의 name을 우선 사용
+    const storedName = localStorage.getItem('name')
+    if (storedName) return storedName
+
+    // userStore.user에서 이름 찾기
+    if (userStore.user?.name) return userStore.user.name
+
+    // 기본값
+    return '사용자'
+})
+const userRole = computed(() => userStore.userRoleLabel || '사용자')
+const userPosition = computed(() => userStore.userPosition || '')
 const userInitial = computed(() => {
-    const name = userStore.userName || '사용자'
+    const name = userName.value
     return name.charAt(0).toUpperCase()
 })
 
@@ -156,8 +171,10 @@ const userInitial = computed(() => {
 const handleLogout = () => {
     if (confirm('로그아웃 하시겠습니까?')) {
         localStorage.removeItem('accessToken')
-        userStore.clear()
-        router.push('/delivery/login')
+        localStorage.removeItem('name')
+        userStore.logout()
+        // 완전히 새로고침하면서 로그인 페이지로 이동
+        window.location.href = '/delivery/login'
     }
 }
 
@@ -165,15 +182,9 @@ const handleLogout = () => {
 const loadDeliveries = async () => {
     loading.value = true
     try {
-        console.log('=== 배송 목록 조회 시작 ===')
 
         // 모든 출고지시 조회 (필터링 없음)
         const result = await getGoodsIssueList({})
-
-        console.log('API 응답:', result)
-        console.log('응답 타입:', typeof result)
-        console.log('응답 개수:', result?.length)
-        console.log('응답이 배열인가?:', Array.isArray(result))
 
         if (!result) {
             console.error('API 응답이 null/undefined')
@@ -193,7 +204,6 @@ const loadDeliveries = async () => {
 
         // API 응답을 배송 관리에 맞게 변환
         deliveries.value = filteredResult.map((item, index) => {
-            console.log(`항목 ${index + 1}:`, item)
 
             // 품목명 포맷: "대표품목" 또는 "대표품목 외 N건"
             let locationText = item.itemName || '배송지'
@@ -216,10 +226,6 @@ const loadDeliveries = async () => {
                 shippedAt: item.shippedAt
             }
         })
-
-        console.log('변환된 배송 목록:', deliveries.value)
-        console.log('변환된 배송 개수:', deliveries.value.length)
-        console.log('=== 배송 목록 조회 완료 ===')
     } catch (error) {
         console.error('배송 목록 조회 실패:', error)
         console.error('에러 상세:', error.response?.data)
@@ -343,12 +349,12 @@ onMounted(() => {
 .user-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
 .user-avatar {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: #ffffff;
     color: #4C4CDD;
@@ -359,10 +365,22 @@ onMounted(() => {
     font-size: 16px;
 }
 
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
 .user-name {
     color: #ffffff;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
+}
+
+.user-position {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-weight: 400;
 }
 
 .logout-btn {
@@ -728,19 +746,19 @@ onMounted(() => {
     }
 
     .user-section {
-        flex-direction: column;
-        align-items: flex-end;
+        flex-direction: row;
+        align-items: center;
         gap: 8px;
     }
 
-    .user-name {
-        font-size: 13px;
+    .user-details {
+        display: none;
     }
 
     .user-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
+        width: 36px;
+        height: 36px;
+        font-size: 15px;
     }
 
     .logout-btn {

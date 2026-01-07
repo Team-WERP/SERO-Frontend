@@ -264,18 +264,6 @@ onMounted(async () => {
         form.lineId = lines.value[0].lineId
     }
 
-
-    console.log(
-        'recommendedLineId:',
-        planning.recommendedLineId,
-        typeof planning.recommendedLineId
-    )
-
-    console.log(
-        'lineIds:',
-        lines.value.map(l => [l.lineId, typeof l.lineId])
-    )
-
     loading.value = false
     await runValidate()
 })

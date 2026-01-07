@@ -1,78 +1,86 @@
 <template>
-    <div class="pp-wrap">
-        <!-- 상단 헤더 -->
-        <div class="page-header">
+    <div class="p-1 min-h-screen font-sans bg-gray-50">
+        <div class="mb-5 flex justify-between items-end">
             <div>
-                <h1 class="page-title">생산계획 관리</h1>
-                <p class="page-description">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">생산계획 관리</h1>
+                <p class="text-sm text-gray-500">
                     생산요청 품목에 대해 월별로 생산계획을 수립합니다.
                 </p>
             </div>
-            <div class="pp-controls">
-                <div class="date-box">
-                    <div class="date-controls">
-                        <button class="date-btn" @click="setThisMonth">이번 달</button>
-                        <button class="date-btn" @click="prevMonth">◀</button>
-
-                        <input type="month" v-model="month" class="date-input" />
-
-                        <button class="date-btn" @click="nextMonth">▶</button>
+            <div class="flex justify-end items-start flex-1">
+                <div class="flex flex-col gap-2 items-end">
+                    <div class="flex items-center gap-1.5">
+                        <button
+                            class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+                            @click="setThisMonth">이번 달</button>
+                        <button
+                            class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+                            @click="prevMonth">◀</button>
+                        <input type="month" v-model="month"
+                            class="px-2.5 py-1.5 text-sm font-semibold border border-gray-300 rounded-md bg-white text-gray-900 outline-none hover:border-indigo-500 cursor-pointer" />
+                        <button
+                            class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+                            @click="nextMonth">▶</button>
                     </div>
-
                 </div>
-
             </div>
         </div>
 
-        <div class="panel gantt-panel">
-            <div class="gantt-container">
-                <div class="gantt-header-row">
-                    <div class="gantt-label-column">라인 / 날짜</div>
-                    <div class="gantt-timeline-column" ref="ganttHeaderRef">
-                        <div class="days-row" :style="{ width: '100%' }">
-                            <div v-for="d in daysInMonth" :key="d" class="day-cell"
-                                :class="{ today: isToday(d), weekend: isWeekend(d) }">
-                                <span class="day-num">{{ d }}</span>
-                                <span v-if="isToday(d)" class="today-tag">TODAY</span>
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-3">
+            <div class="flex flex-col">
+                <div class="flex bg-slate-50 border-b-2 border-gray-200">
+                    <div class="w-[220px] shrink-0 p-3 px-5 border-r border-gray-200 font-bold text-slate-600">라인 / 날짜
+                    </div>
+                    <div class="flex-grow overflow-hidden" ref="ganttHeaderRef">
+                        <div class="flex h-[50px] w-full">
+                            <div v-for="d in daysInMonth" :key="d"
+                                class="flex-1 min-w-[30px] border-r border-slate-100 flex flex-col items-center justify-center relative"
+                                :class="{ 'bg-red-50 text-red-600': isToday(d) }">
+                                <span class="text-xs font-semibold"
+                                    :class="isWeekend(d) ? 'text-slate-400' : 'text-slate-600'">{{ d }}</span>
+                                <span v-if="isToday(d)"
+                                    class="absolute top-0.5 text-[8px] font-black bg-red-600 text-white px-1 rounded">TODAY</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="gantt-body">
-                    <div v-for="(line, idx) in lines" :key="line.lineId" class="gantt-row"
-                        :class="{ alt: idx % 2 === 1 }">
+                <div class="overflow-y-auto">
+                    <div v-for="(line, idx) in lines" :key="line.lineId" class="flex border-b border-gray-200 bg-white"
+                        :class="{ 'bg-slate-50/50': idx % 2 === 1 }">
 
-                        <div class="gantt-label-column line-info">
-                            <div class="line-name">{{ line.lineName }}</div>
-                            <div class="line-meta">
-                                <span class="meta-v">제품명: {{ line.materialName || '미지정' }}</span>
-                                <span class="meta-capa">일일 최대 생산량: {{ formatNumber(line.dailyCapacity) }} {{
-                                    line.unit
+                        <div
+                            class="w-[220px] shrink-0 p-3 px-5 border-r border-gray-200 flex flex-col justify-center bg-inherit z-10">
+                            <div class="font-bold text-slate-800 text-base leading-tight">{{ line.lineName }}</div>
+                            <div class="text-[13px] text-slate-400 flex flex-col mt-1">
+                                <span>제품명: {{ line.materialName || '미지정' }}</span>
+                                <span class="truncate">일일 최대: {{ formatNumber(line.dailyCapacity) }}{{ line.unit
                                     }}</span>
                             </div>
                         </div>
 
-                        <div class="gantt-timeline-column body-grid" @scroll="syncScroll">
-                            <div class="grid-row" :style="{
-                                width: '100%',
-                                height: (maxLaneCount(line.lineId) * 44 + 12) + 'px'
-                            }">
+                        <div class="flex-grow overflow-x-auto relative" @scroll="syncScroll">
+                            <div class="flex relative"
+                                :style="{ width: '100%', height: (maxLaneCount(line.lineId) * 44 + 12) + 'px' }">
+                                <div v-for="d in daysInMonth" :key="d"
+                                    class="flex-1 min-w-[30px] border-r border-slate-100 relative before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[6px] before:opacity-80"
+                                    :class="[
+                                        isToday(d) ? 'bg-red-50/30' : '',
+                                        getLoadTailwindClass(line.lineId, d)
+                                    ]" />
 
-                                <div v-for="d in daysInMonth" :key="d" class="grid-cell" :class="[
-                                    { today: isToday(d), weekend: isWeekend(d) },
-                                    getLoadClass(line.lineId, d)
-                                ]" />
-
-                                <div class="bars-layer" style="width: 100%; position: absolute; left: 0; top: 0;">
+                                <div class="absolute inset-0 pointer-events-none">
                                     <div v-for="plan in plansByLine[line.lineId] || []" :key="plan.ppId"
-                                        class="plan-bar" :class="plan.status" :style="barStyle(plan)"
-                                        @click="openPlan(plan)" @mouseenter="showTooltip($event, plan)"
-                                        @mouseleave="hideTooltip">
-                                        <div class="bar-content">
-                                            <span class="bar-title">{{ plan.prCode }}</span>
-                                            <span v-if="plan.durationDays > 1" class="bar-qty">
-                                                총 {{ formatNumber(plan.productionQuantity) }}{{ plan.unit }}
+                                        class="absolute pointer-events-auto cursor-pointer rounded-lg text-white z-20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:z-30 overflow-hidden"
+                                        :class="plan.status === 'PP_DRAFT' ? 'bg-emerald-500' : 'bg-indigo-500'"
+                                        :style="barStyle(plan)" @click="openPlan(plan)"
+                                        @mouseenter="showTooltip($event, plan)" @mouseleave="hideTooltip">
+                                        <div class="p-1 px-2 flex flex-col h-full justify-center">
+                                            <span class="text-[13px] font-bold truncate">
+                                                {{ plan.ppCode }}
+                                            </span>
+                                            <span class="absolute top-1 right-1 text-[11px] opacity-70">
+                                                ↗
                                             </span>
                                         </div>
                                     </div>
@@ -81,102 +89,96 @@
                         </div>
                     </div>
 
-                    <div v-if="lines.length === 0" class="empty-state">
-                        데이터가 없습니다.
-                    </div>
+                    <div v-if="lines.length === 0" class="p-10 text-center text-gray-400">데이터가 없습니다.</div>
                 </div>
             </div>
-            <div class="load-info-area">
-                <div class="load-legend">
-                    <span class="lg-item">라인 부하율 :</span>
-                    <span class="lg-item"><i class="dot mid"></i> 보통 (50~80%)</span>
-                    <span class="lg-item"><i class="dot warn"></i> 주의 (80~100%)</span>
-                    <span class="lg-item"><i class="dot over"></i> 초과 (100% 초과)</span>
+
+            <div class="flex flex-col items-end p-3 pr-5">
+                <div class="flex gap-3 text-[13px] font-medium text-slate-500">
+                    <span>라인 부하율 :</span>
+                    <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-blue-500"></i> 보통
+                        (50~80%)</span>
+                    <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-amber-500"></i> 주의
+                        (80~100%)</span>
+                    <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-red-500"></i> 초과
+                        (100%+)</span>
                 </div>
             </div>
         </div>
 
-        <div class="panel unassigned-panel">
-            <div class="sub-head">
-                <div class="sub-title">
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 mt-3">
+            <div class="mb-4">
+                <div class="text-lg font-bold flex items-center gap-2">
                     미편성 생산요청
-                    <span class="count-badge">{{ unassigned.length }}</span>
+                    <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ unassigned.length }}</span>
                 </div>
-                <div class="sub-desc">항목을 클릭하여 생산 일정을 등록하세요.</div>
+                <div class="text-sm text-gray-500 mt-1">항목을 클릭하여 생산 일정을 등록하세요.</div>
             </div>
 
-            <div class="unassigned-grid">
-                <div v-for="u in unassigned" :key="u.prItemId" class="ua-card" @click="openCreate(u)">
-                    <!-- 상단: PR + D-Day -->
-                    <div class="ua-top">
-                        <span class="ua-pr">{{ u.prCode }}</span>
-                        <span class="ua-dday" :class="ddayClass(u.dueAt)">
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
+                <div v-for="u in unassigned" :key="u.prItemId" @click="openCreate(u)"
+                    class="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer transition-all hover:border-indigo-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col">
+
+                    <div class="flex justify-between items-center mb-2.5">
+                        <span class="text-[13px] font-extrabold text-gray-900 tracking-tight">{{ u.prCode }}</span>
+                        <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full"
+                            :class="getDdayTailwindClass(u.dueAt)">
                             D-{{ calcDday(u.dueAt) }}
                         </span>
                     </div>
 
-                    <!-- 제품명 -->
-                    <div class="ua-item-name">
-                        {{ u.itemName }}
-                    </div>
+                    <div class="text-lg font-extrabold text-slate-800 mb-3.5">{{ u.itemName }}</div>
 
-                    <!-- 상세 정보 -->
-                    <div class="ua-details">
-                        <div class="ua-row">
-                            <span>규격</span>
-                            <strong>{{ u.spec }}</strong>
+                    <div class="flex flex-col gap-1.5 text-sm">
+                        <div class="flex justify-between font-medium">
+                            <span class="text-gray-400">규격</span>
+                            <span class="text-gray-900">{{ u.spec }}</span>
                         </div>
-
-                        <div class="ua-row">
-                            <span>요청 수량</span>
-                            <strong>{{ formatNumber(u.requestedQuantity) }} ea</strong>
+                        <div class="flex justify-between font-medium">
+                            <span class="text-gray-400">요청 수량</span>
+                            <span class="text-gray-900">{{ formatNumber(u.requestedQuantity) }} ea</span>
                         </div>
-
-                        <div class="ua-row">
-                            <span>납기일</span>
-                            <strong>{{ formatDate(u.dueAt) }}</strong>
+                        <div class="flex justify-between font-medium">
+                            <span class="text-gray-400">납기일</span>
+                            <span class="text-gray-900">{{ formatDate(u.dueAt) }}</span>
                         </div>
-
-                        <div class="ua-row">
-                            <span>생산 라인</span>
-                            <strong class="line">{{ u.productionLineName }}</strong>
+                        <div class="flex justify-between font-medium border-t border-gray-50 pt-1.5 mt-1">
+                            <span class="text-gray-400">생산 라인</span>
+                            <span class="text-indigo-600 font-bold">{{ u.productionLineName }}</span>
                         </div>
                     </div>
                 </div>
 
-                <div v-if="unassigned.length === 0" class="empty-inline">
+                <div v-if="unassigned.length === 0" class="col-span-full py-10 text-center text-gray-400 text-sm">
                     미편성 목록이 비어있습니다.
                 </div>
             </div>
-
         </div>
 
         <PlanCreateModal v-if="showPlanModal" :prItemId="selectedPrItemId" :defaultLineId="selectedLineId"
             :month="month" @close="showPlanModal = false" @created="onCreated" />
+        <PPDetailModal v-if="showDetailModal && selectedPpId !== null" :ppId="selectedPpId" @close="closeDetailModal" />
 
-        <PPDetailModal v-if="showDetailModal && selectedPpId !== null" :ppId="selectedPpId"
-            @close="showDetailModal = false" />
+        <Teleport to="body">
+            <div v-show="tooltip.visible"
+                class="fixed bg-gray-900/95 text-white text-[14px] leading-relaxed p-2.5 px-3.5 rounded-lg whitespace-pre-line z-[99999] pointer-events-none shadow-xl max-w-[300px]"
+                :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px', transform: 'translateX(-50%)' }">
+                {{ tooltip.text }}
+            </div>
+        </Teleport>
     </div>
-
-    <Teleport to="body">
-        <div v-show="tooltip.visible" class="global-tooltip" :style="{
-            left: tooltip.x + 'px',
-            top: tooltip.y + 'px',
-            transform: 'translateX(-50%)'
-        }">
-            {{ tooltip.text }}
-        </div>
-    </Teleport>
-
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PlanCreateModal from '@/components/production/PlanCreateModal.vue'
 import PPDetailModal from '@/components/production/PPDetailModal.vue'
 import { getProductionLines, getMonthlyPlans, getUnassignedTargets, getDailyLineSummary } from '@/api/production/productionPlan'
 
 // --- Constants & Refs ---
+const route = useRoute()
+const router = useRouter()
 const month = ref(toMonthValue(new Date()))
 const lines = ref([])
 const plans = ref([])
@@ -185,7 +187,7 @@ const dailySummary = ref([])
 const showPlanModal = ref(false)
 const selectedPrItemId = ref(null)
 const ganttHeaderRef = ref(null)
-const BAR_HEIGHT = 40
+const BAR_HEIGHT = 30
 const BAR_GAP = 6
 const BAR_TOP_PADDING = 10
 const selectedPpId = ref(null)
@@ -199,11 +201,60 @@ const tooltip = ref({
     text: ''
 })
 
+
+const openPlan = (plan) => {
+    router.push(`/production/plans/${plan.ppId}`)
+}
+
+const closeDetailModal = () => {
+    router.push('/production/plans')
+}
+
+const checkRouteParam = () => {
+    const id = route.params.id
+    if (id) {
+        selectedPpId.value = parseInt(id)
+        showDetailModal.value = true
+    } else {
+        showDetailModal.value = false
+        selectedPpId.value = null
+    }
+}
+
+watch(() => route.params.id, () => {
+    checkRouteParam()
+}, { immediate: true })
+
+onMounted(async () => {
+    await reloadAll()
+    checkRouteParam()
+})
+
+const getLoadTailwindClass = (lineId, day) => {
+    const summary = dailySummaryMap.value[lineId]
+    if (!summary || !summary.dailyPlannedQtyMap) return ''
+    const planned = summary.dailyPlannedQtyMap[day] || 0
+    const capa = summary.dailyCapacity || 0
+    if (capa === 0) return ''
+    const rate = planned / capa
+    if (rate > 1) return 'before:bg-red-500'
+    if (rate >= 0.8) return 'before:bg-amber-500'
+    if (rate >= 0.5) return 'before:bg-blue-500'
+    return ''
+}
+
+const getDdayTailwindClass = (dueAt) => {
+    const d = calcDday(dueAt)
+    if (d <= 3) return 'bg-red-50 text-red-700'
+    if (d <= 7) return 'bg-orange-50 text-orange-700'
+    return 'bg-emerald-50 text-emerald-700'
+}
+
 const showTooltip = (e, plan) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const dailyQty = calcDailyQuantity(plan)
 
-    const text = `기간: ${plan.startDate} ~ ${plan.endDate} (${plan.durationDays}일)\n관련 생산요청: ${plan.prCode}\n총 수량: ${formatNumber(plan.productionQuantity)} ${plan.unit}\n예상 일일 생산량: ${formatNumber(dailyQty)} ${plan.unit}`
+    const text = `기간: ${plan.startDate} ~ ${plan.endDate} (${plan.durationDays}일)\n총 수량: ${formatNumber(plan.productionQuantity)} ${plan.unit}\n예상 일일 생산량: ${formatNumber(dailyQty)} ${plan.unit}`
 
     let x = rect.left + rect.width / 2
     let y = rect.bottom + 8
@@ -302,19 +353,6 @@ const isWeekend = (day) => {
     const dayOfWeek = new Date(y, m - 1, day).getDay()
     return dayOfWeek === 0 || dayOfWeek === 6 // 0:일, 6:토
 }
-
-const getLoadClass = (lineId, day) => {
-    const summary = dailySummaryMap.value[lineId]
-    if (!summary || !summary.dailyPlannedQtyMap) return ''
-    const planned = summary.dailyPlannedQtyMap[day] || 0
-    const capa = summary.dailyCapacity || 0
-    if (capa === 0) return ''
-    const rate = planned / capa
-    if (rate > 1) return 'load-over'
-    if (rate >= 0.8) return 'load-warn'
-    if (rate >= 0.5) return 'load-mid'
-}
-
 const barStyle = (plan) => {
     const [y, m] = month.value.split('-').map(Number)
     const monthStart = new Date(y, m - 1, 1)
@@ -370,10 +408,7 @@ const openCreate = (u) => {
     selectedLineId.value = u.productionLineId
     showPlanModal.value = true
 }
-const openPlan = (plan) => {
-    selectedPpId.value = plan.ppId
-    showDetailModal.value = true
-}
+
 
 function assignPlanLanes(plans) {
     const lanes = []
@@ -407,13 +442,12 @@ const reloadAll = async () => {
     lines.value = await getProductionLines(3)   // 공장 id 고정
     plans.value = await getMonthlyPlans(month.value)
     unassigned.value = await getUnassignedTargets()
-    dailySummary.value = await getDailyLineSummary(month.value, 2)
+    dailySummary.value = await getDailyLineSummary(month.value, 3)
 }
 
 const onCreated = () => { showPlanModal.value = false; reloadAll() }
 
 watch(month, reloadAll)
-onMounted(reloadAll)
 
 function toMonthValue(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -434,544 +468,9 @@ const calcDday = (dueAt) => {
     )
 }
 
-const ddayClass = (dueAt) => {
-    const d = calcDday(dueAt)
-    if (d <= 3) return 'danger'
-    if (d <= 7) return 'warn'
-    return 'safe'
-}
-
 const formatDate = (d) => {
     if (!d) return '-'
     return d.slice(0, 10) // YYYY-MM-DD
 }
 
 </script>
-
-<style scoped>
-.pp-wrap {
-    padding: 5px;
-    min-height: 100vh;
-    font-family: 'Inter', sans-serif;
-}
-
-/* ===== 헤더 ===== */
-.page-header {
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-}
-
-
-.page-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 8px;
-}
-
-.page-description {
-    font-size: 14px;
-    color: #6b7280;
-}
-
-/* Gantt Layout */
-.panel {
-    background: white;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    overflow: hidden;
-}
-
-.gantt-container {
-    display: flex;
-    flex-direction: column;
-}
-
-.gantt-header-row {
-    display: flex;
-    background: #f8fafc;
-    border-bottom: 2px solid #e2e8f0;
-}
-
-.day-num {
-    font-size: 14px;
-}
-
-.gantt-label-column {
-    width: 220px;
-    flex-shrink: 0;
-    padding: 12px 20px;
-    border-right: 1px solid #e2e8f0;
-}
-
-.gantt-timeline-column {
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-/* Timeline Header */
-.days-row {
-    display: flex;
-    height: 50px;
-}
-
-.day-cell,
-.grid-cell {
-    width: 0;
-    flex: 1 0 0;
-    padding-bottom: 5px;
-    min-width: 30px;
-    border-right: 1px solid #f1f5f9;
-}
-
-.day-cell {
-    width: 40px;
-    flex-grow: 1;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: #64748b;
-    border-right: 1px solid #f1f5f9;
-    position: relative;
-}
-
-/* 
-.day-cell.weekend {
-    background: #f1f5f9;
-} */
-
-.day-cell.today {
-    background: #fff1f2;
-    color: #e11d48;
-}
-
-.today-tag {
-    position: absolute;
-    top: 2px;
-    font-size: 8px;
-    font-weight: 900;
-    background: #e11d48;
-    color: white;
-    padding: 1px 4px;
-    border-radius: 4px;
-}
-
-/* Gantt Body */
-.gantt-row {
-    display: flex;
-    border-bottom: 1px solid #e5e7eb;
-    background: #ffffff;
-}
-
-.line-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    background: white;
-    z-index: 10;
-}
-
-.line-name {
-    font-weight: 700;
-    color: #1e293b;
-    font-size: 16px;
-}
-
-.line-meta {
-    font-size: 13px;
-    color: #94a3b8;
-    display: flex;
-    flex-direction: column;
-}
-
-.body-grid {
-    overflow-x: auto;
-    position: relative;
-}
-
-.grid-row {
-    display: flex;
-    height: 60px;
-    position: relative;
-}
-
-.grid-cell {
-    width: 40px;
-    flex-grow: 1;
-    flex-shrink: 0;
-    border-right: 1px solid #f1f5f9;
-    position: relative;
-}
-
-/* Load Indicators (Top Bar) */
-.grid-cell::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 6px;
-    opacity: 0.8;
-}
-
-.load-over::before {
-    background: #ef4444;
-}
-
-.load-warn::before {
-    background: #f59e0b;
-}
-
-.load-mid::before {
-    background: #3b82f6;
-}
-
-/* Plan Bars */
-.bars-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-}
-
-.plan-bar {
-    position: absolute;
-    pointer-events: auto;
-    cursor: pointer;
-    border-radius: 8px;
-    background: #6366f1;
-    color: white;
-    z-index: 20;
-    box-sizing: border-box;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.plan-bar:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    z-index: 50;
-}
-
-.plan-bar {
-    background: #6366f1;
-    color: white;
-}
-
-/* Default confirmed style */
-.plan-bar.PP_DRAFT {
-    background: #10b981;
-}
-
-.bar-content {
-    padding: 4px 8px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    justify-content: center;
-}
-
-.bar-title {
-    font-size: 13px;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.bar-qty {
-    font-size: 11px;
-    opacity: 0.9;
-}
-
-/* Unassigned Cards */
-.unassigned-panel {
-    margin-top: 12px;
-    padding: 20px;
-}
-
-.sub-head {
-    margin-bottom: 16px;
-}
-
-.sub-title {
-    font-size: 18px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.sub-desc {
-    font-size: 15px;
-    color: #6b7280;
-    margin-top: 4px;
-}
-
-.count-badge {
-    background: #e11d48;
-    color: white;
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 12px;
-}
-
-/* ===== Unassigned Cards ===== */
-
-.unassigned-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
-}
-
-/* 카드 */
-.ua-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    padding: 16px 18px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
-}
-
-.ua-card:hover {
-    border-color: #4c4cdd;
-    box-shadow: 0 8px 18px rgba(76, 76, 221, 0.12);
-    transform: translateY(-2px);
-}
-
-/* 상단 영역 */
-.ua-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-/* PR 코드 */
-.ua-pr {
-    font-size: 13px;
-    font-weight: 800;
-    color: #111827;
-    letter-spacing: 0.2px;
-}
-
-/* D-Day */
-.ua-dday {
-    font-size: 12px;
-    font-weight: 800;
-    padding: 3px 10px;
-    border-radius: 999px;
-}
-
-/* D-Day 색상 */
-.ua-dday.safe {
-    background: #ecfdf5;
-    color: #047857;
-}
-
-.ua-dday.warn {
-    background: #fff7ed;
-    color: #b45309;
-}
-
-.ua-dday.danger {
-    background: #fef2f2;
-    color: #b91c1c;
-}
-
-/* 제품명 */
-.ua-item-name {
-    font-size: 17px;
-    font-weight: 800;
-    color: #1e293b;
-    margin-bottom: 14px;
-}
-
-/* 상세 정보 */
-.ua-details {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 14px;
-    color: #475569;
-}
-
-.ua-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.ua-row span {
-    color: #6b7280;
-    font-weight: 500;
-}
-
-.ua-row strong {
-    font-weight: 700;
-    color: #111827;
-}
-
-.ua-row strong.line {
-    color: #4c4cdd;
-}
-
-/* Empty */
-.empty-inline {
-    padding: 24px;
-    text-align: center;
-    color: #9ca3af;
-    font-size: 14px;
-}
-
-
-.gantt-row.alt {
-    background: #fafafa;
-}
-
-.global-tooltip {
-    position: fixed;
-    background: rgba(17, 24, 39, 0.95);
-    color: #fff;
-    font-size: 14px;
-    line-height: 1.5;
-    padding: 10px 14px;
-    border-radius: 8px;
-    white-space: pre-line;
-    z-index: 99999;
-    pointer-events: none;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-    width: max-content;
-    max-width: 300px;
-}
-
-.global-tooltip::before {
-    display: none;
-}
-
-/* ===== 날짜 컨트롤 ===== */
-.pp-controls {
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-start;
-    flex: 1;
-}
-
-.date-box {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-end;
-}
-
-.date-controls {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* 연월 선택 인풋 스타일 */
-.date-input {
-    padding: 6px 10px;
-    font-size: 14px;
-    font-weight: 600;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #111827;
-    outline: none;
-    font-family: inherit;
-    cursor: pointer;
-}
-
-.date-input:hover {
-    border-color: #4C4CDD;
-}
-
-/* 버튼 스타일 */
-.date-btn {
-    padding: 7px 12px;
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.date-btn:hover {
-    background: #f3f4f6;
-    border-color: #9ca3af;
-}
-
-/* 부하율 안내 영역 */
-.load-info-area {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    padding-right: 12px;
-
-}
-
-/* 범례 아이템 배열 */
-.load-legend {
-    display: flex;
-    gap: 12px;
-    font-size: 12px;
-    margin: 8px 0 12px;
-}
-
-.lg-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 13px;
-    color: #64748b;
-    font-weight: 500;
-}
-
-/* 동그란 점 아이콘 */
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.dot.low {
-    background-color: #10b981;
-    opacity: 0.8;
-}
-
-.dot.mid {
-    background-color: #3b82f6;
-    opacity: 0.8;
-}
-
-.dot.warn {
-    background-color: #f59e0b;
-    opacity: 0.8;
-}
-
-.dot.over {
-    background-color: #ef4444;
-    opacity: 0.8;
-}
-
-.pp-controls {
-    align-items: flex-start;
-}
-</style>

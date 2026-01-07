@@ -54,11 +54,14 @@ api.interceptors.response.use(
                 // 로그인 페이지가 아닌 경우에만 리다이렉트
                 if (
                     !currentPath.startsWith("/login") &&
-                    !currentPath.includes("/delivery/login")
+                    !currentPath.includes("/delivery/login") &&
+                    !currentPath.includes("/work/login")
                 ) {
                     // 배송 앱에서는 배송 로그인으로, 일반 앱에서는 일반 로그인으로
                     if (currentPath.startsWith("/delivery/")) {
                         window.location.href = "/delivery/login";
+                    } else if (currentPath.startsWith("/work/")) {
+                        window.location.href = "/work/login";
                     } else {
                         window.location.href = "/login";
                     }

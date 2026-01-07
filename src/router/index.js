@@ -14,7 +14,6 @@ import ClientDashboard from "@/views/client-portal/ClientDashboard.vue";
 import ClientOrderCreate from "@/views/client-portal/ClientOrderCreate.vue";
 import ClientOrderList from "@/views/client-portal/ClientOrderList.vue";
 import ClientOrderDetail from "@/views/client-portal/ClientOrderDetail.vue";
-import ClientOrderDelivery from "@/views/client-portal/ClientOrderDelivery.vue";
 import ClientItemList from "@/views/client-portal/ClientItemList.vue";
 import ClientAddress from "@/views/client-portal/ClientAddress.vue";
 import ClientCompanyInfo from "@/views/client-portal/ClientCompanyInfo.vue";
@@ -31,11 +30,12 @@ import ProductionDashboard from "@/views/production/ProductionDashboard.vue";
 import ProductionRequestList from "@/views/production/ProductionRequestList.vue";
 import ProductionPlanList from "@/views/production/ProductionPlanList.vue";
 import WorkOrderList from "@/views/production/WorkOrderList.vue";
-import WorkResultInput from "@/views/production/WorkResultInput.vue";
 import WorkResultList from "@/views/production/WorkResultList.vue";
 import ProcessFlowManagement from "@/views/production/ProcessFlowManagement.vue";
 import PRDraftDetailView from "@/views/production/PRDraftDetailView.vue";
 import PRDetail from "@/views/production/PRDetail.vue";
+import WorkLogin from "@/views/work/WorkLogin.vue";
+import WorkExecution from "@/views/work/WorkExecution.vue";
 
 // 재고·물류
 import DeliveryOrderList from "@/views/warehouse/DeliveryOrderList.vue";
@@ -48,8 +48,6 @@ import GoodsIssueDetail from "@/views/warehouse/GoodsIssueDetail.vue";
 // 기준정보
 import ItemBomManagement from "@/views/master/ItemBomManagement.vue";
 import ItemBomDetail from "@/views/master/ItemBomDetail.vue";
-import MasterCompanyInfo from "@/views/master/MasterCompanyInfo.vue";
-import EmployeeList from "@/views/master/EmployeeList.vue";
 import CommonCodeManagement from "@/views/master/CommonCodeManagement.vue";
 
 // 전자결재
@@ -64,13 +62,12 @@ import ApprovalDetail from "@/views/approval/ApprovalDetail.vue";
 
 // 공지사항
 import NoticeList from "@/views/notices/NoticeList.vue";
+import NoticeCreate from "@/views/notices/NoticeCreate.vue";
+import NoticeDetail from "@/views/notices/NoticeDetail.vue";
 
 // 시스템 관리
-import SystemCommonCode from "@/views/system/SystemCommonCode.vue";
-import SystemEmployeeManagement from "@/views/system/SystemEmployeeManagement.vue";
-import RoleManagement from "@/views/system/RoleManagement.vue";
+import SystemCommonCodeManagement from "@/views/system/SystemCommonCodeManagement.vue";
 import StockByWarehouse from "@/views/warehouse/StockByWarehouse.vue";
-import DeliveryTracking from "@/views/warehouse/DeliveryTracking.vue";
 
 // 에러
 import Forbidden from "@/views/error/Forbidden.vue";
@@ -93,6 +90,12 @@ const router = createRouter({
         {
             path: "/delivery/login",
             component: DriverLogin,
+            meta: { public: true, hideLayout: true, noPadding: true },
+        },
+        {
+            path: "/work/login",
+            name: "WorkLogin",
+            component: WorkLogin,
             meta: { public: true, hideLayout: true, noPadding: true },
         },
         // 존재하지 않는 페이지 접근
@@ -137,11 +140,6 @@ const router = createRouter({
                     meta: { roles: ["AC_CLI"] },
                 },
                 {
-                    path: "client-portal/order-delivery",
-                    component: ClientOrderDelivery,
-                    meta: { roles: ["AC_CLI"] },
-                },
-                {
                     path: "client-portal/items",
                     component: ClientItemList,
                     meta: { roles: ["AC_CLI"] },
@@ -161,7 +159,11 @@ const router = createRouter({
                     component: ClientNotices,
                     meta: { roles: ["AC_CLI"] },
                 },
-
+                {
+                    path: "client-portal/notices/:noticeId",
+                    component: NoticeDetail,
+                    meta: { roles: ["AC_CLI"] },
+                },
                 // 주문
                 {
                     path: "order/dashboard",
@@ -176,6 +178,11 @@ const router = createRouter({
                 {
                     path: "order/clients",
                     component: ClientManagement,
+                    meta: { roles: ["AC_SAL", "AC_SYS"] },
+                },
+                {
+                    path: "order/clients/:clientId",
+                    component: () => import("@/views/order/ClientDetail.vue"),
                     meta: { roles: ["AC_SAL", "AC_SYS"] },
                 },
                 {
@@ -196,18 +203,13 @@ const router = createRouter({
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_SYS"] },
                 },
                 {
-                    path: "production/plans",
+                    path: "production/plans/:id?",
                     component: ProductionPlanList,
                     meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },
                 {
                     path: "production/work-orders",
                     component: WorkOrderList,
-                    meta: { roles: ["AC_PRO", "AC_SYS"] },
-                },
-                {
-                    path: "production/work-results/input",
-                    component: WorkResultInput,
                     meta: { roles: ["AC_PRO", "AC_SYS"] },
                 },
                 {
@@ -229,6 +231,16 @@ const router = createRouter({
                     path: "production/requests/:prId",
                     component: PRDetail,
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_SYS"] },
+                },
+                {
+                    path: "work/execution",
+                    name: "WorkExecution",
+                    component: WorkExecution,
+                    meta: {
+                        hideLayout: true,
+                        noPadding: true,
+                        roles: ["AC_PRO", "AC_SYS"]
+                    },
                 },
 
                 // 재고·물류
@@ -259,11 +271,6 @@ const router = createRouter({
                     meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
                 },
                 {
-                    path: "warehouse/tracking",
-                    component: DeliveryTracking,
-                    meta: { roles: ["AC_SAL", "AC_WHS", "AC_SYS"] },
-                },
-                {
                     path: "delivery/management",
                     component: DeliveryManagement,
                     meta: {
@@ -277,8 +284,6 @@ const router = createRouter({
                 // ---------------------
                 { path: "/master/bom", component: ItemBomManagement },
                 { path: "/master/bom/:id", component: ItemBomDetail },
-                { path: "/master/company", component: MasterCompanyInfo },
-                { path: "/master/employees", component: EmployeeList },
                 {
                     path: "/master/common-code",
                     component: CommonCodeManagement,
@@ -289,16 +294,6 @@ const router = createRouter({
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
                 },
                 {
-                    path: "master/company",
-                    component: MasterCompanyInfo,
-                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
-                },
-                {
-                    path: "master/employees",
-                    component: EmployeeList,
-                    meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
-                },
-                {
                     path: "master/common-code",
                     component: CommonCodeManagement,
                     meta: { roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] },
@@ -306,17 +301,7 @@ const router = createRouter({
                 // 시스템 관리
                 {
                     path: "system/common-code",
-                    component: SystemCommonCode,
-                    meta: { roles: ["AC_SYS"] },
-                },
-                {
-                    path: "system/employees",
-                    component: SystemEmployeeManagement,
-                    meta: { roles: ["AC_SYS"] },
-                },
-                {
-                    path: "system/roles",
-                    component: RoleManagement,
+                    component: SystemCommonCodeManagement,
                     meta: { roles: ["AC_SYS"] },
                 },
                 // 전자결재
@@ -364,6 +349,20 @@ const router = createRouter({
                 {
                     path: "notices",
                     component: NoticeList,
+                    meta: {
+                        roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
+                    },
+                },
+                {
+                    path: "notices/create",
+                    component: NoticeCreate,
+                    meta: {
+                        roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
+                    },
+                },
+                {
+                    path: "notices/:noticeId",
+                    component: NoticeDetail,
                     meta: {
                         roles: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
                     },

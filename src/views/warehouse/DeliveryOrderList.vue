@@ -10,90 +10,108 @@
             </div>
         </div>
 
-        <!-- 필터 및 검색 -->
-        <div class="search-section">
-            <h2 class="filter-title">필터 및 검색</h2>
-            <div class="filter-row">
-                <div class="filter-item">
-                    <label>납품일</label>
-                    <div>
-                        <input type="date" v-model="startDate" />
-                        <span>~</span>
-                        <input type="date" v-model="endDate" />
-                    </div>
+        <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
+            <h2 class="text-md font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span class="w-1 h-5 bg-indigo-600 rounded-full"></span>
+                필터 및 검색
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 items-end text-sm">
+                
+                <div class="lg:col-span-2">
+                <label class="block mb-2 text-gray-600 text-sm font-semibold uppercase tracking-wide">납품일</label>
+                <div class="flex items-center gap-2">
+                    <input 
+                    type="date" 
+                    v-model="startDate" 
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white"
+                    />
+                    <span class="text-gray-400 font-bold">~</span>
+                    <input 
+                    type="date" 
+                    v-model="endDate" 
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white"
+                    />
+                </div>
                 </div>
 
-                <div class="filter-item">
-                    <label>상태</label>
-                    <select v-model="selectedStatus" @change="fetchDOList">
-                        <option value="">전체</option>
-                        <option v-for="s in statusFilters" :key="s.value" :value="s.value">
-                            {{ s.label }}
-                        </option>
-                    </select>
+                <div>
+                <label class="block mb-2 text-gray-600 text-sm font-semibold uppercase tracking-wide">상태</label>
+                <select 
+                    v-model="selectedStatus" 
+                    @change="fetchDOList"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white cursor-pointer"
+                >
+                    <option value="">전체</option>
+                    <option v-for="s in statusFilters" :key="s.value" :value="s.value">{{ s.label }}</option>
+                </select>
                 </div>
 
-                <div class="filter-item keyword">
-                    <label>납품서번호</label>
-                    <input type="text" v-model="searchKeyword" placeholder="검색하세요" @keyup.enter="fetchDOList" />
+                <div>
+                <label class="block mb-2 text-gray-600 font-semibold text-sm uppercase tracking-wide">납품서번호</label>
+                <input 
+                    type="text" 
+                    v-model="searchKeyword" 
+                    placeholder="DO-xxxx" 
+                    @keyup.enter="fetchDOList"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all"
+                />
                 </div>
 
-                <div class="filter-item">
-                    <label>작성자</label>
-                    <button
-                        class="my-do-btn"
-                        :class="{ active: showOnlyMyDO }"
-                        @click="toggleMyDO">
-                        {{ showOnlyMyDO ? '전체 납품서' : '내 납품서 목록' }}
-                    </button>
+                <div>
+                <label class="block mb-2 text-gray-600 text-sm font-semibold uppercase tracking-wide">작성자 필터</label>
+                <button
+                    @click="toggleMyDO"
+                    :class="[
+                    'w-full py-2 px-2 rounded-lg font-bold text-sm transition-all border outline-none whitespace-nowrap',
+                    showOnlyMyDO 
+                        ? 'bg-indigo-600 border-indigo-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-600 hover:border-indigo-400 hover:text-indigo-600'
+                    ]"
+                >
+                    {{ showOnlyMyDO ? '내 납품서 보기' : '전체 목록 보기' }}
+                </button>
                 </div>
 
-                <div class="button-group">
-                    <button class="reset-btn" @click="resetFilters" title="필터 초기화">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>
-                        </svg>
-                    </button>
-                    <button class="search-btn" @click="fetchDOList">검색</button>
+                <div class="flex gap-2">
+                <button @click="fetchDOList" class="flex-1 bg-indigo-700 text-white px-3 py-2 rounded-lg font-bold hover:bg-indigo-800 transition-all text-sm whitespace-nowrap">
+                    검색
+                </button>
+                <button @click="resetFilters" class="flex-1 bg-gray-100 text-gray-600 px-3 py-2 rounded-lg font-bold hover:bg-gray-200 border border-gray-300 transition-all text-sm whitespace-nowrap">
+                    초기화
+                </button>
                 </div>
             </div>
         </div>
 
         <!-- 납품서 목록 -->
         <div class="items-section">
-            <div
-                v-if="isLoading"
-                class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
-            >
-                <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
-                    </path>
-                </svg>
+            <div v-if="isLoading" class="flex h-screen items-center justify-center bg-slate-50">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
             </div>
             <div class="section-header">
-                <span class="total-count">총 {{ doList.length }}건</span>
+                총 <span class="text-indigo-600 font-bold mx-1">{{ doList.length }}</span>건
+
             </div>
 
             <table class="items-table">
                 <thead>
                     <tr>
-                        <th style="width: 50px; text-align:center;">No</th>
-                        <th style="width: 140px;">납품서 번호</th>
-                        <th style="width: 140px;">수주 번호</th>
+                        <th style="width: 50px;">No</th>
+                        <th style="width: 160px;">납품서번호</th>
+                        <th style="width: 160px;">주문번호</th>
                         <th style="width: 200px;">고객사</th>
-                        <th style="width: 250px;">품목명</th>
+                        <th style="width: 200px;">품목명</th>
                         <th style="width: 120px;">담당자</th>
-                        <th style="width: 130px;">생성일시</th>
-                        <th style="width: 130px;">납품일시</th>
-                        <th style="width: 100px; text-align:center;">상태</th>
+                        <th style="width: 130px;">생성일</th>
+                        <th style="width: 130px;">납품일</th>
+                        <th style="width: 120px;">상태</th>
                     </tr>
                 </thead>
 
-                <tbody>
+                <tbody class="text-center">
                     <tr v-for="(dorder, index) in doList" :key="dorder.doId" class="clickable-row" @click="viewDetail(dorder.doCode)">
-                        <td class="text-center">{{ index + 1 }}</td>
+                        <td>{{ index + 1 }}</td>
 
                         <td class="link">
                             {{ dorder.doCode }}
@@ -102,14 +120,16 @@
                         <td>{{ dorder.soCode }}</td>
                         <td>{{ dorder.companyName }}</td>
                         <td>
-                            <div class="item-name">
+                            <div class="flex items-center justify-center gap-1">
                                 <span>{{ dorder.itemName }}</span>
-                                <span v-if="dorder.itemCount > 1" class="item-count">외 {{ dorder.itemCount - 1 }}건</span>
+                                <span v-if="dorder.itemCount > 1" class="shrink-0 text-slate-500 text-xs">
+                                    외 {{ dorder.itemCount - 1 }}건
+                                </span>
                             </div>
                         </td>
                         <td>{{ dorder.managerName || '-' }}</td>
-                        <td>{{ formatDateTime(dorder.createdAt) }}</td>
-                        <td>{{ formatDateTime(dorder.shippedAt) }}</td>
+                        <td>{{ dorder.createdAt?.slice(0, 10) }}</td>
+                        <td>{{ dorder.shippedAt?.slice(0, 10) }}</td>
                         <td class="text-center">
                             <span :class="['status-badge', getStatusClass(dorder.status)]">
                                 {{ getStatusLabel(dorder.status) }}
@@ -287,18 +307,6 @@ const getStatusClass = (status) => {
     return classMap[status] || 'pending'
 }
 
-// 날짜 시간 포맷팅
-const formatDateTime = (dateTime) => {
-    if (!dateTime) return '-'
-    if (typeof dateTime === 'string') {
-        if (dateTime.includes('T')) {
-            return dateTime.replace('T', ' ').substring(0, 16)
-        }
-        return dateTime
-    }
-    return '-'
-}
-
 // 초기화
 onMounted(() => {
     // 날짜 필터 없이 전체 납품서 조회
@@ -309,7 +317,7 @@ onMounted(() => {
 <style scoped>
 /* ===== 페이지 전체 ===== */
 .do-page {
-    padding: 5px;
+    padding: 8px;
     width: 100%;
 }
 
@@ -333,124 +341,6 @@ onMounted(() => {
     color: #6b7280;
 }
 
-/* ===== 검색 / 필터 ===== */
-.filter-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 10px;
-}
-
-.search-section {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 24px;
-}
-
-.filter-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.filter-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 13px;
-    color: #374151;
-}
-
-.filter-item > div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.filter-item span {
-    color: #6b7280;
-}
-
-.filter-item input[type="date"],
-.filter-item input[type="text"],
-.filter-item select {
-    height: 36px;
-    padding: 0 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 13px;
-    background: #ffffff;
-    min-width: 140px;
-}
-
-.filter-item input[type="date"]:focus,
-.filter-item input[type="text"]:focus,
-.filter-item select:focus {
-    outline: none;
-    border-color: #4C4CDD;
-}
-
-.filter-item.keyword {
-    flex: 1;
-    min-width: 200px;
-}
-
-/* ===== 버튼 그룹 ===== */
-.button-group {
-    display: flex;
-    gap: 8px;
-    align-self: flex-end;
-    margin-top: 18px;
-}
-
-.reset-btn {
-    height: 36px;
-    width: 36px;
-    padding: 0;
-    background: #f3f4f6;
-    color: #374151;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.reset-btn svg {
-    width: 20px;
-    height: 20px;
-    color: #374151;
-}
-
-.reset-btn:hover {
-    background: #e5e7eb;
-}
-
-.reset-btn:hover svg {
-    transform: rotate(180deg);
-    transition: transform 0.3s ease;
-}
-
-.search-btn {
-    height: 36px;
-    padding: 0 24px;
-    background: #4C4CDD;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.search-btn:hover {
-    background: #3d3dbb;
-}
 
 /* ===== 리스트 섹션 ===== */
 .items-section {
@@ -463,11 +353,7 @@ onMounted(() => {
 
 .section-header {
     margin-bottom: 12px;
-}
-
-.total-count {
-    font-size: 14px;
-    color: #6b7280;
+    font-size: small;
 }
 
 /* ===== 테이블 ===== */
@@ -483,17 +369,17 @@ onMounted(() => {
 
 .items-table th {
     padding: 12px 16px;
-    font-size: 14px;
+    font-size: small;
     font-weight: 600;
     color: #374151;
-    text-align: left;
+    text-align: center;
 }
 
 .items-table td {
-    padding: 12px 16px;
     border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
-    color: #111827;
+    font-size: small;
+    color: black;
+    padding: 16px 12px;
 }
 
 .items-table tbody tr:hover {
@@ -525,16 +411,8 @@ onMounted(() => {
 .item-name {
     display: flex;
     align-items: center;
-    gap: 8px;
 }
 
-.item-count {
-    font-size: 12px;
-    color: #6b7280;
-    background: #f3f4f6;
-    padding: 2px 8px;
-    border-radius: 12px;
-}
 
 /* ===== 상태 뱃지 ===== */
 .status-badge {
@@ -573,7 +451,7 @@ onMounted(() => {
     padding: 0 12px;
     border: 1px solid #d1d5db;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: small;
     font-weight: 500;
     cursor: pointer;
     white-space: nowrap;

@@ -45,15 +45,20 @@
                 </span>
             </div>
 
-            <button @click="extendSession" class="text-blue-600 text-xs font-semibold hover:underline">
-                연장
+            <button :disabled="isExtending" @click="extendSession" :class="[
+                'text-xs font-semibold',
+                isExtending
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-blue-600 hover:underline cursor-pointer'
+            ]">
+                {{ isExtending ? "연장 중..." : "연장" }}
             </button>
         </div>
     </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { logout as logoutApi, reissue as reissueApi } from '@/api/auth';
@@ -68,6 +73,8 @@ const userDept = computed(() => userStore.userPosition);
 const userName = localStorage.getItem("name");
 const userRole = computed(() => userStore.userRoleLabel);
 const userInitial = computed(() => userName ? userName.charAt(0) : "");
+
+const isExtending = ref(false);
 
 const goToMyPage = () => {
     router.push('/system/mypage');
@@ -97,6 +104,10 @@ const handleLogout = async () => {
 };
 
 const extendSession = async () => {
+    if (isExtending.value) return;
+
+    isExtending.value = true;
+
     try {
         const type = userStore.hasAuthority("AC_CLI")
             ? "client"
@@ -112,6 +123,8 @@ const extendSession = async () => {
         userStore.setFromToken(accessToken);
     } catch (e) {
         console.error("토큰 재발급 API 실패", e);
+    } finally {
+        isExtending.value = false;
     }
 };
 </script>

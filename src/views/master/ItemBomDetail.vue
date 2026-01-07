@@ -25,11 +25,8 @@
             </div>
         </div>
 
-        <div v-if="isLoading" class="loading-container">
-            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-            </svg>
+        <div v-if="isLoading" class="flex h-screen items-center justify-center bg-slate-50">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
         </div>
 
         <div v-else-if="material" class="content-wrapper">
@@ -346,7 +343,7 @@ onMounted(() => {
 }
 
 .section-title {
-    font-size: 18px;
+    font-size: large;
     font-weight: 700;
     color: #111827;
     margin-bottom: 20px;
@@ -427,7 +424,7 @@ onMounted(() => {
 }
 
 .info-item .label {
-    font-size: 11px;
+    font-size: small;
     font-weight: 600;
     color: #6b7280;
     text-transform: uppercase;
@@ -435,9 +432,9 @@ onMounted(() => {
 }
 
 .info-item .value {
-    font-size: 14px;
+    font-size: small;
     color: #111827;
-    font-weight: 600;
+    font-weight: 400;
     word-break: break-word;
 }
 
@@ -523,17 +520,18 @@ onMounted(() => {
 
 .bom-table th {
     padding: 12px 24px;
-    font-size: 13px;
+    font-size: small;
     font-weight: 600;
     color: #374151;
-    text-align: left;
+    text-align: center;
 }
 
 .bom-table td {
     padding: 12px 24px;
     border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
+    font-size: small;
     color: #111827;
+    text-align: center;
 }
 
 .bom-table tbody tr:hover {

@@ -3,7 +3,7 @@
         <div class="page-header">
             <div>
                 <h1 class="page-title">공통 코드 조회</h1>
-                <p class="page-description">시스템 전반에서 사용하는 공통 코드를 통합하여 조회합니다.</p>
+                <p class="page-description">시스템 전반에서 사용하는 공통 코드를 조회합니다.</p>
             </div>
         </div>
 
@@ -42,15 +42,13 @@
                 </div>
             </div>
 
-            <!-- 우측: 상세 코드 목록 -->
+            <!-- 우측: 공통 코드 목록 -->
             <div class="code-detail-panel">
                 <div class="panel-header">
-                    <div class="header-left">
-                        <h2 class="panel-title">상세 코드</h2>
-                        <span v-if="selectedCodeTypeName" class="selected-type-badge">
-                            {{ selectedCodeTypeName }} ({{ selectedCodeType }})
-                        </span>
-                    </div>
+                    <h2 class="panel-title">공통 코드</h2>
+                    <span v-if="selectedCodeTypeName" class="selected-type-badge">
+                        {{ selectedCodeTypeName }} ({{ selectedCodeType }})
+                    </span>
                 </div>
 
                 <div v-if="!selectedCodeType" class="empty-state">
@@ -63,10 +61,11 @@
                         <thead>
                             <tr>
                                 <th class="col-no">No</th>
-                                <th class="col-code">상세 코드</th>
+                                <th class="col-code">공통 코드</th>
                                 <th class="col-name">코드명</th>
                                 <th class="col-eng">설명</th>
                                 <th class="col-ref">참조값</th>
+                                <th class="col-order">순서</th>
                                 <th class="col-used">사용</th>
                             </tr>
                         </thead>
@@ -79,8 +78,9 @@
                                 <td class="col-name">{{ code.name }}</td>
                                 <td class="col-eng">{{ code.codeNameEng }}</td>
                                 <td class="col-ref text-center">{{ code.ref1 || '-' }}</td>
+                                <td class="col-order text-center">{{ code.sortOrder }}</td>
                                 <td class="col-used text-center">
-                                    {{ code.isUsed }}
+                                    <span class="usage-badge">{{ code.isUsed }}</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -99,7 +99,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { getAllCodeTypes, getCodeDetailsByType } from '@/api/system/commonCode'
 
-// 상태
+// 기본 상태
 const codeTypes = ref([])
 const filteredCodeTypes = ref([])
 const codeDetails = ref([])
@@ -144,7 +144,7 @@ const selectCodeType = async (typeCode) => {
     await fetchCodeDetails(typeCode)
 }
 
-// 상세 코드 목록 조회
+// 공통 코드 목록 조회
 const fetchCodeDetails = async (typeCode) => {
     try {
         codeDetails.value = await getCodeDetailsByType(typeCode)
@@ -309,7 +309,7 @@ onMounted(async () => {
     color: #10b981;
 }
 
-/* ===== 우측 상세 코드 패널 ===== */
+/* ===== 우측 공통 코드 패널 ===== */
 .code-detail-panel {
     background: #ffffff;
     border: 1px solid #e5e7eb;
@@ -325,12 +325,6 @@ onMounted(async () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
 }
 
 .selected-type-badge {
@@ -400,10 +394,10 @@ onMounted(async () => {
 
 /* ===== 테이블 컬럼 너비 ===== */
 .col-no { width: 60px; }
-.col-code { width: 160px; }
-.col-name { width: 200px; }
-.col-eng { min-width: 220px; }
-.col-ref { width: 120px; }
+.col-code { width: 140px; }
+.col-name { width: 180px; }
+.col-eng { min-width: 200px; }
+.col-ref { width: 100px; }
 .col-order { width: 80px; }
 .col-used { width: 80px; }
 
@@ -425,21 +419,10 @@ onMounted(async () => {
 .usage-badge {
     display: inline-block;
     min-width: 28px;
-    padding: 4px 8px;
     text-align: center;
-    border-radius: 4px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
-}
-
-.usage-badge.active {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.usage-badge.inactive {
-    background: #fee2e2;
-    color: #991b1b;
+    color: #111827;
 }
 
 /* ===== 빈 데이터 ===== */

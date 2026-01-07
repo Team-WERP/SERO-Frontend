@@ -138,7 +138,7 @@
                                         <span class="dot"
                                             :class="{ 'dot-red': item.approvalStatus === 'AS_RJCT' }"></span>
                                         <span v-if="item.approvalStatus === 'AS_RJCT'">반려자: {{ item.rejecterName
-                                            }}</span>
+                                        }}</span>
                                         <span v-else>현 결재: {{ item.currentApproverName }}</span>
                                     </div>
                                     <div class="current-approver" v-else style="visibility: hidden;">&nbsp;</div>
@@ -151,12 +151,28 @@
                     </tbody>
                 </table>
             </div>
+
+            <div class="pagination" v-if="pageInfo.totalPages > 0">
+                <button class="page-btn prev-btn" :disabled="pageInfo.number === 0"
+                    @click="changePage(pageInfo.number - 1)">
+                    &lt;
+                </button>
+                <button v-for="page in visiblePages" :key="page" class="page-btn"
+                    :class="{ active: pageInfo.number === (page - 1) }" @click="changePage(page - 1)">
+                    {{ page }}
+                </button>
+                <button class="page-btn next-btn" :disabled="pageInfo.number >= pageInfo.totalPages - 1"
+                    @click="changePage(pageInfo.number + 1)">
+                    &gt;
+                </button>
+            </div>
+
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { getSubmittedApprovals } from '@/api/approval';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -220,6 +236,25 @@ const getProgressWidth = (item) => {
     return (item.currentApprovedCount / item.totalLine) * 100;
 };
 
+// 페이징 계산
+const visiblePages = computed(() => {
+    const currentPage = pageInfo.value.number + 1;
+    const total = pageInfo.value.totalPages;
+    const pageCount = 5;
+    let start = Math.floor((currentPage - 1) / pageCount) * pageCount + 1;
+    let end = start + pageCount - 1;
+    if (end > total) end = total;
+    const pages = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+});
+
+const changePage = (page) => {
+    if (page < 0 || page >= pageInfo.value.totalPages) return;
+    pageInfo.value.number = page;
+    fetchData();
+};
+
 // Bar 색상 클래스
 const getProgressBarClass = (status) => {
     if (status === 'AS_APPR') return 'bar-success';
@@ -252,7 +287,9 @@ const fetchData = async () => {
         startDate: searchFilter.value.startDate,
         endDate: searchFilter.value.endDate,
         refDocType: searchFilter.value.refDocType || null,
-        status: statusParam
+        status: statusParam,
+        page: pageInfo.value.number,
+        size: pageInfo.value.size
     };
 
     try {
@@ -338,7 +375,7 @@ onMounted(() => {
 
 /* ===== 검색 / 필터 ===== */
 .filter-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: #111827;
     margin-bottom: 10px;
@@ -644,5 +681,57 @@ onMounted(() => {
     padding: 60px 0;
     color: #9ca3af;
     font-size: 14px;
+}
+
+/* 페이지네이션 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
+
+.page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 6px;
+    border: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-btn:hover:not(:disabled) {
+    border-color: #4C4CDD;
+    color: #4C4CDD;
+    background-color: #eff6ff;
+}
+
+.page-btn.active {
+    background-color: #4C4CDD;
+    color: #ffffff;
+    border-color: #4C4CDD;
+}
+
+.page-btn:disabled {
+    background-color: #f9fafb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    border-color: #e5e7eb;
+}
+
+.prev-btn,
+.next-btn {
+    font-family: monospace;
+    font-weight: 700;
 }
 </style>

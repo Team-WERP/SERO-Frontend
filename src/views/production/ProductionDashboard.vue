@@ -32,9 +32,11 @@ const capaChartData = ref({ labels: [], datasets: [{ data: [] }] })
 const monthlyTrendData = ref({ labels: [], datasets: [] })
 const riskChartData = ref({ labels: [], datasets: [{ data: [] }] })
 const lineUtilizationRate = ref(0)
+const isLoading = ref(true);
 
 onMounted(async () => {
     try {
+
         const [summary, rawRiskList, lineStatus, lines, trend] = await Promise.all([
             getDashboardSummary(),
             getPrRiskList(),
@@ -113,6 +115,8 @@ onMounted(async () => {
         }
     } catch (error) {
         console.error("데이터 로딩 중 오류 발생:", error)
+    } finally {
+        isLoading.value = false;
     }
 })
 
@@ -152,22 +156,20 @@ const commonOptions = {
     maintainAspectRatio: false,
     plugins: { legend: { display: false } }
 }
-
 const trendOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    scales: {
-        y: { beginAtZero: true, grid: { display: false } }
-    },
     plugins: {
         legend: {
-            display: true,
-            position: 'top',
-            align: 'end',
-            labels: { boxWidth: 10, font: { size: 10 } }
+            display: false, 
+        },
+        tooltip: {
+            enabled: true
         }
-    }
+    },
+    cutout: '75%'
 }
+
 
 const router = useRouter()
 
@@ -180,17 +182,17 @@ const goToDetail = (prId) => {
     <div class=" min-h-screen space-y-6">
         <header class="flex justify-between items-end mb-4">
             <div>
-                <h1 class="text-[28px] font-bold text-[#111827] mb-2 tracking-tight">
+                <h1 class="text-[28px] font-bold mb-2 tracking-tight">
                     생산 대시보드
                 </h1>
-                <p class="text-[14px] text-[#6b7280] font-medium tracking-wide">
+                <p class="text-slate-500 text-sm mt-1">
                     실시간 생산 현황 및 라인 가동 상태를 한눈에 확인합니다.
                 </p>
             </div>
 
             <div class="flex items-center gap-6">
-                <div class="flex items-center gap-3 bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm">
-                    <span class="text-[13px] font-black text-slate-500 uppercase tracking-wider">내 담당 업무만</span>
+                <div class="flex items-center gap-3 bg-white px-5 py-2.5 rounded-xl border border-slate-200 ">
+                    <span class="text-sm font-semibold text-slate-500 uppercase tracking-wider">내 담당 업무만</span>
                     <button @click="isMyTasksOnly = !isMyTasksOnly"
                         :class="isMyTasksOnly ? 'bg-indigo-600' : 'bg-slate-200'"
                         class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none">
@@ -200,19 +202,22 @@ const goToDetail = (prId) => {
                 </div>
                 <div class="relative w-80">
                     <input v-model="searchQuery" type="text" placeholder="생산요청(PR) / 고객사 검색"
-                        class="w-full px-5 py-3 text-base rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all shadow-sm" />
+                        class="w-full px-5 py-3 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all " />
                 </div>
             </div>
         </header>
-
+        <div v-if="isLoading" class="flex h-screen items-center justify-center bg-slate-50">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
+            </div>
         <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+           
             <div v-for="(kpi, key) in productionKpiMock" :key="key"
-                class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
+                class="bg-white p-6 rounded-2xl border border-slate-200  relative overflow-hidden group transition-all">
                 <div
-                    class="flex justify-between items-start mb-4 text-[13px] font-bold text-slate-400 uppercase tracking-widest">
+                    class="flex justify-between items-start mb-4 text-[15px] font-medium text-slate-600 uppercase tracking-widest">
                     {{ kpi.title }}
                 </div>
-                <div class="text-4xl font-black text-slate-700 mb-4 tabular-nums">
+                <div class="text-[18px] font-black text-slate-700 mb-4 tabular-nums">
                     {{ key === 'production' ? kpi.completedQty?.toLocaleString() : kpi.rate + '%' }}
                     <span v-if="key === 'production'" class="text-sm font-bold text-slate-300 ml-1">/ {{
                         kpi.targetQty?.toLocaleString() }} </span>
@@ -227,43 +232,43 @@ const goToDetail = (prId) => {
 
         <div class="grid grid-cols-12 gap-8">
             <div class="col-span-12 lg:col-span-8 space-y-8">
-                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <section class="bg-white rounded-2xl border border-slate-200  overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex items-center gap-3">
                         <span class="w-2 h-5 bg-indigo-500 rounded-full"></span>
-                        <h2 class="text-lg font-bold text-slate-800 tracking-tight">실시간 생산요청 상세 현황</h2>
+                        <h2 class="text-lg font-bold tracking-tight">실시간 생산요청 상세 현황</h2>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-[15px]">
+                        <table class="w-full">
                             <thead>
                                 <tr
-                                    class="bg-slate-50/50 text-slate-500 text-[12px] uppercase tracking-widest font-bold">
-                                    <th class="py-4 px-6 text-left w-14"></th>
-                                    <th class="py-4 text-left">PR 정보</th>
-                                    <th class="py-4 text-left">고객사</th>
-                                    <th class="py-4 text-center">납기일</th>
-                                    <th class="py-4 text-center">리스크</th>
+                                    class="bg-slate-50/50 text-slate-500 text-sm text-center uppercase tracking-widest font-bold">
+                                    <th class="py-4 px-6 w-14"></th>
+                                    <th class="py-4 w-64">PR 정보</th>
+                                    <th class="py-4">고객사</th>
+                                    <th class="py-4">납기일</th>
+                                    <th class="py-4">리스크</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 <template v-for="pr in filteredPrList" :key="pr.prId">
                                     <tr @click="toggleExpand(pr)"
                                         class="hover:bg-indigo-50/30 cursor-pointer transition-colors group">
-                                        <td class="px-6 text-slate-300 font-bold transition-transform duration-300 text-base"
+                                        <td class="px-6 text-slate-300 transition-transform duration-300"
                                             :class="pr.isExpanded ? 'rotate-90' : ''">▶</td>
-                                        <td class="py-5">
-                                            <p class="text-lg font-black text-slate-800 group-hover:text-indigo-600">{{
+                                        <td class="py-5 text-center">
+                                            <p class="text-sm font-semibold text-slate-900 group-hover:underline">{{
                                                 pr.prCode }}</p>
-                                            <p class="text-[12px] font-bold text-slate-400 mt-0.5">품목 수: {{
+                                            <p class="text-xs font-semibold text-slate-700 mt-0.5">품목 수: {{
                                                 pr.summary.totalItems }}건</p>
                                         </td>
-                                        <td class="font-bold text-slate-600">{{ pr.clientName }}</td>
+                                        <td class="text-sm font-medium text-center text-slate-900">{{ pr.clientName }}</td>
                                         <td class="text-center">
-                                            <span class="px-4 py-1.5 rounded-lg text-xs font-black"
+                                            <span class="px-4 py-1.5 rounded-lg text-xs font-semibold"
                                                 :class="pr.dDay <= 1 ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'">D-{{
                                                     pr.dDay }}</span>
                                         </td>
                                         <td class="text-center">
-                                            <span v-if="pr.summary" class="font-black text-sm px-3 py-1.5 rounded"
+                                            <span v-if="pr.summary" class="font-semibold text-xs px-3 py-1.5 rounded"
                                                 :class="getRiskLevel(pr.summary.maxRisk).class">
                                                 {{ pr.summary.maxRisk }}%
                                             </span>
@@ -273,14 +278,14 @@ const goToDetail = (prId) => {
                                         <td colspan="5" class="bg-slate-50/50 p-8">
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div v-for="item in pr.items" :key="item.itemId"
-                                                    class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative">
+                                                    class="bg-white p-5 rounded-xl border border-slate-200  relative">
                                                     <div class="flex justify-between items-start mb-4">
                                                         <div>
                                                             <span
-                                                                class="text-[11px] font-black text-indigo-500 uppercase px-2 py-1 bg-indigo-50 rounded">
+                                                                class="text-sm font-black text-indigo-500 uppercase px-2 py-1 bg-indigo-50 rounded">
                                                                 {{ item.lineName }} </span>
-                                                            <p class="font-bold text-slate-800 mt-2 text-base"> {{
-                                                                item.itemName }} </p>
+                                                            <p class="font-semibold text-slate-800 mt-2 text-sm px-2"> 
+                                                                {{item.itemName }} </p>
                                                         </div>
                                                         <span
                                                             class="px-2.5 py-1 rounded text-xs font-black bg-slate-100 text-slate-500">
@@ -289,7 +294,7 @@ const goToDetail = (prId) => {
                                                     </div>
                                                     <div class="space-y-2">
                                                         <div
-                                                            class="flex justify-between text-[12px] font-bold text-slate-400">
+                                                            class="flex justify-between text-sm font-semibold text-slate-500 px-2">
                                                             <span>생산 진척률 ({{ item.producedQty }} / {{ item.targetQty
                                                                 }})</span>
                                                             <span class="text-indigo-600">{{
@@ -319,7 +324,7 @@ const goToDetail = (prId) => {
                     </div>
                 </section>
 
-                <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                <section class="bg-white p-8 rounded-2xl border border-slate-200 ">
                     <div class="flex items-center gap-3 mb-8">
                         <span class="w-2 h-5 bg-indigo-500 rounded-full"></span>
                         <h2 class="text-lg font-bold text-slate-800 tracking-tight">최근 12개월 목표 대비 생산량</h2>
@@ -331,9 +336,9 @@ const goToDetail = (prId) => {
             </div>
 
             <div class="col-span-12 lg:col-span-4 space-y-8">
-                <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-                    <h2 class="text-base font-bold text-slate-800 mb-8 flex items-center gap-3">
-                        <span class="w-2 h-5 bg-indigo-500 rounded-full"></span> 라인별 CAPA 부하 분석
+                <section class="bg-white p-8 rounded-2xl border border-slate-200 ">
+                    <h2 class="text-lg font-bold text-slate-800 mb-8 flex items-center gap-3">
+                        <span class="w-2 h-5 bg-indigo-500 rounded-full "></span> 라인별 CAPA 부하 분석
                     </h2>
                     <div class="h-56">
                         <Bar :data="capaChartData" :options="commonOptions" />
@@ -343,18 +348,26 @@ const goToDetail = (prId) => {
                     </p>
                 </section>
 
-                <section class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                <section class="bg-white p-8 rounded-2xl border border-slate-200 ">
                     <h2 class="text-base font-bold text-slate-800 mb-8 flex items-center gap-3">
                         <span class="w-2 h-5 bg-indigo-500 rounded-full"></span> 실시간 라인 가동 상태
                     </h2>
                     <div class="flex flex-col items-center">
                         <div class="w-52 h-52 relative mb-6">
-                            <Doughnut :data="lineChartData" :options="commonOptions" />
+                            <Doughnut :data="lineChartData" :options="trendOptions" />
                             <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span class="text-3xl font-black text-slate-800">
-                                    {{ lineUtilizationRate }}%
-                                </span>
+                                <span class="text-3xl font-black text-slate-800">{{ lineUtilizationRate }}%</span>
                                 <span class="text-[12px] font-bold text-slate-400 uppercase mt-1">생산 가동률</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-2 w-full">
+                            <div v-for="(label, index) in lineChartData.labels" :key="index" class="flex items-center gap-2">
+                                <span 
+                                    class="w-3 h-3 rounded-full" 
+                                    :style="{ backgroundColor: lineChartData.datasets[0].backgroundColor[index] }"
+                                ></span>
+                                <span class="text-xs font-semibold text-slate-600">{{ label }}</span>
                             </div>
                         </div>
                     </div>

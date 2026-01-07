@@ -108,7 +108,6 @@ const isDirty = ref(false)
 onMounted(async () => {
     const res = await getPRDraftDetail(prId)
 
-    console.log(res)
     soCode.value = res.soCode
     clientName.value = res.clientName
 

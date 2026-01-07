@@ -1,715 +1,261 @@
 <template>
-    <div class="gi-page">
-        <!-- 상단 헤더 -->
-        <div class="page-header">
-            <div class="header-left">
-                <h1 class="page-title">출고지시 관리</h1>
-                <p class="page-description">
-                    확정된 출고지시서를 조회합니다.
-                </p>
+    <div class="p-2 w-full font-sans">
+      <div class="mb-5 flex justify-between items-end">
+        <div>
+          <h1 class="text-[28px] font-bold text-gray-900 mb-2">출고지시 관리</h1>
+          <p class="text-sm text-gray-500">확정된 출고지시서를 조회합니다.</p>
+        </div>
+        <div class="flex gap-3 items-end">
+          <button v-if="canCreate" 
+            class="bg-[#4C4CDD] text-white border-none rounded-lg px-[18px] py-2.5 text-sm font-bold whitespace-nowrap hover:bg-[#3d3dbb] transition-colors" 
+            @click="openCreateModal"
+          >
+            + 출고지시 등록
+          </button>
+        </div>
+      </div>
+  
+      <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
+        <h2 class="text-md font-bold text-gray-800 mb-6 flex items-center gap-2">
+          <span class="w-1 h-5 bg-indigo-600 rounded-full"></span>
+          필터 및 검색
+        </h2>
+  
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4 items-end text-sm">
+            <div class="lg:col-span-2">
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">납기일</label>
+                <div class="flex items-center gap-2">
+                <input type="date" v-model="startDate" 
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white" />
+                <span class="text-gray-400 font-bold">~</span>
+                <input type="date" v-model="endDate" 
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white" />
+                </div>
             </div>
-            <div class="header-actions">
-                <button v-if="canCreate" class="create-btn" @click="openCreateModal">
-                    + 출고지시 등록
+
+            <div>
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">창고</label>
+                <select v-model="warehouseId" @change="fetchGIList"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white cursor-pointer">
+                <option value="">전체</option>
+                <option v-for="w in warehouseList" :key="w.id" :value="w.id">{{ w.warehouseName }}</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">상태</label>
+                <select v-model="selectedStatus" @change="fetchGIList"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all bg-white cursor-pointer">
+                <option value="">전체</option>
+                <option v-for="s in statusFilters" :key="s.value" :value="s.value">{{ s.label }}</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">출고지시번호</label>
+                <input type="text" v-model="searchKeyword" placeholder="GI-xxxx" @keyup.enter="fetchGIList"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all" />
+            </div>
+
+            <div>
+                <label class="block mb-2 text-gray-600 font-semibold uppercase tracking-wide">요청자 필터</label>
+                <button @click="toggleMyGI"
+                :class="[
+                    'w-full py-2 px-2 rounded-lg text-sm transition-all border outline-none whitespace-nowrap',
+                    showOnlyMyGI ? 'bg-white border-indigo-600 text-indigo-600' : 'bg-white border-gray-300 text-gray-600 hover:border-indigo-400 hover:text-indigo-600'
+                ]">
+                {{ showOnlyMyGI ? '내가 작성한 건' : '모든 담당자 건' }}
                 </button>
             </div>
+
+            <div class="flex gap-2">
+                <button @click="fetchGIList" 
+                class="flex-1 bg-indigo-700 text-white px-3 py-2 rounded-lg font-bold hover:bg-indigo-800 transition-all text-sm whitespace-nowrap">
+                검색
+                </button>
+                <button @click="resetFilters" 
+                class="flex-1 bg-gray-100 text-gray-600 px-3 py-2 rounded-lg font-bold hover:bg-gray-200 border border-gray-300 transition-all text-sm whitespace-nowrap">
+                초기화
+                </button>
+            </div>
+            </div>
+      </div>
+  
+      <div class="relative bg-white border border-gray-200 rounded-lg p-6">
+        <div v-if="isLoading" class="absolute inset-0 z-50 flex items-center justify-center bg-white/60">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
         </div>
         
-
-        <!-- 필터 및 검색 -->
-        <div class="search-section">
-            <h2 class="filter-title">필터 및 검색</h2>
-
-            <div class="filter-row">
-                <div class="filter-item">
-                    <label>납기일</label>
-                    <div>
-                        <input type="date" v-model="startDate" />
-                        <span>~</span>
-                        <input type="date" v-model="endDate" />
-                    </div>
-                </div>
-
-                <div class="filter-item">
-                    <label>창고</label>
-                    <select v-model="warehouseId" @change="fetchGIList">
-                        <option value="">전체</option>
-                        <option v-for="w in warehouseList" :key="w.id" :value="w.id">
-                            {{ w.warehouseName }}
-                        </option>
-                    </select>
-                </div>
-
-                <div class="filter-item">
-                    <label>상태</label>
-                    <select v-model="selectedStatus" @change="fetchGIList">
-                        <option value="">전체</option>
-                        <option v-for="s in statusFilters" :key="s.value" :value="s.value">
-                            {{ s.label }}
-                        </option>
-                    </select>
-                </div>
-
-                <div class="filter-item keyword">
-                    <label>출고지시번호</label>
-                    <input type="text" v-model="searchKeyword" placeholder="검색하세요" @keyup.enter="fetchGIList" />
-                </div>
-
-                <div class="filter-item">
-                    <label>작성자</label>
-                    <button
-                        class="my-gi-btn"
-                        :class="{ active: showOnlyMyGI }"
-                        @click="toggleMyGI">
-                        {{ showOnlyMyGI ? '전체 출고지시' : '내 출고지시 목록' }}
-                    </button>
-                </div>
-
-                <div class="button-group">
-                    <button class="reset-btn" @click="resetFilters" title="필터 초기화">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>
-                        </svg>
-                    </button>
-                    <button class="search-btn" @click="fetchGIList">검색</button>
-                </div>
-            </div>
+        <div class="mb-3 text-sm text-gray-600">
+          총 <span class="text-indigo-600 font-bold mx-1">{{ giList.length }}</span>건
         </div>
-
-        <!-- 출고지시 목록 -->
-        <div class="items-section">
-            <div
-                v-if="isLoading"
-                class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
-            >
-                <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
-                    </path>
-                </svg>
-            </div>
-            <div class="section-header">
-                <span class="total-count">총 {{ giList.length }}건</span>
-            </div>
-
-            <table class="items-table">
-                <thead>
-                    <tr>
-                        <th style="width: 50px; text-align:center;">No</th>
-                        <th style="width: 140px;">출고지시 번호</th>
-                        <th style="width: 140px;">주문 번호</th>
-                        <th style="width: 140px;">납품서 번호</th>
-                        <th style="width: 200px;">품목명</th>
-                        <th style="width: 100px;">창고</th>
-                        <th style="width: 130px;">출고지시일시</th>
-                        <th style="width: 130px;">납기일시</th>
-                        <th style="width: 100px;">요청자</th>
-                        <th style="width: 100px;">담당자</th>
-                        <th style="width: 100px; text-align:center;">상태</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="(gi, index) in giList" :key="gi.id">
-                        <td class="text-center">{{ index + 1 }}</td>
-
-                        <td class="link" @click="goDetail(gi.id)">
-                            {{ gi.giCode }}
-                        </td>
-
-                        <td>{{ gi.soCode }}</td>
-                        <td>{{ gi.doCode }}</td>
-
-                        <td class="item-name" :title="gi.itemName">
-                            {{ gi.itemName }}
-                            <span v-if="gi.itemCount > 1">
-                                외 {{ gi.itemCount - 1 }}건
-                            </span>
-                        </td>
-
-                        <td>{{ gi.warehouseName }}</td>
-
-                        <td>{{ formatDateTime(gi.createdAt) }}</td>
-                        <td>{{ formatDateTime(gi.shippedAt) }}</td>
-
-                        <td>{{ gi.requesterName || '-' }}</td>
-                        <td>{{ gi.managerName || '-' }}</td>
-
-                        <td class="text-center">
-                            <span :class="getStatusClass(gi.status)">
-                                {{ getStatusLabel(gi.status) }}
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr v-if="!isLoading && giList.length === 0">
-                        <td colspan="11" class="text-center empty-message">
-                            조회된 출고지시가 없습니다.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 납품서 선택 모달 -->
-        <DeliveryOrderSelectModal
-            :isOpen="isModalOpen"
-            @close="closeModal"
-        />
+  
+        <table class="w-full border-collapse">
+          <thead class="bg-gray-50 border-b-2 border-gray-200 text-center">
+            <tr>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[50px]">No</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[140px]">출고지시 번호</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[140px]">납품서 번호</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[180px]">품목명</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[160px]">창고</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[110px]">출고지시일</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[110px]">납기일</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[100px]">요청자</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[100px]">담당자</th>
+              <th class="p-3 text-sm font-bold text-gray-700 text-center w-[90px]">상태</th>
+            </tr>
+          </thead>
+  
+          <tbody class="divide-y divide-gray-200">
+            <tr v-for="(gi, index) in giList" :key="gi.id" class="hover:bg-gray-50 transition-colors">
+              <td class="p-4 text-center text-sm">{{ index + 1 }}</td>
+              <td class="p-4 text-center text-sm font-bold cursor-pointer hover:underline text-gray-900" @click="goDetail(gi.id)">
+                {{ gi.giCode }}
+              </td>
+              <td class="p-4 text-center text-sm text-gray-900">{{ gi.doCode }}</td>
+              <td class="p-4 text-center text-sm max-w-[200px] truncate" :title="gi.itemName">
+                {{ gi.itemName }}
+                <span v-if="gi.itemCount > 1" class="text-gray-400 text-xs ml-1">외 {{ gi.itemCount - 1 }}건</span>
+              </td>
+              <td class="p-4 text-center text-sm">{{ gi.warehouseName }}</td>
+              <td class="p-4 text-center text-sm">{{ gi.createdAt.slice(0, 10) }}</td>
+              <td class="p-4 text-center text-sm">{{ gi.shippedAt.slice(0, 10) }}</td>
+              <td class="p-4 text-center text-sm">{{ gi.requesterName || '-' }}</td>
+              <td class="p-4 text-center text-sm">{{ gi.managerName || '-' }}</td>
+              <td class="p-4 text-center">
+                <span :class="['inline-block px-3 py-1 rounded-full text-xs font-bold', getTailwindStatusClass(gi.status)]">
+                  {{ getStatusLabel(gi.status) }}
+                </span>
+              </td>
+            </tr>
+  
+            <tr v-if="!isLoading && giList.length === 0">
+              <td colspan="10" class="py-[60px] text-center text-gray-400 text-sm">
+                조회된 출고지시가 없습니다.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+  
+      <DeliveryOrderSelectModal :isOpen="isModalOpen" @close="closeModal" />
     </div>
-</template>
-
-<script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user.js'
-import { getGIList } from '@/api/shipping/goodsIssue.js'
-import { getWarehouses } from '@/api/warehouse/warehouse.js'
-import DeliveryOrderSelectModal from '@/components/shipping/DeliveryOrderSelectModal.vue'
-
-const router = useRouter()
-const userStore = useUserStore()
-
-// 권한 체크
-const canCreate = computed(() => {
-    return userStore.hasAuthority('AC_SAL')
-})
-
-const canManage = computed(() => {
-    return userStore.hasAuthority('AC_WHS')
-})
-
-// 필터 상태
-const startDate = ref('')
-const endDate = ref('')
-const warehouseId = ref('')
-const searchKeyword = ref('')
-const selectedStatus = ref('')
-const showOnlyMyGI = ref(false) // 내가 작성한 출고지시만 조회
-const giList = ref([])
-const warehouseList = ref([])
-const isModalOpen = ref(false)
-const isLoading = ref(true)
-
-// 상태 필터 목록
-const statusFilters = [
-    { label: '지시검토', value: 'GI_RVW' },
-    { label: '결재중', value: 'GI_APPR_PEND' },
-    { label: '결재승인', value: 'GI_APPR_DONE' },
-    { label: '결재반려', value: 'GI_APPR_RJCT' },
-    { label: '출고완료', value: 'GI_ISSUED' },
-    { label: '배송중', value: 'GI_SHIP_ING' },
-    { label: '배송완료', value: 'GI_SHIP_DONE' },
-    { label: '취소', value: 'GI_CANCEL' }
-]
-
-// 창고 목록 조회
-const fetchWarehouses = async () => {
-    try {
-        warehouseList.value = await getWarehouses()
-    } catch (error) {
-        console.error('창고 목록 조회 실패:', error)
-    }
-}
-
-// 출고지시 목록 조회
-const fetchGIList = async () => {
-    console.log('🔍 fetchGIList 함수 실행됨!')
-    try {
-        isLoading.value = true
-        const params = {}
-
-        if (searchKeyword.value) params.searchKeyword = searchKeyword.value
-        if (selectedStatus.value) params.status = selectedStatus.value
-        if (warehouseId.value) params.warehouseId = parseInt(warehouseId.value)
-
-        // 날짜 필터는 둘 다 있어야 적용
-        if (startDate.value && endDate.value) {
-            params.startDate = startDate.value
-            params.endDate = endDate.value
-        }
-
-        // 내가 작성한 출고지시만 조회
-        if (showOnlyMyGI.value) {
-            params.drafterId = userStore.user?.id
-            console.log('🔍 showOnlyMyGI 활성화! userStore.user:', userStore.user)
-            console.log('🔍 drafterId:', params.drafterId)
-        }
-
-        console.log('API 호출 파라미터:', params)
-        const result = await getGIList(params)
-        console.log('API 응답:', result)
-        console.log('API 응답 타입:', typeof result, Array.isArray(result))
-        console.log('API 응답 길이:', result?.length)
-
-        // 배열인지 확인하고 할당
-        if (Array.isArray(result)) {
-            giList.value = [...result]
-        } else {
-            console.error('예상치 못한 응답 형식:', result)
-            giList.value = []
-        }
-    } catch (error) {
-        console.error('출고지시 목록 조회 실패:', error)
-        console.error('에러 상세:', {
-            message: error.message,
-            response: error.response,
-            status: error.response?.status,
-            data: error.response?.data
-        })
-
-        // 401 에러가 아닌 경우에만 alert 표시
-        if (error.response?.status !== 401) {
-            alert('출고지시 목록을 불러오는데 실패했습니다.')
-        }
-    } finally {
-        isLoading.value = false
-    }
-}
-
-// 필터 초기화
-const resetFilters = () => {
-    // 모든 필터를 초기 상태로 (날짜 필터 없이 전체 조회)
-    startDate.value = ''
-    endDate.value = ''
-    warehouseId.value = ''
-    selectedStatus.value = ''
-    searchKeyword.value = ''
-    showOnlyMyGI.value = false
-
-    // 초기화 후 목록 재조회
-    fetchGIList()
-}
-
-// 내가 작성한 출고지시 토글
-const toggleMyGI = async () => {
-    // 이미 활성화된 상태면 비활성화
-    if (showOnlyMyGI.value) {
-        showOnlyMyGI.value = false
-        await fetchGIList()
-        return
-    }
-
-    // 비활성화 상태에서 활성화 시도
-    const previousValue = showOnlyMyGI.value
-    showOnlyMyGI.value = true
-
-    // fetchGIList를 호출하여 필터링
-    await fetchGIList()
-
-    // 내가 작성한 출고지시가 없으면 버튼 상태 되돌리기
-    if (!giList.value || giList.value.length === 0) {
-        alert('작성한 출고지시가 없습니다.')
-        showOnlyMyGI.value = previousValue
-        // 전체 목록 다시 조회
-        await fetchGIList()
-    }
-}
-
-// 출고지시 등록 모달
-const openCreateModal = () => {
-    isModalOpen.value = true
-}
-
-const closeModal = () => {
-    isModalOpen.value = false
-}
-
-// 상세 페이지 이동
-const goDetail = (id) => {
-    router.push(`/warehouse/goods-issues/${id}`)
-}
-
-// 날짜 포맷팅 (YYYY-MM-DD HH:MM)
-const formatDateTime = (value) => {
-    if (!value) return '-'
-    const dateStr = value.replace('T', ' ').substring(0, 16)
-    return dateStr
-}
-
-// 상태 클래스 매핑
-const getStatusClass = (status) => ({
-    GI_RVW: 'status-badge status-review',
-    GI_APPR_PEND: 'status-badge status-pending',
-    GI_APPR_DONE: 'status-badge status-approved',
-    GI_APPR_RJCT: 'status-badge status-reject',
-    GI_ISSUED: 'status-badge status-issued',
-    GI_SHIP_ING: 'status-badge status-progress',
-    GI_SHIP_DONE: 'status-badge status-complete',
-    GI_CANCEL: 'status-badge status-cancel'
-}[status] || 'status-badge')
-
-// 상태 라벨 매핑
-const getStatusLabel = (status) => ({
-    GI_RVW: '지시검토',
-    GI_APPR_PEND: '결재중',
-    GI_APPR_DONE: '결재승인',
-    GI_APPR_RJCT: '결재반려',
-    GI_ISSUED: '출고완료',
-    GI_SHIP_ING: '배송중',
-    GI_SHIP_DONE: '배송완료'
-}[status] || status)
-
-// 초기 로드
-onMounted(() => {
-    // 창고 목록과 출고지시 목록 동시 조회 (날짜 필터 없이 전체 조회)
-    fetchWarehouses()
-    fetchGIList()
-})
-</script>
-
-<style scoped>
-/* ===== 페이지 전체 ===== */
-.gi-page {
-    padding: 5px;
-    width: 100%;
-}
-
-/* ===== 헤더 ===== */
-.page-header {
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-}
-
-.header-actions {
-    display: flex;
-    gap: 12px;
-    align-items: flex-end;
-}
-
-.period-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.period-selector label {
-    font-size: 13px;
-    color: #374151;
-    font-weight: 600;
-}
-
-.period-selector input[type="month"] {
-    height: 38px;
-    padding: 0 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
-    background: #ffffff;
-}
-
-.page-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 8px;
-}
-
-.page-description {
-    font-size: 14px;
-    color: #6b7280;
-}
-
-/* ===== 검색 / 필터 ===== */
-.filter-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 10px;
-}
-
-.search-section {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 24px;
-}
-
-.filter-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.filter-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 13px;
-    color: #374151;
-}
-
-.filter-item > div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.filter-item span {
-    color: #6b7280;
-}
-
-.filter-item input[type="date"],
-.filter-item input[type="text"],
-.filter-item select {
-    height: 36px;
-    padding: 0 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 13px;
-    background: #ffffff;
-    min-width: 140px;
-}
-
-.filter-item input[type="date"]:focus,
-.filter-item input[type="text"]:focus,
-.filter-item select:focus {
-    outline: none;
-    border-color: #4C4CDD;
-}
-
-.filter-item.keyword {
-    flex: 1;
-    min-width: 200px;
-}
-
-/* ===== 버튼 그룹 ===== */
-.button-group {
-    display: flex;
-    gap: 8px;
-    align-self: flex-end;
-    margin-top: 18px;
-}
-
-.reset-btn {
-    height: 36px;
-    width: 36px;
-    padding: 0;
-    background: #f3f4f6;
-    color: #374151;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.reset-btn svg {
-    width: 20px;
-    height: 20px;
-    color: #374151;
-}
-
-.reset-btn:hover {
-    background: #e5e7eb;
-}
-
-.reset-btn:hover svg {
-    transform: rotate(180deg);
-    transition: transform 0.3s ease;
-}
-
-.search-btn {
-    height: 36px;
-    padding: 0 24px;
-    background: #4C4CDD;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.search-btn:hover {
-    background: #3d3dbb;
-}
-
-/* ===== 리스트 섹션 ===== */
-.items-section {
-    position: relative;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 24px;
-}
-
-.section-header {
-    margin-bottom: 12px;
-}
-
-.total-count {
-    font-size: 14px;
-    color: #6b7280;
-}
-
-/* ===== 테이블 ===== */
-.items-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.items-table thead {
-    background: #f9fafb;
-    border-bottom: 2px solid #e5e7eb;
-}
-
-.items-table th {
-    padding: 12px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-    text-align: left;
-}
-
-.items-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
-    color: #111827;
-}
-
-.items-table tbody tr:hover {
-    background: #f9fafb;
-}
-
-/* ===== 공통 정렬 ===== */
-.text-center {
-    text-align: center;
-}
-
-/* ===== 상태 뱃지 ===== */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.status-review {
-    background: #fff7ed;
-    color: #c2410c;
-}
-
-.status-pending {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.status-approved {
-    background: #e0f2fe;
-    color: #0369a1;
-}
-
-.status-reject {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.status-issued {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.status-progress {
-    background: #ede9fe;
-    color: #5b21b6;
-}
-
-.status-complete {
-    background: #e0e7ff;
-    color: #3730a3;
-}
-
-.status-cancel {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-/* ===== 링크 ===== */
-.link {
-    color: #4C4CDD;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.link:hover {
-    text-decoration: underline;
-}
-
-/* ===== 품목명 ===== */
-.item-name {
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.item-name span {
-    color: #6b7280;
-    font-size: 12px;
-    margin-left: 4px;
-}
-
-.empty-message {
-    padding: 60px 0;
-    color: #9ca3af;
-    font-size: 14px;
-}
-
-/* ===== 작성자 필터 버튼 ===== */
-.filter-item .my-gi-btn {
-    height: 36px;
-    padding: 0 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s ease;
-    min-width: 140px;
-    background: #ffffff;
-    color: #374151;
-}
-
-.filter-item .my-gi-btn:hover {
-    border-color: #9ca3af;
-    background: #f9fafb;
-}
-
-.filter-item .my-gi-btn.active {
-    background: #4C4CDD;
-    color: #ffffff;
-    border-color: #4C4CDD;
-}
-
-.filter-item .my-gi-btn.active:hover {
-    background: #3d3dbb;
-    border-color: #3d3dbb;
-}
-
-.create-btn {
-    background: #4C4CDD;
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
-.create-btn:hover {
-    background: #3d3dbb;
-}
-</style>
+  </template>
+  
+  <script setup>
+
+  import { ref, onMounted, computed } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { useUserStore } from '@/stores/user.js'
+  import { getGIList } from '@/api/shipping/goodsIssue.js'
+  import { getWarehouses } from '@/api/warehouse/warehouse.js'
+  import DeliveryOrderSelectModal from '@/components/shipping/DeliveryOrderSelectModal.vue'
+  
+  const router = useRouter()
+  const userStore = useUserStore()
+  
+  const canCreate = computed(() => userStore.hasAuthority('AC_SAL'))
+  const canManage = computed(() => userStore.hasAuthority('AC_WHS'))
+  
+  const startDate = ref('')
+  const endDate = ref('')
+  const warehouseId = ref('')
+  const searchKeyword = ref('')
+  const selectedStatus = ref('')
+  const showOnlyMyGI = ref(false)
+  const giList = ref([])
+  const warehouseList = ref([])
+  const isModalOpen = ref(false)
+  const isLoading = ref(true)
+  
+  const statusFilters = [
+      { label: '지시검토', value: 'GI_RVW' },
+      { label: '결재중', value: 'GI_APPR_PEND' },
+      { label: '결재승인', value: 'GI_APPR_DONE' },
+      { label: '결재반려', value: 'GI_APPR_RJCT' },
+      { label: '출고완료', value: 'GI_ISSUED' },
+      { label: '배송중', value: 'GI_SHIP_ING' },
+      { label: '배송완료', value: 'GI_SHIP_DONE' },
+      { label: '취소', value: 'GI_CANCEL' }
+  ]
+  
+  const fetchWarehouses = async () => {
+      try { warehouseList.value = await getWarehouses() }
+      catch (error) { console.error('창고 목록 조회 실패:', error) }
+  }
+  
+  const fetchGIList = async () => {
+      try {
+          isLoading.value = true
+          const params = {}
+          if (searchKeyword.value) params.searchKeyword = searchKeyword.value
+          if (selectedStatus.value) params.status = selectedStatus.value
+          if (warehouseId.value) params.warehouseId = parseInt(warehouseId.value)
+          if (startDate.value && endDate.value) {
+              params.startDate = startDate.value
+              params.endDate = endDate.value
+          }
+          if (showOnlyMyGI.value) {
+              params.drafterId = userStore.user?.id
+          }
+          const result = await getGIList(params)
+          if (Array.isArray(result)) giList.value = [...result]
+          else giList.value = []
+      } catch (error) {
+          console.error('출고지시 목록 조회 실패:', error)
+          if (error.response?.status !== 401) alert('출고지시 목록을 불러오는데 실패했습니다.')
+      } finally { isLoading.value = false }
+  }
+  
+  const resetFilters = () => {
+      startDate.value = ''
+      endDate.value = ''
+      warehouseId.value = ''
+      selectedStatus.value = ''
+      searchKeyword.value = ''
+      showOnlyMyGI.value = false
+      fetchGIList()
+  }
+  
+  const toggleMyGI = async () => {
+      if (showOnlyMyGI.value) {
+          showOnlyMyGI.value = false
+          await fetchGIList()
+          return
+      }
+      const previousValue = showOnlyMyGI.value
+      showOnlyMyGI.value = true
+      await fetchGIList()
+      if (!giList.value || giList.value.length === 0) {
+          alert('작성한 출고지시가 없습니다.')
+          showOnlyMyGI.value = previousValue
+          await fetchGIList()
+      }
+  }
+  
+  const openCreateModal = () => isModalOpen.value = true
+  const closeModal = () => isModalOpen.value = false
+  const goDetail = (id) => router.push(`/warehouse/goods-issues/${id}`)
+  
+  const getStatusLabel = (status) => ({
+      GI_RVW: '지시검토', GI_APPR_PEND: '결재중', GI_APPR_DONE: '결재승인',
+      GI_APPR_RJCT: '결재반려', GI_ISSUED: '출고완료', GI_SHIP_ING: '배송중', GI_SHIP_DONE: '배송완료'
+  }[status] || status)
+  
+
+  const getTailwindStatusClass = (status) => ({
+      GI_RVW: 'bg-orange-50 text-orange-700',
+      GI_APPR_PEND: 'bg-amber-100 text-amber-800',
+      GI_APPR_DONE: 'bg-sky-100 text-sky-700',
+      GI_APPR_RJCT: 'bg-red-100 text-red-800',
+      GI_ISSUED: 'bg-green-100 text-green-800',
+      GI_SHIP_ING: 'bg-violet-100 text-violet-800',
+      GI_SHIP_DONE: 'bg-indigo-100 text-indigo-900',
+      GI_CANCEL: 'bg-gray-100 text-gray-700'
+  }[status] || 'bg-gray-100 text-gray-700')
+  
+  onMounted(() => {
+      fetchWarehouses()
+      fetchGIList()
+  })
+  </script>

@@ -24,11 +24,6 @@ export const useMenuStore = defineStore("menu", {
                     role: ["AC_CLI"],
                 },
                 {
-                    name: "주문배송조회",
-                    path: "/client-portal/order-delivery",
-                    role: ["AC_CLI"],
-                },
-                {
                     name: "거래품목조회",
                     path: "/client-portal/items",
                     role: ["AC_CLI"],
@@ -92,12 +87,7 @@ export const useMenuStore = defineStore("menu", {
                     role: ["AC_PRO", "AC_SYS"],
                 },
                 {
-                    name: "작업지시 실적 등록",
-                    path: "/production/work-results/input",
-                    role: ["AC_PRO", "AC_SYS"],
-                },
-                {
-                    name: "작업지시 실적 관리",
+                    name: "생산 실적 관리",
                     path: "/production/work-results/management",
                     role: ["AC_PRO", "AC_SYS"],
                 },
@@ -125,11 +115,6 @@ export const useMenuStore = defineStore("menu", {
                     path: "/warehouse/goods-issues",
                     role: ["AC_SAL", "AC_WHS", "AC_SYS"],
                 },
-                {
-                    name: "배송상태 추적",
-                    path: "/warehouse/tracking",
-                    role: ["AC_SAL", "AC_WHS", "AC_SYS"],
-                },
             ],
 
             // 5. 기준정보
@@ -137,16 +122,6 @@ export const useMenuStore = defineStore("menu", {
                 {
                     name: "자재·BOM 관리",
                     path: "/master/bom",
-                    role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
-                },
-                {
-                    name: "기업정보관리",
-                    path: "/master/company",
-                    role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
-                },
-                {
-                    name: "사원정보조회",
-                    path: "/master/employees",
                     role: ["AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"],
                 },
                 {
@@ -199,17 +174,7 @@ export const useMenuStore = defineStore("menu", {
                     name: "공통코드 관리",
                     path: "/system/common-code",
                     role: ["AC_SYS"],
-                },
-                {
-                    name: "사원 정보 관리",
-                    path: "/system/employees",
-                    role: ["AC_SYS"],
-                },
-                {
-                    name: "사용자 권한 관리",
-                    path: "/system/roles",
-                    role: ["AC_SYS"],
-                },
+                }
             ],
         },
     }),

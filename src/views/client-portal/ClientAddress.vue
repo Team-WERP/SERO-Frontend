@@ -9,6 +9,10 @@
             </div>
         </div>
 
+        <div v-if="isLoading" class="flex h-screen items-center justify-center bg-slate-50">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        </div>
+
         <!-- 검색 영역 -->
         <div class="search-section">
             <div class="search-row">
@@ -92,6 +96,7 @@ const userStore = useUserStore()
 const searchKeyword = ref('')
 const addresses = ref([])
 const allAddresses = ref([])
+const isLoading = ref(true);
 
 // 모달 관련
 const isModalOpen = ref(false)
@@ -102,12 +107,13 @@ const loadAddresses = async () => {
     try {
         const clientId = userStore.clientId
         allAddresses.value = await getClientAddresses(clientId)
-        console.log('조회된 배송지 목록:', allAddresses.value)
         searchAddresses()
     } catch (error) {
         console.error('배송지 조회 실패:', error)
         allAddresses.value = []
         addresses.value = []
+    } finally {
+        isLoading.value = false;
     }
 }
 
@@ -149,9 +155,6 @@ const closeModal = () => {
 const handleSubmit = async (formData) => {
     try {
         const clientId = userStore.clientId
-
-        console.log('전송할 데이터:', formData)
-        console.log('클라이언트 ID:', clientId)
 
         if (formData.id) {
             // 수정

@@ -11,31 +11,37 @@
         </div>
 
         <!-- 필터 및 검색 -->
-        <div class="search-section">
-            <h2 class="filter-title">필터 및 검색</h2>
-            <div class="filter-row">
-                <div class="filter-item">
-                    <label>창고</label>
-                    <select v-model="warehouseId" @change="fetchStockList">
+        <div class="bg-white p-6 rounded-xl border border-gray-200 mb-8">
+            <h2 class="text-md font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span class="w-1 h-5 bg-indigo-600 rounded-full"></span>
+                필터 및 검색
+            </h2>
+
+            <div class="flex flex-wrap items-end gap-4">
+                
+                <div class="filter-item flex flex-col gap-2">
+                    <label class="text-gray-600 text-sm font-semibold uppercase">창고</label>
+                    <select v-model="warehouseId" @change="fetchStockList" 
+                        class="min-w-[140px] border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none bg-white cursor-pointer">
                         <option value="">전체</option>
-                        <option v-for="w in warehouseList" :key="w.id" :value="w.id">
-                            {{ w.warehouseName }}
-                        </option>
+                        <option v-for="w in warehouseList" :key="w.id" :value="w.id">{{ w.warehouseName }}</option>
                     </select>
                 </div>
 
-                <div class="filter-item">
-                    <label>자재 유형</label>
-                    <select v-model="materialType" @change="fetchStockList">
+                <div class="filter-item flex flex-col gap-2">
+                    <label class="text-gray-600 text-sm font-semibold uppercase">자재 유형</label>
+                    <select v-model="materialType" @change="fetchStockList"
+                        class="min-w-[140px] border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none bg-white cursor-pointer">
                         <option value="">전체</option>
                         <option value="MAT_FG">완제품</option>
                         <option value="MAT_RM">원자재</option>
                     </select>
                 </div>
 
-                <div class="filter-item">
-                    <label>재고 상태</label>
-                    <select v-model="stockStatus" @change="fetchStockList">
+                <div class="filter-item flex flex-col gap-2">
+                    <label class="text-gray-600 text-sm font-semibold uppercase">재고 상태</label>
+                    <select v-model="stockStatus" @change="fetchStockList"
+                        class="min-w-[140px] border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none bg-white cursor-pointer">
                         <option value="">전체</option>
                         <option value="NORMAL">정상</option>
                         <option value="LOW">부족</option>
@@ -43,76 +49,71 @@
                     </select>
                 </div>
 
-                <div class="filter-item keyword">
-                    <label>검색어</label>
-                    <input
-                        type="text"
-                        v-model="searchKeyword"
-                        placeholder="자재명, 자재코드, 창고명 검색"
-                        @keyup.enter="fetchStockList"
-                    />
+                <div class="flex items-end gap-2">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-gray-600 text-sm font-semibold uppercase">검색어</label>
+                        <input 
+                            type="text"
+                            v-model="searchKeyword"
+                            placeholder="검색어 입력"
+                            @keyup.enter="fetchStockList"
+                            class="w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-indigo-600 outline-none transition-all"
+                        />
+                    </div>
+                    
+                    <div class="flex-1 gap-3"> <button @click="fetchStockList" class="bg-indigo-700 text-white px-8 py-2 rounded-lg font-bold hover:bg-indigo-800 transition-all text-sm whitespace-nowrap">
+                            검색
+                        </button>
+                        <button @click="resetFilters" class="flex-1 bg-gray-100 ml-2 text-gray-600 px-4 py-2 rounded-lg font-bold hover:bg-gray-200 border border-gray-300 transition-all text-sm whitespace-nowrap">
+                            초기화
+                        </button>
+                    </div>
                 </div>
 
-                <div class="button-group">
-                    <button class="reset-btn" @click="resetFilters" title="필터 초기화">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>
-                        </svg>
-                    </button>
-                    <button class="search-btn" @click="fetchStockList">검색</button>
-                </div>
             </div>
         </div>
 
         <!-- 재고 목록 -->
         <div class="items-section">
-            <div
-                v-if="isLoading"
-                class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-sm"
-            >
-                <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
-                    </path>
-                </svg>
+            <div v-if="isLoading" class="flex h-screen items-center justify-center bg-slate-50">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
             </div>
-            <div class="section-header">
-                <span class="total-count">총 {{ stockList.length }}건</span>
+            <div class="section-header text-sm">
+                총 <span class="text-indigo-600 font-bold mx-1">{{ stockList.length}}</span>건
             </div>
 
             <table class="items-table">
                 <thead>
                     <tr>
-                        <th style="width: 50px; text-align:center;">No</th>
-                        <th style="width: 150px;">창고명</th>
+                        <th style="width: 50px;">No</th>
                         <th style="width: 120px;">자재코드</th>
-                        <th style="width: 200px;">자재명</th>
-                        <th style="width: 150px;">규격</th>
+                        <th style="width: 180px;">자재명</th>
+                        <th style="width: 180px;">창고명</th>
+                        <th style="width: 160px;">규격</th>
                         <th style="width: 100px;">자재유형</th>
-                        <th style="width: 80px; text-align:center;">단위</th>
-                        <th style="width: 100px; text-align:right;">안전재고</th>
-                        <th style="width: 100px; text-align:right;">현재재고</th>
-                        <th style="width: 100px; text-align:right;">가용재고</th>
-                        <th style="width: 100px; text-align:center;">재고상태</th>
+                        <th style="width: 60px;">단위</th>
+                        <th style="width: 100px;">안전재고</th>
+                        <th style="width: 100px;">현재재고</th>
+                        <th style="width: 100px;">가용재고</th>
+                        <th style="width: 100px;">재고상태</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <tr v-for="(stock, index) in stockList" :key="stock.id" @click="openStockDetail(stock.id)" class="clickable-row">
-                        <td class="text-center">{{ index + 1 }}</td>
-                        <td>{{ stock.warehouseName }}</td>
+                    <tr v-for="(stock, index) in stockList" :key="stock.id" @click="openStockDetail(stock.id)" class="clickable-row text-center">
+                        <td >{{ index + 1 }}</td>
                         <td class="link">{{ stock.materialCode }}</td>
                         <td class="material-name" :title="stock.materialName">
                             {{ stock.materialName }}
                         </td>
+                        <td>{{ stock.warehouseName }}</td>
                         <td>{{ stock.materialSpec || '-' }}</td>
                         <td>{{ getMaterialTypeLabel(stock.materialType) }}</td>
-                        <td class="text-center">{{ stock.baseUnit }}</td>
-                        <td class="text-right">{{ formatNumber(stock.safetyStock) }}</td>
-                        <td class="text-right">{{ formatNumber(stock.currentStock) }}</td>
-                        <td class="text-right">{{ formatNumber(stock.availableStock) }}</td>
-                        <td class="text-center">
+                        <td>{{ stock.baseUnit }}</td>
+                        <td>{{ formatNumber(stock.safetyStock) }}</td>
+                        <td>{{ formatNumber(stock.currentStock) }}</td>
+                        <td>{{ formatNumber(stock.availableStock) }}</td>
+                        <td >
                             <span :class="getStockStatusClass(stock.stockStatus)">
                                 {{ getStockStatusLabel(stock.stockStatus) }}
                             </span>
@@ -260,7 +261,7 @@ onMounted(() => {
 <style scoped>
 /* ===== 페이지 전체 ===== */
 .stock-page {
-    padding: 5px;
+    padding: 8px;
     width: 100%;
 }
 
@@ -274,7 +275,7 @@ onMounted(() => {
 
 .page-title {
     font-size: 28px;
-    font-weight: 700;
+    font-weight: bold;
     color: #111827;
     margin-bottom: 8px;
 }
@@ -286,9 +287,8 @@ onMounted(() => {
 
 /* ===== 검색 / 필터 ===== */
 .filter-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
-    color: #111827;
     margin-bottom: 10px;
 }
 
@@ -319,7 +319,7 @@ onMounted(() => {
     font-weight: 600;
 }
 
-.filter-item input[type="text"],
+.filter-item input[type="text" ],
 .filter-item select {
     height: 36px;
     padding: 0 10px;
@@ -408,11 +408,6 @@ onMounted(() => {
     margin-bottom: 12px;
 }
 
-.total-count {
-    font-size: 14px;
-    color: #6b7280;
-}
-
 /* ===== 테이블 ===== */
 .items-table {
     width: 100%;
@@ -426,17 +421,17 @@ onMounted(() => {
 
 .items-table th {
     padding: 12px 16px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: #374151;
-    text-align: left;
+    text-align: center;
 }
 
 .items-table td {
     padding: 12px 16px;
     border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
-    color: #111827;
+    font-size: 13px;
+    color: #111827
 }
 
 .items-table tbody tr.clickable-row {
@@ -482,8 +477,12 @@ onMounted(() => {
 
 /* ===== 링크 ===== */
 .link {
-    color: #4C4CDD;
+    cursor: pointer;
     font-weight: 600;
+}
+
+.link:hover {
+    text-decoration: underline;
 }
 
 /* ===== 자재명 ===== */

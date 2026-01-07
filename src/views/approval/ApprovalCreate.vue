@@ -11,10 +11,10 @@
 
             <div class="flex gap-2 items-center relative">
                 <!-- 미리보기 버튼 -->
-                <button
+                <!-- <button
                     class="px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
                     미리보기
-                </button>
+                </button> -->
 
                 <!-- 결재 상신 버튼 + 툴팁 -->
                 <div class="relative group">
@@ -271,7 +271,7 @@
                                     </path>
                                 </svg>
                                 <span class="text-sm font-medium">{{ formData.relatedDoc.url.split("/").pop()
-                                    }}</span>
+                                }}</span>
                             </div>
                             <a :href="formData.relatedDoc.url" target="_blank"
                                 class="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors">

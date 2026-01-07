@@ -11,10 +11,14 @@ export const startWorkOrder = (woId, note) =>
     api.post(`/work-orders/${woId}/start`, null, { params: { note } })
 
 export const pauseWorkOrder = (woId, note) =>
-    api.post(`/work-orders/${woId}/pause`, null, { params: { note } })
+    api.post(`/work-orders/${woId}/pause`, null, {
+        params: { note }
+    })
 
 export const resumeWorkOrder = (woId, note) =>
-    api.post(`/work-orders/${woId}/resume`, null, { params: { note } })
+    api.post(`/work-orders/${woId}/resume`, null, {
+        params: { note }
+    })
 
 export const endWorkOrder = (woId, payload) =>
     api.post(`/work-orders/${woId}/end`, payload)
@@ -24,3 +28,25 @@ export const getWorkOrderHistory = (woId) =>
 
 export const previewWorkOrderResult = (woId, payload) =>
     api.post(`/work-orders/${woId}/result/preview`, payload)
+
+export const getDailyWorkOrders = (date) =>
+    api.get('/work-orders/daily', { params: { date } })
+
+export const getEmergencyTargetsByLine = (lineId) =>
+    api.get('/work-orders/emergency-targets', {
+        params: { lineId }
+    })
+
+export const getWorkOrderResults = (params) =>
+    api.get('/work-orders/results', {
+        params: {
+            startDate: params.startDate,
+            endDate: params.endDate,
+            lineId: params.lineId ?? null,
+            keyword: params.keyword ?? null
+        }
+    })
+
+export const getWorkOrderDetail = (woId) =>
+    api.get(`/work-orders/${woId}/detail`)
+        .then(res => res.data)
