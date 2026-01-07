@@ -8,11 +8,11 @@
                     기안한 결재 문서를 조회하고 진행 상태를 확인할 수 있습니다.
                 </p>
             </div>
-            <div>
+            <!-- <div>
                 <button class="create-btn" @click="openDraftModal">
                     + 결재 상신
                 </button>
-            </div>
+            </div> -->
         </div>
 
         <div class="tabs-container">
@@ -138,7 +138,7 @@
                                         <span class="dot"
                                             :class="{ 'dot-red': item.approvalStatus === 'AS_RJCT' }"></span>
                                         <span v-if="item.approvalStatus === 'AS_RJCT'">반려자: {{ item.rejecterName
-                                        }}</span>
+                                            }}</span>
                                         <span v-else>현 결재: {{ item.currentApproverName }}</span>
                                     </div>
                                     <div class="current-approver" v-else style="visibility: hidden;">&nbsp;</div>

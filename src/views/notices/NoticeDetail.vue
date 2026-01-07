@@ -302,7 +302,6 @@ const noticeStatus = computed(() => {
     if (!notice.value) return {};
 
     const { emergency, pinnedStartAt, pinnedEndAt } = notice.value;
-    console.log(notice.value);
 
     // 만료 여부 체크 (종료일이 존재하고, 현재 시간보다 이전이면 True)
     const isEnded = pinnedEndAt ? isExpired(pinnedEndAt) : false;
@@ -369,6 +368,8 @@ const deleteNotice = async () => {
     try {
         await deleteNoticeAPI(notice.value.noticeId);
         alert('공지사항이 삭제되었습니다.');
+
+        router.push('/notices');
     } catch (e) {
         console.error(e);
         alert('공지사항 삭제에 실패했습니다.');
