@@ -16,14 +16,14 @@
 
         <div class="divider"></div>
 
-        <ul class="profile-modal__menu">
-            <!-- <li @click="goToMyPage">
+        <!-- <ul class="profile-modal__menu">
+            <li @click="goToMyPage">
                 <span class="icon">👤</span> 내 정보 수정
-            </li> -->
+            </li>
             <li @click="goToSettings">
                 <span class="icon">⚙️</span> 설정
             </li>
-        </ul>
+        </ul> -->
 
         <div class="divider"></div>
 
