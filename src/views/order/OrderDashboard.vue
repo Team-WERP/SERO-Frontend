@@ -43,7 +43,7 @@
           </div>
         </div>
 
-        <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200">
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-4 bg-[#4C4CDD] rounded-full"></span>
