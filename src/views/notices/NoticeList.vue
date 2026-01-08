@@ -344,14 +344,32 @@ const isPinnedActive = (start, end) => {
 };
 
 const getNoticeBadgeType = (notice) => {
-    const start = notice.pinnedStartAt ? new Date(notice.pinnedStartAt) : null;
-    const end = notice.pinnedEndAt ? new Date(notice.pinnedEndAt) : null;
+    const start = parseKST(notice.pinnedStartAt);
+    const end = parseKST(notice.pinnedEndAt);
 
     const active = isPinnedActive(start, end);
 
     if (notice.emergency && active) return 'URGENT';
     if (!notice.emergency && active) return 'PINNED';
     return 'NORMAL';
+};
+
+const parseKST = (value) => {
+    if (!value) return null;
+
+    if (value.includes('T') && (value.includes('+') || value.includes('Z'))) {
+        return new Date(value);
+    }
+
+    if (value.includes(' ')) {
+        return new Date(value.replace(' ', 'T') + '+09:00');
+    }
+
+    if (value.length === 10) {
+        return new Date(value + 'T00:00:00+09:00');
+    }
+
+    return new Date(value);
 };
 
 // 5개 단위로 보여주는 페이지네이션

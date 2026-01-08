@@ -22,10 +22,10 @@
                         class="px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-colors">
                         미리보기
                     </button>
-                    <button @click="router.back()"
+                    <!-- <button @click="router.push('/approval')"
                         class="px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm transition-colors">
                         목록으로
-                    </button>
+                    </button> -->
 
                     <button v-if="isMyTurn" @click="openApprovalModal" class="px-3 py-1.5 bg-[#4c4cdd] text-white rounded text-sm font-medium hover:bg-[#3b3bcf]
                         shadow-sm
@@ -162,7 +162,7 @@
                                             {{ getDocType(approvalData.refDocType) }}
                                         </span>
                                         <span class="text-sm font-bold text-blue-800">{{ approvalData.refDocCode
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -247,7 +247,7 @@
                                     <p class="text-sm font-bold text-slate-700 mb-1">
                                         {{ log.approverName }}
                                         <span class="text-xs font-normal text-slate-500 ml-1">{{ log.approverDepartment
-                                            }}</span>
+                                        }}</span>
                                     </p>
 
                                     <div v-if="log.note" class="bg-slate-50 border border-slate-200 rounded p-2.5 mt-1">

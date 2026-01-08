@@ -195,10 +195,11 @@ const notice = ref(null);
 const loading = ref(true);
 
 const canEdit = computed(() => {
-    if (!notice.value) return false;
+    if (!notice.value || userStore.hasAuthority('AC_CLI')) return false;
 
     // 예: 작성자 본인이거나 시스템 관리자일 때
     return userStore.user?.id === notice.value.creatorId || userStore.hasAuthority('AC_SYS');
+
 });
 
 onMounted(async () => {
@@ -302,7 +303,6 @@ const noticeStatus = computed(() => {
     if (!notice.value) return {};
 
     const { emergency, pinnedStartAt, pinnedEndAt } = notice.value;
-    console.log(notice.value);
 
     // 만료 여부 체크 (종료일이 존재하고, 현재 시간보다 이전이면 True)
     const isEnded = pinnedEndAt ? isExpired(pinnedEndAt) : false;
@@ -369,6 +369,8 @@ const deleteNotice = async () => {
     try {
         await deleteNoticeAPI(notice.value.noticeId);
         alert('공지사항이 삭제되었습니다.');
+
+        router.push('/notices');
     } catch (e) {
         console.error(e);
         alert('공지사항 삭제에 실패했습니다.');

@@ -7,6 +7,9 @@ export function useNotificationSSE() {
     let reconnectAttempts = 0;
     const MAX_RECONNECT_ATTEMPTS = 5;
 
+    let controller = null;
+    let reader = null;
+
     const getDecodedToken = (token) => {
         try {
             const base64Url = token.split('.')[1];
@@ -45,26 +48,40 @@ export function useNotificationSSE() {
             notificationStore.setConnected(true);
             reconnectAttempts = 0;
 
-            const reader = response.body.getReader();
+            reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
 
             notificationStore.setEventSource({
-                close: () => { controller.abort(); reader.cancel(); }
+                close: () => { disconnect(); }
             });
 
             const readStream = async () => {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) { handleDisconnect(); break; }
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n\n');
-                    buffer = lines.pop() || '';
-                    for (const line of lines) { if (line.trim()) parseSSEMessage(line); }
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) { handleDisconnect(); break; }
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n\n');
+                        buffer = lines.pop() || '';
+                        for (const line of lines) { if (line.trim()) parseSSEMessage(line); }
+                    }
+                } catch (error) {
+                    if (error.name === 'AbortError') return;
+                    console.error("SSE stream error", error);
+                    handleDisconnect();
                 }
             };
-            readStream();
-        } catch (error) { handleDisconnect(); }
+
+            readStream().catch(error => {
+                if (error.name === 'AbortError') return;
+                console.error("SSE readStream error", error);
+                handleDisconnect();
+            });
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            handleDisconnect();
+        }
     };
 
     const parseSSEMessage = (message) => {
@@ -74,7 +91,8 @@ export function useNotificationSSE() {
 
         for (const line of lines) {
             if (line.startsWith('event:')) eventType = line.substring(6).trim();
-            else if (line.startsWith('data:')) data = line.substring(5).trim();        }
+            else if (line.startsWith('data:')) data = line.substring(5).trim();
+        }
 
         if (eventType === 'notification') {
             const notification = JSON.parse(data);
@@ -93,6 +111,17 @@ export function useNotificationSSE() {
         }
     };
 
+    const disconnect = () => {
+        if (!notificationStore.isConnected) return; // 이미 끊겼으면 무시
+        reader?.cancel();
+        controller?.abort();
+        notificationStore.setConnected(false);
+        notificationStore.reset();
+        reader = null;
+        controller = null;
+    };
+
+
     onMounted(async () => {
         await notificationStore.fetchNotifications();
         await notificationStore.fetchUnreadCount();
@@ -100,7 +129,7 @@ export function useNotificationSSE() {
         if (Notification.permission === 'default') Notification.requestPermission();
     });
 
-    onBeforeUnmount(() => notificationStore.disconnect());
+    onBeforeUnmount(() => disconnect());
 
-    return { connect, disconnect: notificationStore.disconnect, isConnected: () => notificationStore.isConnected };
+    return { connect, disconnect, isConnected: () => notificationStore.isConnected };
 }

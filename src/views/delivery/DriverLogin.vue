@@ -13,21 +13,11 @@
 
                 <form @submit.prevent="handleLogin" class="login-form">
                     <div class="form-group">
-                        <input
-                            v-model="email"
-                            type="email"
-                            class="form-input"
-                            placeholder="이메일"
-                        />
+                        <input v-model="email" type="email" class="form-input" placeholder="이메일" />
                     </div>
 
                     <div class="form-group">
-                        <input
-                            v-model="password"
-                            type="password"
-                            class="form-input"
-                            placeholder="비밀번호"
-                        />
+                        <input v-model="password" type="password" class="form-input" placeholder="비밀번호" />
                     </div>
 
                     <button type="submit" class="login-btn" :disabled="loading">
@@ -69,8 +59,6 @@ const handleLogin = async () => {
             password: password.value
         })
 
-        console.log('로그인 응답:', response)
-
         // 로그인 성공 시 토큰과 이름 저장
         const { accessToken, name } = response.data
 
@@ -104,8 +92,6 @@ const devLogin = async () => {
             email: 'driver@werp.com',
             password: 'kang'
         })
-
-        console.log('로그인 응답:', response)
 
         const { accessToken, name } = response.data
 
