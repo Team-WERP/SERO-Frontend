@@ -73,6 +73,8 @@ import StockByWarehouse from "@/views/warehouse/StockByWarehouse.vue";
 import Forbidden from "@/views/error/Forbidden.vue";
 import NotFound from "@/views/error/NotFound.vue";
 
+import SitemapView from "@/components/common/SitemapView.vue";
+
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -116,6 +118,13 @@ const router = createRouter({
                 {
                     path: "forbidden",
                     component: Forbidden,
+                },
+                {
+                    path: "sitemap",
+                    component: SitemapView,
+                    meta: {
+                        roles: ["AC_CLI", "AC_SAL", "AC_PRO", "AC_WHS", "AC_SYS"] // 모든 권한 허용
+                    },
                 },
 
                 // 고객포털
