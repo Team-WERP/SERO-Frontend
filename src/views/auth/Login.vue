@@ -59,22 +59,22 @@
 
             <button @click="devLogin('sal')"
                 class="mt-4 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
-                본사 직원(영업팀)로 로그인
+                본사 영업팀 직원(이영업)으로 로그인
             </button>
 
             <button @click="devLogin('pro')"
                 class="mt-4 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
-                본사 직원(생산팀)로 로그인
+                본사 생산팀 직원(정반장)으로 로그인
             </button>
 
             <button @click="devLogin('whs')"
                 class="mt-4 h-10 w-full rounded-xl text-[14px] border border-[#4C4CDD] font-semibold text-[#4C4CDD] hover:opacity-95 transition cursor-pointer">
-                본사 직원(물류팀)로 로그인
+                본사 물류팀 직원(최물류)으로 로그인
             </button>
 
             <button @click="devLogin('cli')"
-                class="mt-4 h-10 w-full rounded-xl  text-[14px] border border-[#4C4CDD] text-[#4C4CDD] font-semibold hover:opacity-95 transition cursor-pointer">
-                고객사 직원으로 로그인
+                class="mt-4 h-10 w-full rounded-xl  text-[14px] bg-blue-500 border text-white font-semibold hover:opacity-95 transition cursor-pointer">
+                고객사 직원(김발주)으로 로그인
             </button>
 
             <div class="mt-4 text-center text-[11px] text-gray-400">
@@ -198,22 +198,22 @@ const devLogin = async (role) => {
                 email: 'admin@werp.com',
                 password: 'kang',
             },
-            sal: {
+            sal: {  // 영업팀 이영업 대리
                 type: 'hq',
-                email: 'jihyepark@werp.com',
+                email: 'sales_lee@werp.com',
                 password: 'kang',
             },
-            pro: {
+            pro: {  // 생산팀 정반장 과장
                 type: 'hq',
-                email: 'jaehyun.choi@werp.com',
+                email: 'lee.sj@werp.com',
                 password: 'kang',
             },
-            whs: {
+            whs: {  // 물류팀 최물류 사원
                 type: 'hq',
                 email: 'zxc@werp.com',
                 password: 'kang',
             },
-            cli: {
+            cli: {  // 고객사 (주)한화모멘텀 김발주 대리
                 type: 'client',
                 email: 'procurement01@hanwha.com',
                 password: 'kang',
