@@ -1,5 +1,7 @@
 <template>
-    <div class="pr-detail-wrap relative"> <div v-if="isLoading" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
+    <div class="pr-detail-wrap relative">
+        <div v-if="isLoading"
+            class="fixed inset-0 z-[9999] flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
             <div class="flex flex-col items-center gap-3">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4C4CDD]"></div>
             </div>
@@ -16,8 +18,9 @@
             <div class="title-left">
                 <div class="title">
                     {{ header.prCode }}
-                    <span class="status-pill" :class="statusClass">
-                        {{ statusLabel }}
+                    <span :class="getPRStatusBadgeClass(header.status)"
+                        class="rounded-full px-3 py-1 text-sm font-bold whitespace-nowrap">
+                        {{ getPRStatusLabel(header.status) }}
                     </span>
                 </div>
 
@@ -31,8 +34,8 @@
             </div>
 
             <div v-if="islLoading" class="flex h-screen items-center justify-center bg-slate-50">
-                            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
-                        </div>
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4C4CDD]"></div>
+            </div>
 
             <!-- stepper -->
             <div class="flex items-center gap-4">
@@ -43,10 +46,10 @@
                             {{ idx + 1 }}
                         </div>
                         <span class="mt-1 text-[11px] font-medium text-gray-900">{{ step }}</span>
-                        <span class="text-[10px] text-gray-400">
+                        <!-- <span class="text-[10px] text-gray-400">
                             {{ idx === 0 ? header.requestedAt?.slice(0, 10) : (idx === 3 && header.status === 'PR_DONE'
                                 ? header.updatedAt?.slice(0, 10) : '-') }}
-                        </span>
+                        </span> -->
                     </div>
                     <div v-if="idx !== steps.length - 1" class="mb-6 h-[2px] w-12 bg-gray-200"></div>
                 </div>
@@ -322,7 +325,7 @@ import { getEmployees } from '@/api/employee/employee'
 import ManagerAssignmentModal from './ManagerAssignmentModal.vue';
 import PlanTab from './PlanTab.vue'
 import PRPrintDocument from '@/components/production/PRPrintDocument.vue'
-import { getApprovalSummary } from '@/api/approval/approval'; // API 임포트 확인
+import { getApprovalSummary } from '@/api/approval/approval';
 
 const route = useRoute()
 const router = useRouter()
@@ -363,7 +366,7 @@ const currentStepIndex = computed(() => {
 
     if (!status) return -1;
 
-    if (['PR_TMP', 'PR_RVW', 'PR_APPR_PEND', 'PR_APPR_RJCT'].includes(status)) return 0;
+    if (['PR_TMP', 'PR_RVW', 'PR_APPR_PEND', 'PR_APPR_RJCT', 'PR_APPR_DONE'].includes(status)) return 0;
 
     if (status === 'PR_PLANNED' || (status === 'PR_APPR_DONE' && (!progress || progress === 'PLANNING' || progress === 'PLANNED'))) {
         return 1;
@@ -387,21 +390,34 @@ const getStepDotClass = (idx) => {
     return 'bg-[#CBD5E0]';
 };
 
-const statusClass = computed(() => {
-    const s = header.value.status;
-    const styles = {
-        'PR_TMP': 'bg-[#F3F4F6] text-[#374151]', // gray
-        'PR_RVW': 'bg-[#FFFBEB] text-[#B4540A]', // yellow/amber
-        'PR_APPR_PEND': 'bg-[#ECFEF6] text-[#278465]', // green
-        'PR_APPR_DONE': 'bg-[#ECFEF6] text-[#278465]', // green
-        'PR_APPR_RJCT': 'bg-[#FFD8D8] text-[#D34242]', // red
-        'PR_PLANNED': 'bg-[#F0F6FF] text-[#1E4ED8]', // blue
-        'PR_PRODUCING': 'bg-[#F0F6FF] text-[#1E4ED8]', // blue
-        'PR_DONE': 'bg-[#F3F4F6] text-[#000000]', // gray/black
-        'PR_CANCEL': 'bg-[#FFD8D8] text-[#D34242]'  // red
+const getPRStatusLabel = (status) => {
+    const map = {
+        PR_TMP: '임시저장',
+        PR_RVW: '요청검토',
+        PR_APPR_PEND: '결재중',
+        PR_APPR_DONE: '결재승인',
+        PR_APPR_RJCT: '결재반려',
+        PR_PLANNED: '계획수립',
+        PR_PRODUCING: '생산중',
+        PR_DONE: '생산완료',
+        PR_CANCEL: '취소'
     };
-    return styles[s] || 'bg-gray-100 text-gray-600';
-});
+
+    return map[status] || status || '-';
+};
+
+const getPRStatusBadgeClass = (status) => ({
+    PR_TMP: 'bg-gray-100 text-gray-600',
+    PR_RVW: 'bg-[#fff7ed] text-[#c2410c]',        // 요청검토
+    PR_APPR_PEND: 'bg-[#fff7ed] text-[#c2410c]', // 결재중
+    PR_APPR_DONE: 'bg-[#e0f2fe] text-[#0369a1]', // 결재승인
+    PR_APPR_RJCT: 'bg-[#fee2e2] text-[#991b1b]', // 결재반려
+    PR_PLANNED: 'bg-[#fef3c7] text-[#92400e]',   // 계획수립
+    PR_PRODUCING: 'bg-[#ede9fe] text-[#5b21b6]', // 생산중
+    PR_DONE: 'bg-[#e0e7ff] text-[#3730a3]',      // 생산완료
+    PR_CANCEL: 'bg-[#f3f4f6] text-[#374151]'     // 취소
+}[status] || 'bg-gray-100 text-gray-600');
+
 
 const reloadDetail = async () => {
     const res = await getPRDetail(prId)
@@ -462,7 +478,7 @@ const getLineStatusClass = (status) => {
 
 
 onMounted(async () => {
-    try{
+    try {
         isLoading.value = true;
         const res = await getPRDetail(prId);
         header.value = res.header;
@@ -472,12 +488,12 @@ onMounted(async () => {
         if (header.value.approvalCode) {
             fetchApprovalSummary();
         }
-    }catch(error) {
+    } catch (error) {
         console.error('API Error:', error);
     } finally {
         isLoading.value = false;
     }
-    
+
 });
 
 const showAssignManagerBtn = computed(() => {

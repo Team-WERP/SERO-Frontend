@@ -39,13 +39,13 @@
                         <tbody class="text-sm">
                             <tr v-for="doc in todoList" :key="doc.id" class="hover:bg-gray-50 group">
                                 <td class="p-3 text-gray-500">{{ doc.date }}</td>
-                                <td
+                                <td @click="goToRequestApprovlPage(doc)"
                                     class="p-3 font-medium text-gray-700 group-hover:text-blue-600 cursor-pointer truncate max-w-[180px]">
                                     {{ doc.title }}
                                 </td>
                                 <td class="p-3 text-center text-gray-600">{{ doc.author }}
                                     <span class="text-xs text-gray-400 block">{{ doc.department }}∙{{ doc.position
-                                        }}</span>
+                                    }}</span>
                                 </td>
                                 <td class="p-3 text-center">
                                     <span class="px-2 py-1 rounded text-xs font-bold"
@@ -114,7 +114,7 @@
                                 <td class="p-4 text-center text-gray-600 whitespace-nowrap">
                                     {{ item.author }}
                                     <span class="text-xs text-gray-400 block">{{ item.department }}∙{{ item.position
-                                        }}</span>
+                                    }}</span>
                                 </td>
 
                                 <td class="p-4 text-center text-gray-500 whitespace-nowrap">
@@ -385,6 +385,10 @@ const getResultStatusColor = (status) => {
         case 'AS_RJCT': return 'bg-red-50 text-red-600 border-red-100';
     }
 };
+
+const goToRequestApprovlPage = (doc) => {
+    router.push(`/approval/${doc.id}`);
+}
 
 onMounted(() => {
     fetchMyInProgressCount();
